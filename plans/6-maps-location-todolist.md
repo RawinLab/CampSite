@@ -27,43 +27,43 @@
 ### Tasks
 
 #### Phase 1: Leaflet Integration & Setup
-- [ ] T001 P1 US-011 Install Leaflet and dependencies [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/package.json]
-- [ ] T002 P1 US-011 Install Leaflet TypeScript definitions [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
-- [ ] T003 P1 US-011 Install leaflet.markercluster plugin [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
-- [ ] T004 P1 US-011 Create Leaflet CSS imports [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/styles/map.css]
+- [x] T001 P1 US-011 Install Leaflet and dependencies [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/package.json]
+- [x] T002 P1 US-011 Install Leaflet TypeScript definitions [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
+- [x] T003 P1 US-011 Install leaflet.markercluster plugin [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
+- [x] T004 P1 US-011 Create Leaflet CSS imports [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/styles/map.css]
 - [ ] T005 P2 US-011 Unit test: Verify Leaflet library loads [agent: test-automator] [deps: T001] [files: apps/campsite-frontend/__tests__/lib/leaflet.test.ts]
 
 #### Phase 2: Map Data API
-- [ ] T006 P1 US-011 Create map campsites API endpoint [agent: backend-architect] [deps: none] [files: apps/campsite-backend/src/routes/campsites.ts]
-- [ ] T007 P1 US-011 Implement lightweight map data query [agent: backend-architect] [deps: T006] [files: apps/campsite-backend/src/controllers/campsiteController.ts]
+- [x] T006 P1 US-011 Create map campsites API endpoint [agent: backend-architect] [deps: none] [files: apps/campsite-backend/src/routes/map.ts]
+- [x] T007 P1 US-011 Implement lightweight map data query [agent: backend-architect] [deps: T006] [files: apps/campsite-backend/src/routes/map.ts]
 - [ ] T008 P1 US-011 Add geo-spatial indexing to database [agent: backend-architect] [deps: none] [files: supabase/migrations/20260117120000_add_geo_indexes.sql]
 - [ ] T009 P2 US-011 Unit test: Map API returns correct schema [agent: test-automator] [deps: T006] [files: apps/campsite-backend/__tests__/routes/map-api.test.ts]
 - [ ] T010 P2 US-011 Integration test: Map API with filters [agent: test-automator] [deps: T007] [files: tests/integration/map-api-filters.test.ts]
 
 #### Phase 3: Map Components
-- [ ] T011 P1 US-011 Create CampsiteMap component [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
-- [ ] T012 P1 US-011 Create MapMarker component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapMarker.tsx]
-- [ ] T013 P1 US-011 Create MarkerCluster component [agent: frontend-developer] [deps: T003, T011] [files: apps/campsite-frontend/src/components/map/MarkerCluster.tsx]
-- [ ] T014 P1 US-011 Create MapInfoWindow component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapInfoWindow.tsx]
-- [ ] T015 P1 US-011 Create MapControls component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapControls.tsx]
-- [ ] T016 P1 US-011 Create MapLegend component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapLegend.tsx]
-- [ ] T017 P1 US-011 Create MapContainer with SSR safety [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapContainer.tsx]
+- [x] T011 P1 US-011 Create CampsiteMap component [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
+- [x] T012 P1 US-011 Create MapMarker component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapMarker.tsx]
+- [x] T013 P1 US-011 Create MarkerCluster component [agent: frontend-developer] [deps: T003, T011] [files: apps/campsite-frontend/src/components/map/MarkerCluster.tsx]
+- [x] T014 P1 US-011 Create MapInfoWindow component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapInfoWindow.tsx]
+- [x] T015 P1 US-011 Create MapControls component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapControls.tsx]
+- [x] T016 P1 US-011 Create MapLegend component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapLegend.tsx]
+- [x] T017 P1 US-011 Create MapContainer with SSR safety [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapContainer.tsx]
 - [ ] T018 P2 US-011 Unit test: CampsiteMap renders without errors [agent: test-automator] [deps: T011] [files: apps/campsite-frontend/__tests__/components/CampsiteMap.test.tsx]
 - [ ] T019 P2 US-011 Unit test: MapMarker colors by type [agent: test-automator] [deps: T012] [files: apps/campsite-frontend/__tests__/components/MapMarker.test.tsx]
 - [ ] T020 P2 US-011 Unit test: MarkerCluster groups correctly [agent: test-automator] [deps: T013] [files: apps/campsite-frontend/__tests__/components/MarkerCluster.test.tsx]
 
 #### Phase 4: Map Styling & Customization
-- [ ] T021 P1 US-011 Create custom marker icons [agent: frontend-developer] [deps: T012] [files: apps/campsite-frontend/src/components/map/MapMarker.tsx]
-- [ ] T022 P1 US-011 Style info window popup [agent: frontend-developer] [deps: T014] [files: apps/campsite-frontend/src/styles/map.css]
-- [ ] T023 P1 US-011 Style cluster markers [agent: frontend-developer] [deps: T013] [files: apps/campsite-frontend/src/styles/map.css]
-- [ ] T024 P1 US-011 Create map theme colors constants [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/lib/constants/mapTheme.ts]
+- [x] T021 P1 US-011 Create custom marker icons [agent: frontend-developer] [deps: T012] [files: apps/campsite-frontend/src/components/map/MapMarker.tsx]
+- [x] T022 P1 US-011 Style info window popup [agent: frontend-developer] [deps: T014] [files: apps/campsite-frontend/src/styles/map.css]
+- [x] T023 P1 US-011 Style cluster markers [agent: frontend-developer] [deps: T013] [files: apps/campsite-frontend/src/styles/map.css]
+- [x] T024 P1 US-011 Create map theme colors constants [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/lib/constants/mapTheme.ts]
 - [ ] T025 P2 US-011 Unit test: Marker colors match types [agent: test-automator] [deps: T021] [files: apps/campsite-frontend/__tests__/lib/mapTheme.test.ts]
 
 #### Phase 5: View Toggle & Integration
-- [ ] T026 P1 US-011 Create ViewToggle component [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/src/components/search/ViewToggle.tsx]
+- [x] T026 P1 US-011 Create ViewToggle component [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/src/components/search/ViewToggle.tsx]
 - [ ] T027 P1 US-011 Integrate map into search results page [agent: frontend-developer] [deps: T017, T026] [files: apps/campsite-frontend/src/app/search/page.tsx]
-- [ ] T028 P1 US-011 Create useMapSync hook for filter sync [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/hooks/useMapSync.ts]
-- [ ] T029 P1 US-011 Implement map bounds update on filter change [agent: frontend-developer] [deps: T028] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
+- [x] T028 P1 US-011 Create useMapSync hook for filter sync [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/hooks/useMapSync.ts]
+- [x] T029 P1 US-011 Implement map bounds update on filter change [agent: frontend-developer] [deps: T028] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
 - [ ] T030 P2 US-011 Unit test: ViewToggle switches views [agent: test-automator] [deps: T026] [files: apps/campsite-frontend/__tests__/components/ViewToggle.test.tsx]
 - [ ] T031 P2 US-011 Unit test: useMapSync updates markers [agent: test-automator] [deps: T028] [files: apps/campsite-frontend/__tests__/hooks/useMapSync.test.ts]
 
@@ -96,10 +96,10 @@
 ### Tasks
 
 #### Phase 1: Attractions Components
-- [ ] T041 P1 US-012 Create AttractionsSection component [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/src/components/campsite/AttractionsSection.tsx]
-- [ ] T042 P1 US-012 Create AttractionCard component [agent: frontend-developer] [deps: T041] [files: apps/campsite-frontend/src/components/campsite/AttractionCard.tsx]
-- [ ] T043 P1 US-012 Create category icon mapping [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/attractionIcons.ts]
-- [ ] T044 P1 US-012 Create difficulty badge styles [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/difficultyColors.ts]
+- [x] T041 P1 US-012 Create AttractionsSection component [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/src/components/campsite/AttractionsSection.tsx]
+- [x] T042 P1 US-012 Create AttractionCard component [agent: frontend-developer] [deps: T041] [files: apps/campsite-frontend/src/components/campsite/AttractionCard.tsx]
+- [x] T043 P1 US-012 Create category icon mapping [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/attractionIcons.ts]
+- [x] T044 P1 US-012 Create difficulty badge styles [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/difficultyColors.ts]
 - [ ] T045 P2 US-012 Unit test: AttractionCard renders correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/components/AttractionCard.test.tsx]
 - [ ] T046 P2 US-012 Unit test: Directions URL generated correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/lib/directionsUrl.test.ts]
 
@@ -313,8 +313,15 @@ Quick validation after deployment:
 
 ## Progress Summary
 - **Total:** 48
-- **Completed:** 0
-- **Pending:** 48
-- **Percentage:** 0%
+- **Completed:** 22 (P1 implementation tasks)
+- **Pending:** 26 (P2 tests + T008 geo-index + T027 search page integration)
+- **Percentage:** 46%
 
 **Last Updated:** 2026-01-17
+
+## Implementation Notes
+- Leaflet + react-leaflet 4.2.1 installed (React 18 compatible)
+- Map API created at `/api/map/campsites` with bounds and filter support
+- Attractions API created at `/api/campsites/:id/attractions`
+- All shared types added to @campsite/shared package
+- Frontend build passes successfully
