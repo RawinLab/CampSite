@@ -11,5 +11,12 @@ module.exports = {
       testMatch: ['**/*.test.ts'],
       setupFilesAfterEnv: ['<rootDir>/../../../apps/campsite-backend/__tests__/setup.ts'],
     },
+    {
+      displayName: 'integration',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      rootDir: '<rootDir>/tests/integration',
+      testMatch: ['**/*.test.ts'],
+    },
   ],
 };

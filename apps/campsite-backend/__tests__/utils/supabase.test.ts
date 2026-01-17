@@ -8,20 +8,32 @@ describe('Supabase Client', () => {
   });
 
   it('creates admin client with service role key', () => {
+    const { getSupabaseAdmin } = require('../../src/lib/supabase');
+    const adminClient = getSupabaseAdmin();
+    expect(adminClient).toBeDefined();
+    expect(adminClient.from).toBeDefined();
+    expect(adminClient.auth).toBeDefined();
+  });
+
+  it('supabaseAdmin proxy provides access to client methods', () => {
     const { supabaseAdmin } = require('../../src/lib/supabase');
     expect(supabaseAdmin).toBeDefined();
+    expect(supabaseAdmin.from).toBeDefined();
+    expect(supabaseAdmin.auth).toBeDefined();
   });
 
   it('createSupabaseClient returns admin client when no token', () => {
-    const { createSupabaseClient, supabaseAdmin } = require('../../src/lib/supabase');
+    const { createSupabaseClient, getSupabaseAdmin } = require('../../src/lib/supabase');
     const client = createSupabaseClient();
-    expect(client).toBe(supabaseAdmin);
+    const adminClient = getSupabaseAdmin();
+    expect(client).toBe(adminClient);
   });
 
   it('createSupabaseClient creates new client with token', () => {
-    const { createSupabaseClient, supabaseAdmin } = require('../../src/lib/supabase');
+    const { createSupabaseClient, getSupabaseAdmin } = require('../../src/lib/supabase');
     const client = createSupabaseClient('user-token');
-    expect(client).not.toBe(supabaseAdmin);
+    const adminClient = getSupabaseAdmin();
+    expect(client).not.toBe(adminClient);
     expect(client).toBeDefined();
   });
 });

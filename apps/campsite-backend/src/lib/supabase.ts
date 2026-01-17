@@ -32,13 +32,19 @@ export function getSupabaseAdmin(): SupabaseClient {
   return _supabaseAdmin;
 }
 
-// For backward compatibility
-export const supabaseAdmin = {
-  get from() { return getSupabaseAdmin().from.bind(getSupabaseAdmin()); },
-  get auth() { return getSupabaseAdmin().auth; },
-  get storage() { return getSupabaseAdmin().storage; },
-  get rpc() { return getSupabaseAdmin().rpc.bind(getSupabaseAdmin()); },
-};
+// Proxy object for backward compatibility with direct property access
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const supabaseAdmin: any = new Proxy({}, {
+  get(_, prop) {
+    const client = getSupabaseAdmin();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const value = (client as any)[prop as string];
+    if (typeof value === 'function') {
+      return value.bind(client);
+    }
+    return value;
+  },
+});
 
 // Create client with user's JWT token for RLS-enabled queries
 export function createSupabaseClient(accessToken?: string): SupabaseClient {

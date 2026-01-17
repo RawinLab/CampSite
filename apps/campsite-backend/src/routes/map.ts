@@ -123,7 +123,7 @@ router.get(
           if (campsiteIds && campsiteIds.length > 0) {
             // Count amenities per campsite and filter those with all required amenities
             const campsiteCounts = campsiteIds.reduce(
-              (acc, { campsite_id }) => {
+              (acc: Record<string, number>, { campsite_id }: { campsite_id: string }) => {
                 acc[campsite_id] = (acc[campsite_id] || 0) + 1;
                 return acc;
               },
@@ -131,7 +131,7 @@ router.get(
             );
 
             const matchingCampsiteIds = Object.entries(campsiteCounts)
-              .filter(([, count]) => count >= ids.length)
+              .filter(([, count]) => (count as number) >= ids.length)
               .map(([id]) => id);
 
             if (matchingCampsiteIds.length > 0) {

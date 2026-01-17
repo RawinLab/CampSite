@@ -213,10 +213,11 @@ export async function getOwnerInquiries(
       .from('inquiries')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'new')
-      .in('campsite_id', (inquiries || []).map(i => i.campsite_id));
+      .in('campsite_id', (inquiries || []).map((i: { campsite_id: string }) => i.campsite_id));
 
     // Transform data to include thumbnail
-    const transformedInquiries = (inquiries || []).map(inquiry => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transformedInquiries = (inquiries || []).map((inquiry: any) => {
       const campsite = inquiry.campsite as any;
       const primaryPhoto = campsite?.campsite_photos?.find((p: any) => p.is_primary);
       const firstPhoto = campsite?.campsite_photos?.[0];
@@ -450,7 +451,8 @@ export async function getUserInquiries(
     }
 
     // Transform data
-    const transformedInquiries = (inquiries || []).map(inquiry => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transformedInquiries = (inquiries || []).map((inquiry: any) => {
       const campsite = inquiry.campsite as any;
       const primaryPhoto = campsite?.campsite_photos?.find((p: any) => p.is_primary);
       const firstPhoto = campsite?.campsite_photos?.[0];

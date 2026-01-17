@@ -233,7 +233,7 @@ export async function batchCheckWishlist(
     throw new Error('Failed to check wishlist status');
   }
 
-  const wishlistedIds = new Set(data?.map((item) => item.campsite_id) || []);
+  const wishlistedIds = new Set(data?.map((item: { campsite_id: string }) => item.campsite_id) || []);
   const result: Record<string, boolean> = {};
 
   for (const id of campsiteIds) {
