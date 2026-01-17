@@ -9,6 +9,77 @@ import { validateBody } from '../middleware/validation';
 
 const router: RouterType = Router();
 
+// Password reset request schema
+const resetPasswordRequestSchema = z.object({
+  email: z.string().email('Invalid email format'),
+});
+
+// Password reset confirm schema
+const resetPasswordConfirmSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit'),
+});
+
+// Request password reset email
+router.post(
+  '/reset-password/request',
+  inquiryRateLimiter,
+  validateBody(resetPasswordRequestSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+
+      // Always return success to prevent email enumeration
+      // Even if user doesn't exist, we return success message
+      await supabaseAdmin.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password`,
+      });
+
+      res.json({
+        message: 'If your email is registered, you will receive a password reset link',
+      });
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      // Still return success to prevent enumeration
+      res.json({
+        message: 'If your email is registered, you will receive a password reset link',
+      });
+    }
+  }
+);
+
+// Confirm password reset with new password
+router.post(
+  '/reset-password/confirm',
+  authMiddleware,
+  validateBody(resetPasswordConfirmSchema),
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { password } = req.body;
+
+      const { error } = await supabaseAdmin.auth.updateUser({
+        password,
+      });
+
+      if (error) {
+        return res.status(401).json({
+          error: 'Invalid or expired token',
+        });
+      }
+
+      res.json({
+        message: 'Password updated successfully',
+      });
+    } catch (error) {
+      console.error('Password reset confirm error:', error);
+      res.status(500).json({ error: 'Failed to update password' });
+    }
+  }
+);
+
 // Get current user profile
 router.get(
   '/me',

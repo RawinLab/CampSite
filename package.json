@@ -19,6 +19,7 @@
     "db:studio": "cd supabase && supabase studio"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.2.0",
     "@playwright/test": "^1.41.0",
     "@types/jest": "^29.5.0",
     "@types/node": "^20.10.0",
