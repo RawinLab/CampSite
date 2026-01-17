@@ -460,6 +460,7 @@ describe('ProvinceAutocomplete', () => {
     });
 
     it('opens dropdown when input is focused', async () => {
+      // Mock hook to always return suggestions
       (useProvinceSearch as jest.Mock).mockReturnValue({
         query: 'กรุง',
         setQuery: mockSetQuery,
@@ -473,17 +474,28 @@ describe('ProvinceAutocomplete', () => {
       render(<ProvinceAutocomplete value={null} onChange={mockOnChange} />);
 
       const input = screen.getByRole('combobox');
+
+      // Type to trigger dropdown - the dropdown needs inputValue >= 2 chars OR suggestions.length > 0
       await user.type(input, 'กรุง');
 
-      // Close dropdown first
+      // Dropdown should be visible because:
+      // 1. isOpen is true (set by handleInputChange)
+      // 2. inputValue.length >= 2 OR suggestions.length > 0
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument();
+      });
+
+      // Close dropdown with Escape
       await user.keyboard('{Escape}');
 
+      // Verify dropdown is closed
       await waitFor(() => {
         expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
       });
 
-      // Focus input again
-      await user.click(input);
+      // Refocus by clicking - this triggers onFocus which sets isOpen to true
+      // Dropdown should reopen since inputValue is still 'กรุง' (>= 2) and suggestions exist
+      fireEvent.focus(input);
 
       await waitFor(() => {
         expect(screen.getByRole('listbox')).toBeInTheDocument();

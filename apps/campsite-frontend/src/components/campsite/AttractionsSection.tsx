@@ -72,8 +72,8 @@ export function AttractionsSection({
       ? attractions
       : attractions.filter((a) => a.category === selectedCategory);
 
-  // Don't render if no attractions
-  if (!isLoading && attractions.length === 0) {
+  // Don't render if no attractions and no error
+  if (!isLoading && !error && attractions.length === 0) {
     return null;
   }
 

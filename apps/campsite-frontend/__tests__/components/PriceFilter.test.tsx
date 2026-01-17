@@ -75,8 +75,8 @@ describe('PriceFilter Component', () => {
     // Try to set min higher than max
     fireEvent.change(minSlider, { target: { value: '2500' } });
 
-    // Should be capped at max value
-    expect(screen.getByText('฿2,000')).toBeInTheDocument();
+    // Should be capped at max value (may appear multiple times in UI)
+    expect(screen.getAllByText('฿2,000').length).toBeGreaterThan(0);
     expect(minSlider).toHaveValue('2000');
   });
 
@@ -94,8 +94,8 @@ describe('PriceFilter Component', () => {
     // Try to set max lower than min
     fireEvent.change(maxSlider, { target: { value: '500' } });
 
-    // Should be capped at min value
-    expect(screen.getByText('฿1,000')).toBeInTheDocument();
+    // Should be capped at min value (may appear multiple times in UI)
+    expect(screen.getAllByText('฿1,000').length).toBeGreaterThan(0);
     expect(maxSlider).toHaveValue('1000');
   });
 
