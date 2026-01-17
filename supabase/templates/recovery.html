@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รีเซ็ตรหัสผ่าน - Camping Thailand</title>
+  <style>
+    body {
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #16a34a;
+    }
+    h1 {
+      color: #16a34a;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #16a34a;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .button:hover {
+      background-color: #15803d;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e5e5;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+    .warning {
+      background-color: #fef2f2;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Camping Thailand</div>
+    </div>
+
+    <h1>รีเซ็ตรหัสผ่าน</h1>
+
+    <p>สวัสดีครับ/ค่ะ</p>
+
+    <p>เราได้รับคำขอรีเซ็ตรหัสผ่านสำหรับบัญชีของคุณ กรุณาคลิกปุ่มด้านล่างเพื่อตั้งรหัสผ่านใหม่</p>
+
+    <p style="text-align: center;">
+      <a href="{{ .ConfirmationURL }}" class="button">รีเซ็ตรหัสผ่าน</a>
+    </p>
+
+    <div class="warning">
+      <strong>สำคัญ:</strong> ลิงก์นี้จะหมดอายุใน 1 ชั่วโมง หากคุณไม่ได้ขอรีเซ็ตรหัสผ่าน กรุณาเพิกเฉยต่ออีเมลนี้และรหัสผ่านของคุณจะไม่เปลี่ยนแปลง
+    </div>
+
+    <div class="footer">
+      <p>หากปุ่มด้านบนไม่ทำงาน กรุณาคัดลอกลิงก์นี้ไปวางในเบราว์เซอร์:</p>
+      <p style="word-break: break-all; color: #16a34a;">{{ .ConfirmationURL }}</p>
+      <p>© 2026 Camping Thailand. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>

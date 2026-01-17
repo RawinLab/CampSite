@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ยืนยันอีเมล - Camping Thailand</title>
+  <style>
+    body {
+      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #16a34a;
+    }
+    h1 {
+      color: #16a34a;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .button {
+      display: inline-block;
+      background-color: #16a34a;
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+    .button:hover {
+      background-color: #15803d;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e5e5;
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+    }
+    .note {
+      background-color: #f0fdf4;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">Camping Thailand</div>
+    </div>
+
+    <h1>ยืนยันอีเมลของคุณ</h1>
+
+    <p>สวัสดีครับ/ค่ะ</p>
+
+    <p>ขอบคุณที่สมัครสมาชิก Camping Thailand! กรุณาคลิกปุ่มด้านล่างเพื่อยืนยันอีเมลของคุณ</p>
+
+    <p style="text-align: center;">
+      <a href="{{ .ConfirmationURL }}" class="button">ยืนยันอีเมล</a>
+    </p>
+
+    <div class="note">
+      <strong>หมายเหตุ:</strong> ลิงก์นี้จะหมดอายุใน 24 ชั่วโมง หากคุณไม่ได้สมัครสมาชิก กรุณาเพิกเฉยต่ออีเมลนี้
+    </div>
+
+    <div class="footer">
+      <p>หากปุ่มด้านบนไม่ทำงาน กรุณาคัดลอกลิงก์นี้ไปวางในเบราว์เซอร์:</p>
+      <p style="word-break: break-all; color: #16a34a;">{{ .ConfirmationURL }}</p>
+      <p>© 2026 Camping Thailand. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
