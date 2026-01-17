@@ -41,10 +41,24 @@ export function useMapSync(options: UseMapSyncOptions = {}): UseMapSyncReturn {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Use refs to avoid stale closure issues in debounced callbacks
+  const boundsRef = useRef<MapBounds | null>(bounds);
+  const filtersRef = useRef<MapFilters>(filters);
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    boundsRef.current = bounds;
+  }, [bounds]);
+
+  useEffect(() => {
+    filtersRef.current = filters;
+  }, [filters]);
+
   /**
    * Fetch campsites from API
+   * @param useRefs - When true, use refs for bounds/filters (for debounced calls)
    */
-  const fetchCampsites = useCallback(async () => {
+  const fetchCampsites = useCallback(async (useRefs = false) => {
     if (!enabled) return;
 
     // Cancel any pending request
@@ -57,41 +71,48 @@ export function useMapSync(options: UseMapSyncOptions = {}): UseMapSyncReturn {
     setIsLoading(true);
     setError(null);
 
+    // Use refs for debounced calls to get latest values, state for direct calls
+    const currentBounds = useRefs ? boundsRef.current : bounds;
+    const currentFilters = useRefs ? filtersRef.current : filters;
+
+    // Prefer bounds state, but fallback to filters.bounds if available
+    const effectiveBounds = currentBounds || currentFilters.bounds;
+
     try {
       // Build query params
       const params = new URLSearchParams();
 
-      // Add bounds if available
-      if (bounds) {
-        params.append('north', bounds.north.toString());
-        params.append('south', bounds.south.toString());
-        params.append('east', bounds.east.toString());
-        params.append('west', bounds.west.toString());
+      // Add bounds if available (from state or filters)
+      if (effectiveBounds) {
+        params.append('north', effectiveBounds.north.toString());
+        params.append('south', effectiveBounds.south.toString());
+        params.append('east', effectiveBounds.east.toString());
+        params.append('west', effectiveBounds.west.toString());
       }
 
       // Add filters
-      if (filters.campsite_types && filters.campsite_types.length > 0) {
-        params.append('campsite_types', filters.campsite_types.join(','));
+      if (currentFilters.campsite_types && currentFilters.campsite_types.length > 0) {
+        params.append('campsite_types', currentFilters.campsite_types.join(','));
       }
 
-      if (filters.province_id) {
-        params.append('province_id', filters.province_id.toString());
+      if (currentFilters.province_id) {
+        params.append('province_id', currentFilters.province_id.toString());
       }
 
-      if (filters.min_price !== undefined) {
-        params.append('min_price', filters.min_price.toString());
+      if (currentFilters.min_price !== undefined) {
+        params.append('min_price', currentFilters.min_price.toString());
       }
 
-      if (filters.max_price !== undefined) {
-        params.append('max_price', filters.max_price.toString());
+      if (currentFilters.max_price !== undefined) {
+        params.append('max_price', currentFilters.max_price.toString());
       }
 
-      if (filters.min_rating !== undefined) {
-        params.append('min_rating', filters.min_rating.toString());
+      if (currentFilters.min_rating !== undefined) {
+        params.append('min_rating', currentFilters.min_rating.toString());
       }
 
-      if (filters.amenity_ids && filters.amenity_ids.length > 0) {
-        params.append('amenity_ids', filters.amenity_ids.join(','));
+      if (currentFilters.amenity_ids && currentFilters.amenity_ids.length > 0) {
+        params.append('amenity_ids', currentFilters.amenity_ids.join(','));
       }
 
       const response = await fetch(
@@ -128,15 +149,17 @@ export function useMapSync(options: UseMapSyncOptions = {}): UseMapSyncReturn {
   const handleBoundsChange = useCallback(
     (newBounds: MapBounds) => {
       setBounds(newBounds);
+      // Also update ref immediately for debounced callback
+      boundsRef.current = newBounds;
 
       // Clear existing debounce timer
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
       }
 
-      // Set new debounce timer
+      // Set new debounce timer - use refs to get latest values
       debounceTimerRef.current = setTimeout(() => {
-        fetchCampsites();
+        fetchCampsites(true);
       }, debounceMs);
     },
     [fetchCampsites, debounceMs]

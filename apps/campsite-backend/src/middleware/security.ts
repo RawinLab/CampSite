@@ -3,9 +3,38 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import { Express, Request, Response, NextFunction } from 'express';
 
-// CORS configuration
+// Parse CORS origins from environment variable (comma-separated)
+const getAllowedOrigins = (): string[] | string => {
+  const corsOrigins = process.env.CORS_ORIGINS || process.env.CORS_ORIGIN;
+  if (!corsOrigins) {
+    return ['http://localhost:3000'];
+  }
+  // Support comma-separated list of origins
+  const origins = corsOrigins.split(',').map(o => o.trim());
+  return origins.length === 1 ? origins[0] : origins;
+};
+
+// CORS configuration - use function to evaluate at request time
 export const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean | string | string[]) => void) => {
+    const allowedOrigins = getAllowedOrigins();
+    // Allow requests with no origin (like mobile apps or Postman)
+    if (!origin) return callback(null, true);
+
+    if (typeof allowedOrigins === 'string') {
+      // Single origin
+      callback(null, allowedOrigins);
+    } else if (Array.isArray(allowedOrigins)) {
+      // Multiple origins
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, origin);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } else {
+      callback(new Error('Invalid CORS configuration'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

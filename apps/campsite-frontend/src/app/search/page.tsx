@@ -1,23 +1,51 @@
 'use client';
 
-// Force dynamic rendering for pages using useSearchParams (via useSearch hook)
-export const dynamic = 'force-dynamic';
-
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect, useMemo } from 'react';
+import nextDynamic from 'next/dynamic';
 import { useSearch } from '@/hooks/useSearch';
 import { useCampsites } from '@/hooks/useCampsites';
+import { useMapSync } from '@/hooks/useMapSync';
 import { SearchBar } from '@/components/search/SearchBar';
 import { SearchResults } from '@/components/search/SearchResults';
 import { FilterSidebar, MobileFilterModal } from '@/components/search/FilterSidebar';
 import { Pagination } from '@/components/search/Pagination';
 import { SortSelect } from '@/components/search/SortSelect';
+import { ViewToggle, useViewToggle, type ViewMode } from '@/components/search/ViewToggle';
 import { Button } from '@/components/ui/button';
 import { SEARCH_DEFAULTS } from '@campsite/shared';
-import type { ProvinceSuggestion } from '@campsite/shared';
+import type { ProvinceSuggestion, MapFilters, MapCampsite } from '@campsite/shared';
+
+// Dynamic import for CampsiteMap to handle SSR safely (Leaflet requires window)
+const CampsiteMap = nextDynamic(
+  () => import('@/components/map/CampsiteMap').then((mod) => mod.CampsiteMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[600px] items-center justify-center rounded-xl bg-gray-100">
+        <div className="map-loading__spinner" />
+      </div>
+    ),
+  }
+);
 
 function SearchPageContent() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [selectedProvince, setSelectedProvince] = useState<ProvinceSuggestion | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
+
+  // View toggle with localStorage persistence
+  const { getInitialView, saveView } = useViewToggle('list');
+
+  // Initialize view from localStorage on client
+  useEffect(() => {
+    setViewMode(getInitialView());
+  }, [getInitialView]);
+
+  // Handle view change with persistence
+  const handleViewChange = (view: ViewMode) => {
+    setViewMode(view);
+    saveView(view);
+  };
 
   const {
     filters,
@@ -61,6 +89,40 @@ function SearchPageContent() {
     filters.maxPrice !== undefined && filters.maxPrice !== SEARCH_DEFAULTS.MAX_PRICE ? 1 : 0,
     filters.amenities?.length ?? 0,
   ].reduce((a, b) => a + b, 0);
+
+  // Convert search filters to map filters format
+  const mapFilters = useMemo<MapFilters>(() => ({
+    campsite_types: filters.types as MapFilters['campsite_types'],
+    province_id: filters.provinceId,
+    min_price: filters.minPrice,
+    max_price: filters.maxPrice,
+    min_rating: filters.minRating,
+    amenity_ids: filters.amenities?.map(Number).filter((n) => !isNaN(n)),
+  }), [filters.types, filters.provinceId, filters.minPrice, filters.maxPrice, filters.minRating, filters.amenities]);
+
+  // Use map sync hook for fetching map markers
+  const {
+    campsites: mapCampsites,
+    isLoading: isMapLoading,
+    error: mapError,
+    setBounds: setMapBounds,
+    setFilters: setMapFilters,
+  } = useMapSync({
+    initialFilters: mapFilters,
+    enabled: viewMode === 'map',
+  });
+
+  // Sync filters to map when they change
+  useEffect(() => {
+    if (viewMode === 'map') {
+      setMapFilters(mapFilters);
+    }
+  }, [mapFilters, viewMode, setMapFilters]);
+
+  // Handle map marker click - navigate to campsite detail
+  const handleMapMarkerClick = (campsite: MapCampsite) => {
+    window.open(`/campsite/${campsite.id}`, '_blank');
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -142,31 +204,62 @@ function SearchPageContent() {
               )}
             </div>
 
-            {/* Sort */}
-            <SortSelect value={filters.sort} onChange={setSort} />
+            <div className="flex items-center gap-4">
+              {/* View Toggle */}
+              <ViewToggle
+                view={viewMode}
+                onViewChange={handleViewChange}
+                listCount={results?.pagination.total}
+              />
+
+              {/* Sort - only show in list view */}
+              {viewMode === 'list' && (
+                <SortSelect value={filters.sort} onChange={setSort} />
+              )}
+            </div>
           </div>
 
           {/* Error State */}
-          {error && (
+          {(error || mapError) && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
               <p className="font-medium">เกิดข้อผิดพลาด</p>
-              <p className="text-sm">{error}</p>
+              <p className="text-sm">{error || mapError}</p>
             </div>
           )}
 
-          {/* Results Grid */}
-          <SearchResults
-            campsites={results?.data || []}
-            isLoading={isLoading}
-          />
+          {/* List View */}
+          {viewMode === 'list' && (
+            <>
+              {/* Results Grid */}
+              <SearchResults
+                campsites={results?.data || []}
+                isLoading={isLoading}
+              />
 
-          {/* Pagination */}
-          {results && results.pagination.totalPages > 1 && (
-            <div className="mt-8">
-              <Pagination
-                currentPage={results.pagination.page}
-                totalPages={results.pagination.totalPages}
-                onPageChange={setPage}
+              {/* Pagination */}
+              {results && results.pagination.totalPages > 1 && (
+                <div className="mt-8">
+                  <Pagination
+                    currentPage={results.pagination.page}
+                    totalPages={results.pagination.totalPages}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Map View */}
+          {viewMode === 'map' && (
+            <div className="h-[600px] w-full overflow-hidden rounded-xl lg:h-[700px]">
+              <CampsiteMap
+                campsites={mapCampsites}
+                onBoundsChange={setMapBounds}
+                onMarkerClick={handleMapMarkerClick}
+                showLegend={true}
+                showControls={true}
+                isLoading={isMapLoading}
+                className="h-full w-full"
               />
             </div>
           )}

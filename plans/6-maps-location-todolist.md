@@ -14,15 +14,15 @@
 > As a user, I want to view campsites on an interactive map with color-coded markers so that I can visually explore campsite locations and availability.
 
 ### Acceptance Criteria
-- [ ] Map displays all campsites in Thailand
-- [ ] Markers color-coded by campsite type
-- [ ] Marker clustering works when zoomed out
-- [ ] Info window shows on marker click
-- [ ] Map syncs with search filters
-- [ ] Mobile touch gestures work (pinch, pan)
-- [ ] List/Map view toggle functional
-- [ ] Map loads within 3 seconds
-- [ ] Legend displays marker color meanings
+- [x] Map displays all campsites in Thailand
+- [x] Markers color-coded by campsite type
+- [x] Marker clustering works when zoomed out
+- [x] Info window shows on marker click
+- [x] Map syncs with search filters
+- [x] Mobile touch gestures work (pinch, pan)
+- [x] List/Map view toggle functional
+- [x] Map loads within 3 seconds
+- [x] Legend displays marker color meanings
 
 ### Tasks
 
@@ -31,14 +31,14 @@
 - [x] T002 P1 US-011 Install Leaflet TypeScript definitions [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
 - [x] T003 P1 US-011 Install leaflet.markercluster plugin [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/package.json]
 - [x] T004 P1 US-011 Create Leaflet CSS imports [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/styles/map.css]
-- [ ] T005 P2 US-011 Unit test: Verify Leaflet library loads [agent: test-automator] [deps: T001] [files: apps/campsite-frontend/__tests__/lib/leaflet.test.ts]
+- [x] T005 P2 US-011 Unit test: Verify Leaflet library loads [agent: test-automator] [deps: T001] [files: apps/campsite-frontend/__tests__/lib/leaflet.test.ts]
 
 #### Phase 2: Map Data API
 - [x] T006 P1 US-011 Create map campsites API endpoint [agent: backend-architect] [deps: none] [files: apps/campsite-backend/src/routes/map.ts]
 - [x] T007 P1 US-011 Implement lightweight map data query [agent: backend-architect] [deps: T006] [files: apps/campsite-backend/src/routes/map.ts]
-- [ ] T008 P1 US-011 Add geo-spatial indexing to database [agent: backend-architect] [deps: none] [files: supabase/migrations/20260117120000_add_geo_indexes.sql]
-- [ ] T009 P2 US-011 Unit test: Map API returns correct schema [agent: test-automator] [deps: T006] [files: apps/campsite-backend/__tests__/routes/map-api.test.ts]
-- [ ] T010 P2 US-011 Integration test: Map API with filters [agent: test-automator] [deps: T007] [files: tests/integration/map-api-filters.test.ts]
+- [x] T008 P1 US-011 Add geo-spatial indexing to database [agent: backend-architect] [deps: none] [files: supabase/migrations/20260117120000_add_geo_indexes.sql]
+- [x] T009 P2 US-011 Unit test: Map API returns correct schema [agent: test-automator] [deps: T006] [files: apps/campsite-backend/__tests__/routes/map-api.test.ts]
+- [x] T010 P2 US-011 Integration test: Map API with filters [agent: test-automator] [deps: T007] [files: tests/integration/map-api-filters.test.ts]
 
 #### Phase 3: Map Components
 - [x] T011 P1 US-011 Create CampsiteMap component [agent: frontend-developer] [deps: T001] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
@@ -48,37 +48,37 @@
 - [x] T015 P1 US-011 Create MapControls component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapControls.tsx]
 - [x] T016 P1 US-011 Create MapLegend component [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapLegend.tsx]
 - [x] T017 P1 US-011 Create MapContainer with SSR safety [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/components/map/MapContainer.tsx]
-- [ ] T018 P2 US-011 Unit test: CampsiteMap renders without errors [agent: test-automator] [deps: T011] [files: apps/campsite-frontend/__tests__/components/CampsiteMap.test.tsx]
-- [ ] T019 P2 US-011 Unit test: MapMarker colors by type [agent: test-automator] [deps: T012] [files: apps/campsite-frontend/__tests__/components/MapMarker.test.tsx]
-- [ ] T020 P2 US-011 Unit test: MarkerCluster groups correctly [agent: test-automator] [deps: T013] [files: apps/campsite-frontend/__tests__/components/MarkerCluster.test.tsx]
+- [x] T018 P2 US-011 Unit test: CampsiteMap renders without errors [agent: test-automator] [deps: T011] [files: apps/campsite-frontend/__tests__/components/CampsiteMap.test.tsx]
+- [x] T019 P2 US-011 Unit test: MapMarker colors by type [agent: test-automator] [deps: T012] [files: apps/campsite-frontend/__tests__/components/MapMarker.test.tsx]
+- [x] T020 P2 US-011 Unit test: MarkerCluster groups correctly [agent: test-automator] [deps: T013] [files: apps/campsite-frontend/__tests__/components/MarkerCluster.test.tsx]
 
 #### Phase 4: Map Styling & Customization
 - [x] T021 P1 US-011 Create custom marker icons [agent: frontend-developer] [deps: T012] [files: apps/campsite-frontend/src/components/map/MapMarker.tsx]
 - [x] T022 P1 US-011 Style info window popup [agent: frontend-developer] [deps: T014] [files: apps/campsite-frontend/src/styles/map.css]
 - [x] T023 P1 US-011 Style cluster markers [agent: frontend-developer] [deps: T013] [files: apps/campsite-frontend/src/styles/map.css]
 - [x] T024 P1 US-011 Create map theme colors constants [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/lib/constants/mapTheme.ts]
-- [ ] T025 P2 US-011 Unit test: Marker colors match types [agent: test-automator] [deps: T021] [files: apps/campsite-frontend/__tests__/lib/mapTheme.test.ts]
+- [x] T025 P2 US-011 Unit test: Marker colors match types [agent: test-automator] [deps: T021] [files: apps/campsite-frontend/__tests__/lib/mapTheme.test.ts]
 
 #### Phase 5: View Toggle & Integration
 - [x] T026 P1 US-011 Create ViewToggle component [agent: frontend-developer] [deps: none] [files: apps/campsite-frontend/src/components/search/ViewToggle.tsx]
-- [ ] T027 P1 US-011 Integrate map into search results page [agent: frontend-developer] [deps: T017, T026] [files: apps/campsite-frontend/src/app/search/page.tsx]
+- [x] T027 P1 US-011 Integrate map into search results page [agent: frontend-developer] [deps: T017, T026] [files: apps/campsite-frontend/src/app/search/page.tsx]
 - [x] T028 P1 US-011 Create useMapSync hook for filter sync [agent: frontend-developer] [deps: T011] [files: apps/campsite-frontend/src/hooks/useMapSync.ts]
 - [x] T029 P1 US-011 Implement map bounds update on filter change [agent: frontend-developer] [deps: T028] [files: apps/campsite-frontend/src/components/map/CampsiteMap.tsx]
-- [ ] T030 P2 US-011 Unit test: ViewToggle switches views [agent: test-automator] [deps: T026] [files: apps/campsite-frontend/__tests__/components/ViewToggle.test.tsx]
-- [ ] T031 P2 US-011 Unit test: useMapSync updates markers [agent: test-automator] [deps: T028] [files: apps/campsite-frontend/__tests__/hooks/useMapSync.test.ts]
+- [x] T030 P2 US-011 Unit test: ViewToggle switches views [agent: test-automator] [deps: T026] [files: apps/campsite-frontend/__tests__/components/ViewToggle.test.tsx]
+- [x] T031 P2 US-011 Unit test: useMapSync updates markers [agent: test-automator] [deps: T028] [files: apps/campsite-frontend/__tests__/hooks/useMapSync.test.ts]
 
 #### Phase 6: E2E Map Tests
-- [ ] T032 P2 US-011 E2E: Map loads with markers [agent: test-automator] [deps: T027] [files: tests/e2e/map/map-load.test.ts]
-- [ ] T033 P2 US-011 E2E: Map view toggle works [agent: test-automator] [deps: T027] [files: tests/e2e/map/view-toggle.test.ts]
-- [ ] T034 P2 US-011 E2E: Marker click shows info window [agent: test-automator] [deps: T027] [files: tests/e2e/map/marker-click.test.ts]
-- [ ] T035 P2 US-011 E2E: Info window "View Details" link works [agent: test-automator] [deps: T027] [files: tests/e2e/map/info-window-link.test.ts]
-- [ ] T036 P2 US-011 E2E: Zoom controls functional [agent: test-automator] [deps: T027] [files: tests/e2e/map/zoom-controls.test.ts]
-- [ ] T037 P2 US-011 E2E: Map clustering on zoom out [agent: test-automator] [deps: T027] [files: tests/e2e/map/clustering.test.ts]
-- [ ] T038 P2 US-011 E2E: Mobile pinch zoom works [agent: test-automator] [deps: T027] [files: tests/e2e/map/mobile-zoom.test.ts]
-- [ ] T039 P2 US-011 E2E: Filter sync updates map markers [agent: test-automator] [deps: T029] [files: tests/e2e/map/filter-sync.test.ts]
-- [ ] T040 P2 US-011 E2E: Legend displays correctly [agent: test-automator] [deps: T027] [files: tests/e2e/map/legend.test.ts]
+- [x] T032 P2 US-011 E2E: Map loads with markers [agent: test-automator] [deps: T027] [files: tests/e2e/map/map-load.test.ts]
+- [x] T033 P2 US-011 E2E: Map view toggle works [agent: test-automator] [deps: T027] [files: tests/e2e/map/view-toggle.test.ts]
+- [x] T034 P2 US-011 E2E: Marker click shows info window [agent: test-automator] [deps: T027] [files: tests/e2e/map/marker-click.test.ts]
+- [x] T035 P2 US-011 E2E: Info window "View Details" link works [agent: test-automator] [deps: T027] [files: tests/e2e/map/info-window-link.test.ts]
+- [x] T036 P2 US-011 E2E: Zoom controls functional [agent: test-automator] [deps: T027] [files: tests/e2e/map/zoom-controls.test.ts]
+- [x] T037 P2 US-011 E2E: Map clustering on zoom out [agent: test-automator] [deps: T027] [files: tests/e2e/map/clustering.test.ts]
+- [x] T038 P2 US-011 E2E: Mobile pinch zoom works [agent: test-automator] [deps: T027] [files: tests/e2e/map/mobile-zoom.test.ts]
+- [x] T039 P2 US-011 E2E: Filter sync updates map markers [agent: test-automator] [deps: T029] [files: tests/e2e/map/filter-sync.test.ts]
+- [x] T040 P2 US-011 E2E: Legend displays correctly [agent: test-automator] [deps: T027] [files: tests/e2e/map/legend.test.ts]
 
-### Story Progress: 0/40
+### Story Progress: 40/40
 
 ---
 
@@ -86,12 +86,12 @@
 > As a user viewing a campsite, I want to see nearby attractions with directions so that I can plan activities around my camping trip.
 
 ### Acceptance Criteria
-- [ ] Attractions list shows within 20km radius
-- [ ] Each attraction shows distance, category, difficulty
-- [ ] Directions button opens Google Maps
-- [ ] Attractions sorted by distance
-- [ ] Category icons display correctly
-- [ ] Difficulty badges color-coded
+- [x] Attractions list shows within 20km radius
+- [x] Each attraction shows distance, category, difficulty
+- [x] Directions button opens Google Maps
+- [x] Attractions sorted by distance
+- [x] Category icons display correctly
+- [x] Difficulty badges color-coded
 
 ### Tasks
 
@@ -100,14 +100,14 @@
 - [x] T042 P1 US-012 Create AttractionCard component [agent: frontend-developer] [deps: T041] [files: apps/campsite-frontend/src/components/campsite/AttractionCard.tsx]
 - [x] T043 P1 US-012 Create category icon mapping [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/attractionIcons.ts]
 - [x] T044 P1 US-012 Create difficulty badge styles [agent: frontend-developer] [deps: T042] [files: apps/campsite-frontend/src/lib/constants/difficultyColors.ts]
-- [ ] T045 P2 US-012 Unit test: AttractionCard renders correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/components/AttractionCard.test.tsx]
-- [ ] T046 P2 US-012 Unit test: Directions URL generated correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/lib/directionsUrl.test.ts]
+- [x] T045 P2 US-012 Unit test: AttractionCard renders correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/components/AttractionCard.test.tsx]
+- [x] T046 P2 US-012 Unit test: Directions URL generated correctly [agent: test-automator] [deps: T042] [files: apps/campsite-frontend/__tests__/lib/directionsUrl.test.ts]
 
 #### Phase 2: E2E Attractions Tests
-- [ ] T047 P2 US-012 E2E: Attractions list displays [agent: test-automator] [deps: T041] [files: tests/e2e/attractions/attractions-list.test.ts]
-- [ ] T048 P2 US-012 E2E: Directions link opens Google Maps [agent: test-automator] [deps: T042] [files: tests/e2e/attractions/directions-link.test.ts]
+- [x] T047 P2 US-012 E2E: Attractions list displays [agent: test-automator] [deps: T041] [files: tests/e2e/attractions/attractions-list.test.ts]
+- [x] T048 P2 US-012 E2E: Directions link opens Google Maps [agent: test-automator] [deps: T042] [files: tests/e2e/attractions/directions-link.test.ts]
 
-### Story Progress: 0/8
+### Story Progress: 8/8
 
 ---
 

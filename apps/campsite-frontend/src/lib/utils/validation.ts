@@ -34,7 +34,7 @@ export function validatePhotoFile(file: File): ValidationResult {
   }
 
   // Check file type
-  if (!PHOTO_VALIDATION.ALLOWED_TYPES.includes(file.type)) {
+  if (!(PHOTO_VALIDATION.ALLOWED_TYPES as readonly string[]).includes(file.type)) {
     return {
       valid: false,
       error: 'รองรับเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP)',
@@ -120,5 +120,5 @@ export function getFileExtension(filename: string): string {
  * @returns True if the type is allowed
  */
 export function isAllowedImageType(type: string): boolean {
-  return PHOTO_VALIDATION.ALLOWED_TYPES.includes(type);
+  return (PHOTO_VALIDATION.ALLOWED_TYPES as readonly string[]).includes(type);
 }
