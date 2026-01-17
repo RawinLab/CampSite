@@ -42,3 +42,4 @@ supabase/.branches/
 # Misc
 *.tgz
 .cache/
+*.tsbuildinfo
