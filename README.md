@@ -216,6 +216,7 @@ pnpm format           # Format with Prettier
 | 9. Owner Dashboard | [Plan](./plans/9-owner-dashboard-plan.md) | [Tasks](./plans/9-owner-dashboard-todolist.md) |
 | 10. Admin Dashboard | [Plan](./plans/10-admin-dashboard-plan.md) | [Tasks](./plans/10-admin-dashboard-todolist.md) |
 | 11. SEO & Performance | [Plan](./plans/11-seo-performance-plan.md) | [Tasks](./plans/11-seo-performance-todolist.md) |
+| 12. Google Places API | [Plan](./plans/12-google-places-plan.md) | [Tasks](./plans/12-google-places-todolist.md) |
 
 > 📌 **Master TodoList:** [plans/00-master-todolist.md](./plans/00-master-todolist.md)
 
@@ -243,6 +244,8 @@ graph TB
         F[Google OAuth]
         G[Mailgun]
         H[OpenStreetMap]
+        I[Google Places API]
+        J[Google Gemini AI]
     end
 
     A --> B
@@ -251,6 +254,8 @@ graph TB
     B --> C
     B --> D
     B --> G
+    B --> I
+    B --> J
     A --> F
     A --> H
 ```

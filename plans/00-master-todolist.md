@@ -1,14 +1,5 @@
 # Master TodoList - Camping Thailand Platform
 
-## Overview
-- **Project:** Camping Thailand MVP
-- **Total Modules:** 12
-- **Total Todolists:** 12
-- **Completed:** 12
-- **In Progress:** 0
-- **Pending:** 0
-- **Generated:** 2026-01-17
-- **Last Updated:** 2026-01-17
 
 ---
 
@@ -67,6 +58,7 @@ graph TD
 | 9 | Owner Dashboard | 9-owner-dashboard-plan.md | 9-owner-dashboard-todolist.md | **completed** | ~32 hours | HIGH |
 | 10 | Admin Dashboard | 10-admin-dashboard-plan.md | 10-admin-dashboard-todolist.md | **completed** | ~24 hours | HIGH |
 | 11 | SEO & Performance | 11-seo-performance-plan.md | 11-seo-performance-todolist.md | **completed** | ~21 hours | MEDIUM |
+| 12 | Google Places | 12-google-places-plan.md | 12-google-places-todolist.md | **in_progress** | ~30 hours | HIGH |
 
 **Total Estimated Effort:** ~284 hours (~36 working days for 1 developer, ~18 days for 2 developers)
 
@@ -160,6 +152,12 @@ Final polish and optimization:
     - Meta tags, JSON-LD, sitemap, error pages, skeleton screens
     - **Dependencies:** Modules 0, 3, 4, 5
     - **E2E Tests:** 6 Lighthouse tests, 5 SEO tests
+
+13. [ ] **Module 12: Google Places** (4 days) 🔄
+    - `plans/12-google-places-plan.md`
+    - Google Places API integration, AI processing, admin dashboard
+    - **Dependencies:** Modules 0, 2, 10
+    - **E2E Tests:** 8 sync, AI processing, admin dashboard tests
 
 ---
 
