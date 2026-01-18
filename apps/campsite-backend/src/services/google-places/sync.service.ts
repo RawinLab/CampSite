@@ -317,6 +317,7 @@ class GooglePlacesSyncService {
 
       const response = await axios.post(url, {
         textQuery: query,
+        languageCode: language === 'th' ? 'th' : 'en',
       }, {
         params: {
           key: API_KEY,
@@ -395,6 +396,7 @@ class GooglePlacesSyncService {
         const response = await axios.get(url, {
           params: {
             key: API_KEY,
+            languageCode: 'th', // Get Thai language data
           },
           timeout: 10000,
           headers: headers,
