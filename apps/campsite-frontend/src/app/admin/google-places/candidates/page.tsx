@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/admin/data-table';
 import {
@@ -18,6 +18,7 @@ import {
   Clock,
   AlertCircle,
   ChevronRight,
+  Play,
 } from 'lucide-react';
 import type { ImportCandidate, DuplicateComparison, ConfidenceBreakdown } from '@campsite/shared';
 
@@ -54,37 +55,39 @@ export default function CandidatesPage() {
     }
   }, [user, role, authLoading, router]);
 
-  // Fetch candidates
-  useEffect(() => {
+  // Fetch candidates function
+  async function fetchCandidates() {
     if (!user || role !== 'admin') return;
 
-    async function fetchCandidates() {
-      const queryParams = new URLSearchParams({
-        limit: '50',
-        offset: '0',
-      });
+    setLoading(true);
+    const queryParams = new URLSearchParams({
+      limit: '50',
+      offset: '0',
+    });
 
-      fetch(`/api/admin/google-places/candidates?${queryParams}`, {
+    try {
+      const res = await fetch(`/api/admin/google-places/candidates?${queryParams}`, {
         headers: {
           'content-type': 'application/json',
         },
         credentials: 'include',
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setCandidates(data.data);
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to fetch candidates:', error);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCandidates(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch candidates:', error);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchCandidates();
+  // Fetch candidates on mount
+  useEffect(() => {
+    if (user && role === 'admin') {
+      fetchCandidates();
+    }
   }, [user, role]);
 
   function handleViewCandidate(candidate: ImportCandidate) {
@@ -318,7 +321,7 @@ export default function CandidatesPage() {
           </Card>
           <Card>
             <CardContent className="p-6">
-              <div className="text_content-green-600 mb-2">High Confidence</div>
+              <div className="text-sm text-green-600 mb-2">High Confidence</div>
               <div className="text-2xl font-bold">
                 {candidates.filter(c => c.confidence_score >= 0.9).length}
               </div>

@@ -17,17 +17,17 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: [
+  webServer: process.env.SKIP_WEBSERVER ? undefined : [
     {
       command: 'pnpm dev:frontend',
       url: 'http://localhost:3090',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120000,
     },
     {
       command: 'pnpm dev:backend',
       url: 'http://localhost:3091/api/health',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 120000,
     },
   ],

@@ -39,12 +39,12 @@ export function useAuth(): UseAuthReturn {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('user_role')
-        .eq('id', userId)
+        .select('role')
+        .eq('auth_user_id', userId)
         .single();
 
       if (error || !data) return 'user';
-      return data.user_role as UserRole;
+      return data.role as UserRole;
     } catch {
       return 'user';
     }
