@@ -36,7 +36,17 @@ export const resetPasswordSchema = z.object({
   path: ['confirmPassword'],
 });
 
+export const refreshTokenSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token is required'),
+});
+
+export const googleOAuthCallbackSchema = z.object({
+  code: z.string().min(1, 'Authorization code is required'),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type GoogleOAuthCallbackInput = z.infer<typeof googleOAuthCallbackSchema>;

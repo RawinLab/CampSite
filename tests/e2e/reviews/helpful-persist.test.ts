@@ -2,15 +2,36 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Review Helpful Vote Persistence', () => {
   test.beforeEach(async ({ page, context }) => {
-    // Mock authenticated session
+    // Mock authenticated session using new token storage
+    const mockToken = 'mock-authenticated-user-token';
     await context.addCookies([
       {
-        name: 'sb-access-token',
-        value: 'mock-authenticated-user-token',
+        name: 'campsite_access_token',
+        value: mockToken,
         domain: 'localhost',
         path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+      {
+        name: 'campsite_refresh_token',
+        value: mockToken,
+        domain: 'localhost',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
       },
     ]);
+
+    // Also set localStorage tokens
+    await page.addInitScript((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', tokenData.expiry);
+    }, {
+      token: mockToken,
+      expiry: (Date.now() + 3600000).toString(),
+    });
 
     // Navigate to a campsite detail page with reviews
     await page.goto('/campsites/test-campsite-1');

@@ -1,9 +1,11 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { AuthenticatedRequest, authMiddleware } from '../middleware/auth';
 import { requireOwner } from '../middleware/roleGuard';
 import { validate } from '../middleware/validation';
+import { uploadPhoto } from '../middleware/upload';
 import { analyticsService } from '../services/analytics.service';
 import { emailService } from '../services/email.service';
+import { storageService } from '../services/storage.service';
 import { createSupabaseClient } from '../lib/supabase';
 import {
   dashboardStatsQuerySchema,
@@ -380,84 +382,135 @@ router.delete('/campsites/:id', async (req: AuthenticatedRequest, res: Response)
  * POST /api/dashboard/campsites/:id/photos
  * Upload photo (expects multipart form data with 'photo' field)
  */
-router.post('/campsites/:id/photos', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const supabase = req.supabase || createSupabaseClient();
+router.post(
+  '/campsites/:id/photos',
+  uploadPhoto.single('photo'),
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    let uploadedUrl: string | null = null;
 
-    // Verify ownership
-    const { data: existing } = await supabase
-      .from('campsites')
-      .select('id')
-      .eq('id', id)
-      .eq('owner_id', req.user!.id)
-      .single();
+    try {
+      const { id } = req.params;
+      const supabase = req.supabase || createSupabaseClient();
 
-    if (!existing) {
-      return res.status(404).json(errorResponse('Campsite not found'));
-    }
+      // Verify ownership
+      const { data: existing } = await supabase
+        .from('campsites')
+        .select('id')
+        .eq('id', id)
+        .eq('owner_id', req.user!.id)
+        .single();
 
-    // Check current photo count
-    const { count } = await supabase
-      .from('campsite_photos')
-      .select('*', { count: 'exact', head: true })
-      .eq('campsite_id', id);
+      if (!existing) {
+        return res.status(404).json(errorResponse('Campsite not found'));
+      }
 
-    if ((count || 0) >= 20) {
-      return res.status(400).json(errorResponse('Maximum 20 photos allowed per campsite'));
-    }
-
-    // Photo upload handling should be done with multer middleware
-    // For now, expect url in body (frontend uploads directly to Supabase Storage)
-    const { url, alt_text, is_primary } = req.body;
-
-    if (!url) {
-      return res.status(400).json(errorResponse('Photo URL is required'));
-    }
-
-    // If setting as primary, unset other primary photos
-    if (is_primary) {
-      await supabase
+      // Check current photo count
+      const { count } = await supabase
         .from('campsite_photos')
-        .update({ is_primary: false })
+        .select('*', { count: 'exact', head: true })
         .eq('campsite_id', id);
-    }
 
-    // Get next sort order
-    const { data: lastPhoto } = await supabase
-      .from('campsite_photos')
-      .select('sort_order')
-      .eq('campsite_id', id)
-      .order('sort_order', { ascending: false })
-      .limit(1)
-      .single();
+      if ((count || 0) >= 20) {
+        return res.status(400).json(errorResponse('Maximum 20 photos allowed per campsite'));
+      }
 
-    const sortOrder = (lastPhoto?.sort_order || 0) + 1;
+      // Get alt_text and is_primary from body (form fields)
+      const { alt_text, is_primary } = req.body;
+      const isPrimaryBool = is_primary === 'true' || is_primary === true;
 
-    // Insert photo
-    const { data: photo, error } = await supabase
-      .from('campsite_photos')
-      .insert({
-        campsite_id: id,
-        url,
-        alt_text: alt_text || null,
-        is_primary: is_primary || false,
-        sort_order: sortOrder,
-      })
-      .select()
-      .single();
+      // Check if file was uploaded or URL provided
+      let url: string;
 
-    if (error) {
-      logger.error('Error creating photo:', error);
+      if (req.file) {
+        // File uploaded via multer - upload to Supabase Storage
+        url = await storageService.uploadCampsitePhoto(
+          req.file.buffer,
+          req.file.originalname,
+          req.file.mimetype,
+          id
+        );
+        uploadedUrl = url; // Track for cleanup on failure
+      } else if (req.body.url) {
+        // URL provided directly (backward compatibility)
+        url = req.body.url;
+      } else {
+        return res.status(400).json(errorResponse('Photo file or URL is required'));
+      }
+
+      // If setting as primary, unset other primary photos
+      if (isPrimaryBool) {
+        await supabase
+          .from('campsite_photos')
+          .update({ is_primary: false })
+          .eq('campsite_id', id);
+      }
+
+      // Get next sort order
+      const { data: lastPhoto } = await supabase
+        .from('campsite_photos')
+        .select('sort_order')
+        .eq('campsite_id', id)
+        .order('sort_order', { ascending: false })
+        .limit(1)
+        .single();
+
+      const sortOrder = (lastPhoto?.sort_order || 0) + 1;
+
+      // Insert photo metadata to database
+      const { data: photo, error } = await supabase
+        .from('campsite_photos')
+        .insert({
+          campsite_id: id,
+          url,
+          alt_text: alt_text || null,
+          is_primary: isPrimaryBool,
+          sort_order: sortOrder,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        logger.error('Error creating photo record:', error);
+        // Clean up uploaded file if database insert fails
+        if (uploadedUrl) {
+          try {
+            await storageService.deleteCampsitePhoto(uploadedUrl);
+            logger.info('Cleaned up uploaded file after DB error');
+          } catch (cleanupError) {
+            logger.error('Failed to clean up uploaded file:', cleanupError);
+          }
+        }
+        return res.status(500).json(errorResponse('Failed to save photo'));
+      }
+
+      return res.status(201).json(successResponse(photo, 'Photo uploaded successfully'));
+    } catch (error) {
+      logger.error('Error uploading photo:', error);
+
+      // Clean up uploaded file on any error
+      if (uploadedUrl) {
+        try {
+          await storageService.deleteCampsitePhoto(uploadedUrl);
+          logger.info('Cleaned up uploaded file after error');
+        } catch (cleanupError) {
+          logger.error('Failed to clean up uploaded file:', cleanupError);
+        }
+      }
+
+      // Handle multer errors
+      if (error instanceof Error) {
+        if (error.message.includes('File too large')) {
+          return res.status(400).json(errorResponse('File size exceeds 5MB limit'));
+        }
+        if (error.message.includes('Invalid file type')) {
+          return res.status(400).json(errorResponse(error.message));
+        }
+      }
+
       return res.status(500).json(errorResponse('Failed to upload photo'));
     }
-
-    return res.status(201).json(successResponse(photo, 'Photo uploaded successfully'));
-  } catch (error) {
-    logger.error('Error uploading photo:', error);
-    return res.status(500).json(errorResponse('Failed to upload photo'));
   }
-});
+);
 
 /**
  * POST /api/dashboard/campsites/:id/photos/reorder
@@ -552,7 +605,7 @@ router.patch(
 
 /**
  * DELETE /api/dashboard/campsites/:id/photos/:photoId
- * Delete photo
+ * Delete photo from database and Supabase Storage
  */
 router.delete(
   '/campsites/:id/photos/:photoId',
@@ -585,7 +638,7 @@ router.delete(
         return res.status(404).json(errorResponse('Photo not found'));
       }
 
-      // Delete from database
+      // Delete from database first
       const { error } = await supabase
         .from('campsite_photos')
         .delete()
@@ -593,11 +646,18 @@ router.delete(
         .eq('campsite_id', id);
 
       if (error) {
-        logger.error('Error deleting photo:', error);
+        logger.error('Error deleting photo from database:', error);
         return res.status(500).json(errorResponse('Failed to delete photo'));
       }
 
-      // TODO: Delete from Supabase Storage
+      // Delete from Supabase Storage (don't fail if storage deletion fails)
+      try {
+        await storageService.deleteCampsitePhoto(photo.url);
+        logger.info(`Deleted photo from storage: ${photo.url}`);
+      } catch (storageError) {
+        // Log but don't fail - the database record is already deleted
+        logger.error('Failed to delete photo from storage:', storageError);
+      }
 
       return res.json(successResponse(null, 'Photo deleted successfully'));
     } catch (error) {

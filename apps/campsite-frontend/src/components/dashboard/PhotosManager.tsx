@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FileUploader } from '@/components/ui/FileUploader';
 import { DraggablePhotoGrid } from './DraggablePhotoGrid';
 import { useToast } from '@/components/ui/use-toast';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import type { CampsitePhotoResponse } from '@campsite/shared';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface PhotosManagerProps {
   campsiteId: string;
@@ -22,7 +24,7 @@ export function PhotosManager({
   const [photos, setPhotos] = useState<CampsitePhotoResponse[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
+  const { session } = useAuth();
 
   const handleUpload = useCallback(
     async (files: File[]) => {
@@ -35,38 +37,39 @@ export function PhotosManager({
         return;
       }
 
+      if (!session?.access_token) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to upload photos',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setIsUploading(true);
 
       try {
         for (const file of files) {
-          // Upload to Supabase Storage
-          const fileName = `${campsiteId}/${Date.now()}-${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('campsite-photos')
-            .upload(fileName, file);
+          // Upload directly to backend API using multipart form data
+          const formData = new FormData();
+          formData.append('photo', file);
+          formData.append('alt_text', file.name.replace(/\.[^/.]+$/, ''));
+          formData.append('is_primary', String(photos.length === 0));
 
-          if (uploadError) {
-            throw new Error(`Failed to upload ${file.name}`);
-          }
-
-          // Get public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('campsite-photos')
-            .getPublicUrl(fileName);
-
-          // Create photo record
-          const response = await fetch(`/api/dashboard/campsites/${campsiteId}/photos`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              url: publicUrl,
-              alt_text: file.name.replace(/\.[^/.]+$/, ''),
-              is_primary: photos.length === 0,
-            }),
-          });
+          const response = await fetch(
+            `${API_BASE_URL}/api/dashboard/campsites/${campsiteId}/photos`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${session.access_token}`,
+              },
+              body: formData,
+            }
+          );
 
           if (!response.ok) {
-            throw new Error('Failed to create photo record');
+            const errorData = await response.json().catch(() => ({ error: 'Upload failed' }));
+            throw new Error(errorData.error || `Failed to upload ${file.name}`);
           }
 
           const { data: newPhoto } = await response.json();
@@ -87,20 +90,32 @@ export function PhotosManager({
         setIsUploading(false);
       }
     },
-    [campsiteId, photos.length, maxPhotos, toast, supabase]
+    [campsiteId, photos.length, maxPhotos, toast, session?.access_token]
   );
 
   const handleReorder = useCallback(
     async (reorderedPhotos: CampsitePhotoResponse[]) => {
+      if (!session?.access_token) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to reorder photos',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const previousPhotos = [...photos];
       setPhotos(reorderedPhotos);
 
       try {
         const response = await fetch(
-          `/api/dashboard/campsites/${campsiteId}/photos/reorder`,
+          `${API_BASE_URL}/api/dashboard/campsites/${campsiteId}/photos/reorder`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
             body: JSON.stringify({
               photos: reorderedPhotos.map((p, index) => ({
                 id: p.id,
@@ -122,11 +137,20 @@ export function PhotosManager({
         });
       }
     },
-    [campsiteId, photos, toast]
+    [campsiteId, photos, toast, session?.access_token]
   );
 
   const handleSetPrimary = useCallback(
     async (photoId: string) => {
+      if (!session?.access_token) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to set primary photo',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const previousPhotos = [...photos];
       setPhotos((prev) =>
         prev.map((p) => ({ ...p, is_primary: p.id === photoId }))
@@ -134,8 +158,14 @@ export function PhotosManager({
 
       try {
         const response = await fetch(
-          `/api/dashboard/campsites/${campsiteId}/photos/${photoId}/primary`,
-          { method: 'PATCH' }
+          `${API_BASE_URL}/api/dashboard/campsites/${campsiteId}/photos/${photoId}/primary`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
         );
 
         if (!response.ok) {
@@ -155,31 +185,38 @@ export function PhotosManager({
         });
       }
     },
-    [campsiteId, photos, toast]
+    [campsiteId, photos, toast, session?.access_token]
   );
 
   const handleDelete = useCallback(
     async (photoId: string) => {
-      const photoToDelete = photos.find((p) => p.id === photoId);
+      if (!session?.access_token) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to delete photos',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       const previousPhotos = [...photos];
       setPhotos((prev) => prev.filter((p) => p.id !== photoId));
 
       try {
+        // Delete via backend API - backend handles storage deletion
         const response = await fetch(
-          `/api/dashboard/campsites/${campsiteId}/photos/${photoId}`,
-          { method: 'DELETE' }
+          `${API_BASE_URL}/api/dashboard/campsites/${campsiteId}/photos/${photoId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          }
         );
 
         if (!response.ok) {
           throw new Error('Failed to delete photo');
-        }
-
-        // Delete from storage
-        if (photoToDelete) {
-          const path = photoToDelete.url.split('/campsite-photos/')[1];
-          if (path) {
-            await supabase.storage.from('campsite-photos').remove([path]);
-          }
         }
 
         toast({
@@ -195,7 +232,7 @@ export function PhotosManager({
         });
       }
     },
-    [campsiteId, photos, toast, supabase]
+    [campsiteId, photos, toast, session?.access_token]
   );
 
   return (

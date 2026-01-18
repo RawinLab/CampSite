@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { createClient } from '@/lib/supabase/client';
+import { submitOwnerRequest, hasPendingOwnerRequest } from '@/lib/api/auth';
 
 interface OwnerRequestFormProps {
   onSuccess?: () => void;
@@ -19,10 +19,11 @@ interface OwnerRequestFormProps {
 
 export function OwnerRequestForm({ onSuccess }: OwnerRequestFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingPending, setIsCheckingPending] = useState(true);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { user, role } = useAuth();
-  const supabase = createClient();
+  const { user, session, role } = useAuth();
 
   const {
     register,
@@ -37,8 +38,29 @@ export function OwnerRequestForm({ onSuccess }: OwnerRequestFormProps) {
     },
   });
 
+  // Check for existing pending request on mount
+  useEffect(() => {
+    async function checkPendingRequest() {
+      if (!session?.access_token) {
+        setIsCheckingPending(false);
+        return;
+      }
+
+      try {
+        const hasPending = await hasPendingOwnerRequest(session.access_token);
+        setHasPendingRequest(hasPending);
+      } catch (error) {
+        console.error('Failed to check pending request:', error);
+      } finally {
+        setIsCheckingPending(false);
+      }
+    }
+
+    checkPendingRequest();
+  }, [session?.access_token]);
+
   const onSubmit = async (data: OwnerRequestInput) => {
-    if (!user) {
+    if (!user || !session?.access_token) {
       setErrorMessage('กรุณาเข้าสู่ระบบก่อน');
       return;
     }
@@ -53,52 +75,26 @@ export function OwnerRequestForm({ onSuccess }: OwnerRequestFormProps) {
     setSuccessMessage(null);
 
     try {
-      // Check for existing pending request
-      const { data: existingRequest, error: checkError } = await supabase
-        .from('owner_requests')
-        .select('id, status')
-        .eq('user_id', user.id)
-        .eq('status', 'pending')
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingRequest) {
-        setErrorMessage('คุณมีคำขอที่รอการอนุมัติอยู่แล้ว');
-        setIsLoading(false);
-        return;
-      }
-
-      // Submit new request
-      const { error: insertError } = await supabase
-        .from('owner_requests')
-        .insert({
-          user_id: user.id,
-          business_name: data.business_name,
-          business_description: data.business_description,
-          contact_phone: data.contact_phone,
-          status: 'pending',
-        });
-
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setErrorMessage('คุณมีคำขอที่รอการอนุมัติอยู่แล้ว');
-        } else {
-          throw insertError;
-        }
-        setIsLoading(false);
-        return;
-      }
+      await submitOwnerRequest(session.access_token, data);
 
       setSuccessMessage(
         'ส่งคำขอสำเร็จแล้ว! เราจะตรวจสอบและแจ้งผลให้คุณทราบทางอีเมล'
       );
+      setHasPendingRequest(true);
       onSuccess?.();
     } catch (error) {
       console.error('Owner request error:', error);
-      setErrorMessage('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+      const message = error instanceof Error ? error.message : 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง';
+
+      // Handle specific error messages
+      if (message.includes('already have a pending')) {
+        setErrorMessage('คุณมีคำขอที่รอการอนุมัติอยู่แล้ว');
+        setHasPendingRequest(true);
+      } else if (message.includes('already a campsite owner')) {
+        setErrorMessage('คุณเป็นเจ้าของแคมป์ไซต์อยู่แล้ว');
+      } else {
+        setErrorMessage(message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -116,6 +112,22 @@ export function OwnerRequestForm({ onSuccess }: OwnerRequestFormProps) {
     return (
       <div className="rounded-md bg-blue-50 p-4 text-sm text-blue-700">
         คุณเป็นผู้ดูแลระบบ ไม่จำเป็นต้องสมัครเป็นเจ้าของแคมป์ไซต์
+      </div>
+    );
+  }
+
+  if (isCheckingPending) {
+    return (
+      <div className="rounded-md bg-gray-50 p-4 text-sm text-gray-700">
+        กำลังตรวจสอบสถานะคำขอ...
+      </div>
+    );
+  }
+
+  if (hasPendingRequest) {
+    return (
+      <div className="rounded-md bg-amber-50 p-4 text-sm text-amber-700">
+        คุณมีคำขอที่รอการอนุมัติอยู่แล้ว กรุณารอทีมงานตรวจสอบ
       </div>
     );
   }

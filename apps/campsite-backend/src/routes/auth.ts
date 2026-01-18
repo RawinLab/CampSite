@@ -1,13 +1,314 @@
 import { Router, Request, Response } from 'express';
 import type { Router as RouterType } from 'express';
 import { z } from 'zod';
-import { ownerRequestSchema } from '@campsite/shared';
+import {
+  ownerRequestSchema,
+  loginSchema,
+  signupSchema,
+  refreshTokenSchema,
+  googleOAuthCallbackSchema,
+} from '@campsite/shared';
 import { supabaseAdmin } from '../lib/supabase';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { inquiryRateLimiter } from '../middleware/rate-limit';
 import { validateBody } from '../middleware/validation';
 
 const router: RouterType = Router();
+
+// ============================================================
+// Authentication Endpoints (Login, Register, Logout, OAuth)
+// ============================================================
+
+// Login with email and password
+router.post(
+  '/login',
+  validateBody(loginSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+
+      const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        // Handle specific Supabase auth errors
+        if (error.message.includes('Invalid login credentials')) {
+          return res.status(401).json({ error: 'Invalid email or password' });
+        }
+        if (error.message.includes('Email not confirmed')) {
+          return res.status(401).json({ error: 'Please verify your email before logging in' });
+        }
+        return res.status(401).json({ error: error.message });
+      }
+
+      if (!data.user || !data.session) {
+        return res.status(401).json({ error: 'Authentication failed' });
+      }
+
+      // Get user profile with role
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('auth_user_id', data.user.id)
+        .single();
+
+      res.json({
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          email_confirmed_at: data.user.email_confirmed_at,
+        },
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_in: data.session.expires_in,
+          expires_at: data.session.expires_at,
+          token_type: data.session.token_type,
+        },
+        profile,
+      });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ error: 'Login failed' });
+    }
+  }
+);
+
+// Register new user
+router.post(
+  '/register',
+  validateBody(signupSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { email, password, full_name, phone } = req.body;
+
+      // Sign up the user with Supabase Auth
+      const { data, error } = await supabaseAdmin.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name, // This will be used by the database trigger to create profile
+          },
+          emailRedirectTo: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        // Handle specific errors
+        if (error.message.includes('already registered')) {
+          return res.status(400).json({ error: 'Email is already registered' });
+        }
+        return res.status(400).json({ error: error.message });
+      }
+
+      if (!data.user) {
+        return res.status(400).json({ error: 'Registration failed' });
+      }
+
+      // If phone number provided, update the profile
+      // Note: Profile is created automatically by database trigger (handle_new_user)
+      if (phone) {
+        // Wait briefly for trigger to create profile, then update
+        setTimeout(async () => {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ phone })
+            .eq('auth_user_id', data.user!.id);
+        }, 100);
+      }
+
+      res.status(201).json({
+        message: 'Registration successful. Please check your email to verify your account.',
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+        },
+        session: data.session ? {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_in: data.session.expires_in,
+          expires_at: data.session.expires_at,
+          token_type: data.session.token_type,
+        } : null,
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Registration failed' });
+    }
+  }
+);
+
+// Logout (requires authentication)
+router.post(
+  '/logout',
+  authMiddleware,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      // Note: Supabase handles token invalidation on the client side
+      // The server can optionally call signOut to revoke the session
+      // For stateless JWT approach, we just return success and let client clear tokens
+
+      // If we want to revoke the session on server side (optional):
+      // const token = req.headers.authorization?.replace('Bearer ', '');
+      // await supabaseAdmin.auth.admin.signOut(token);
+
+      res.json({
+        message: 'Logged out successfully',
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if there's an error, we return success since client will clear tokens
+      res.json({
+        message: 'Logged out successfully',
+      });
+    }
+  }
+);
+
+// Initiate Google OAuth - returns URL to redirect to
+router.post(
+  '/google',
+  async (req: Request, res: Response) => {
+    try {
+      const redirectTo = req.body.redirectTo || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback`;
+
+      const { data, error } = await supabaseAdmin.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      if (!data.url) {
+        return res.status(400).json({ error: 'Failed to generate OAuth URL' });
+      }
+
+      res.json({
+        url: data.url,
+        provider: data.provider,
+      });
+    } catch (error) {
+      console.error('Google OAuth initiation error:', error);
+      res.status(500).json({ error: 'Failed to initiate Google OAuth' });
+    }
+  }
+);
+
+// Handle Google OAuth callback - exchange code for session
+router.post(
+  '/google/callback',
+  validateBody(googleOAuthCallbackSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { code } = req.body;
+
+      // Exchange the code for a session
+      const { data, error } = await supabaseAdmin.auth.exchangeCodeForSession(code);
+
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      if (!data.user || !data.session) {
+        return res.status(400).json({ error: 'Failed to authenticate with Google' });
+      }
+
+      // Get or wait for profile (trigger creates it on first OAuth login)
+      let profile = null;
+      let retries = 3;
+
+      while (retries > 0 && !profile) {
+        const { data: profileData } = await supabaseAdmin
+          .from('profiles')
+          .select('*')
+          .eq('auth_user_id', data.user.id)
+          .single();
+
+        profile = profileData;
+
+        if (!profile && retries > 1) {
+          // Wait briefly for trigger to complete
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        retries--;
+      }
+
+      res.json({
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+          email_confirmed_at: data.user.email_confirmed_at,
+        },
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_in: data.session.expires_in,
+          expires_at: data.session.expires_at,
+          token_type: data.session.token_type,
+        },
+        profile,
+      });
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      res.status(500).json({ error: 'Failed to complete Google authentication' });
+    }
+  }
+);
+
+// Refresh access token using refresh token
+router.post(
+  '/refresh',
+  validateBody(refreshTokenSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { refresh_token } = req.body;
+
+      const { data, error } = await supabaseAdmin.auth.refreshSession({
+        refresh_token,
+      });
+
+      if (error) {
+        return res.status(401).json({ error: 'Invalid or expired refresh token' });
+      }
+
+      if (!data.session) {
+        return res.status(401).json({ error: 'Failed to refresh session' });
+      }
+
+      res.json({
+        session: {
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+          expires_in: data.session.expires_in,
+          expires_at: data.session.expires_at,
+          token_type: data.session.token_type,
+        },
+        user: data.user ? {
+          id: data.user.id,
+          email: data.user.email,
+        } : null,
+      });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      res.status(500).json({ error: 'Failed to refresh token' });
+    }
+  }
+);
+
+// ============================================================
+// Password Reset Endpoints
+// ============================================================
 
 // Password reset request schema
 const resetPasswordRequestSchema = z.object({

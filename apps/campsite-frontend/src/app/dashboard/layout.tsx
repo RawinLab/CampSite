@@ -1,12 +1,11 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { getServerSession } from '@/lib/auth/server';
 import {
   LayoutDashboard,
   Tent,
   MessageSquare,
   BarChart3,
-  Settings,
   LogOut,
   ChevronRight,
 } from 'lucide-react';
@@ -25,24 +24,15 @@ const navItems = [
 ];
 
 export default async function DashboardLayout({ children }: DashboardLayoutProps) {
-  const supabase = await createClient();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getServerSession();
 
   if (!session) {
     redirect('/auth/login?redirect=/dashboard');
   }
 
-  // Get user profile to check role
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('user_role, full_name')
-    .eq('id', session.user.id)
-    .single();
-
-  if (!profile || (profile.user_role !== 'owner' && profile.user_role !== 'admin')) {
+  // Check role
+  const userRole = session.user.role;
+  if (userRole !== 'owner' && userRole !== 'admin') {
     redirect('/');
   }
 
@@ -61,9 +51,9 @@ export default async function DashboardLayout({ children }: DashboardLayoutProps
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden md:inline">
-              {profile.full_name || session.user.email}
+              {session.user.full_name || session.user.email}
             </span>
-            <form action="/auth/logout" method="post">
+            <form action="/api/auth/logout" method="post">
               <Button variant="ghost" size="sm" type="submit">
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout

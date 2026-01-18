@@ -1,9 +1,40 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { createClient } from '@/lib/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import type { UserRole } from '@campsite/shared';
+import {
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  getMe,
+  refreshTokens,
+  requestPasswordReset,
+  confirmPasswordReset,
+  getGoogleLoginUrl,
+  type AuthUser,
+} from '@/lib/api/auth';
+import {
+  getAccessToken,
+  clearTokens,
+  isTokenExpired,
+  hasValidTokens,
+} from '@/lib/auth/token';
+
+// Create a simplified user type that matches what components expect
+interface User {
+  id: string;
+  email: string;
+  user_metadata?: {
+    full_name?: string;
+    phone?: string;
+  };
+}
+
+// Create a simplified session type
+interface Session {
+  access_token: string;
+  user: User;
+}
 
 interface AuthState {
   user: User | null;
@@ -23,6 +54,18 @@ interface UseAuthReturn extends AuthState {
   refreshSession: () => Promise<void>;
 }
 
+// Convert AuthUser to the simplified User type
+function authUserToUser(authUser: AuthUser): User {
+  return {
+    id: authUser.id,
+    email: authUser.email,
+    user_metadata: {
+      full_name: authUser.full_name || undefined,
+      phone: authUser.phone || undefined,
+    },
+  };
+}
+
 export function useAuth(): UseAuthReturn {
   const [state, setState] = useState<AuthState>({
     user: null,
@@ -32,24 +75,9 @@ export function useAuth(): UseAuthReturn {
     error: null,
   });
 
-  // Memoize the supabase client to prevent recreation on each render
-  const supabase = useMemo(() => createClient(), []);
-
-  // Fetch user role from profiles table
-  const fetchUserRole = useCallback(async (userId: string): Promise<UserRole> => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('auth_user_id', userId)
-        .single();
-
-      if (error || !data) return 'user';
-      return data.role as UserRole;
-    } catch {
-      return 'user';
-    }
-  }, [supabase]);
+  // Track if we're currently refreshing to avoid multiple refresh calls
+  const isRefreshing = useRef(false);
+  const refreshInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize auth state
   useEffect(() => {
@@ -57,32 +85,62 @@ export function useAuth(): UseAuthReturn {
 
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Check if we have valid tokens
+        if (!hasValidTokens()) {
+          // Try to refresh if we have a refresh token but expired access token
+          const accessToken = getAccessToken();
+          if (accessToken && isTokenExpired()) {
+            const refreshed = await refreshTokens();
+            if (!refreshed) {
+              if (isMounted) {
+                setState({
+                  user: null,
+                  session: null,
+                  role: 'user',
+                  loading: false,
+                  error: null,
+                });
+              }
+              return;
+            }
+          } else if (!accessToken) {
+            if (isMounted) {
+              setState({
+                user: null,
+                session: null,
+                role: 'user',
+                loading: false,
+                error: null,
+              });
+            }
+            return;
+          }
+        }
+
+        // Get user data from API
+        const authUser = await getMe();
 
         if (!isMounted) return;
-        if (error) throw error;
 
-        if (session?.user) {
-          const role = await fetchUserRole(session.user.id);
-          if (isMounted) {
-            setState({
-              user: session.user,
-              session,
-              role,
-              loading: false,
-              error: null,
-            });
-          }
+        if (authUser) {
+          const user = authUserToUser(authUser);
+          const accessToken = getAccessToken();
+
+          setState({
+            user,
+            session: accessToken ? { access_token: accessToken, user } : null,
+            role: authUser.role,
+            loading: false,
+            error: null,
+          });
         } else {
-          if (isMounted) {
-            setState({
-              user: null,
-              session: null,
-              role: 'user',
-              loading: false,
-              error: null,
-            });
-          }
+          setState({
+            user: null,
+            session: null,
+            role: 'user',
+            loading: false,
+            error: null,
+          });
         }
       } catch (error) {
         if (isMounted) {
@@ -97,148 +155,169 @@ export function useAuth(): UseAuthReturn {
 
     initializeAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          const role = await fetchUserRole(session.user.id);
-          setState({
-            user: session.user,
-            session,
-            role,
-            loading: false,
-            error: null,
-          });
-        } else {
-          setState({
-            user: null,
-            session: null,
-            role: 'user',
-            loading: false,
-            error: null,
-          });
-        }
+    // Set up token refresh interval (refresh 1 minute before expiry)
+    const setupRefreshInterval = () => {
+      // Clear existing interval
+      if (refreshInterval.current) {
+        clearInterval(refreshInterval.current);
       }
-    );
+
+      // Check every 30 seconds if token needs refresh
+      refreshInterval.current = setInterval(async () => {
+        if (isTokenExpired(60000) && !isRefreshing.current) {
+          isRefreshing.current = true;
+          try {
+            await refreshTokens();
+          } catch (error) {
+            console.error('Token refresh failed:', error);
+          } finally {
+            isRefreshing.current = false;
+          }
+        }
+      }, 30000);
+    };
+
+    setupRefreshInterval();
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      if (refreshInterval.current) {
+        clearInterval(refreshInterval.current);
+      }
     };
-  }, [supabase, fetchUserRole]);
+  }, []);
 
   const signUp = useCallback(
     async (email: string, password: string, fullName: string, phone?: string) => {
       try {
-        const { error } = await supabase.auth.signUp({
+        const response = await apiRegister({
           email,
           password,
-          options: {
-            data: {
-              full_name: fullName,
-              phone: phone || null,
-            },
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
-          },
+          full_name: fullName,
+          phone: phone || undefined,
         });
 
-        if (error) throw error;
+        // If we got a session back (email confirmation disabled), update state
+        if (response.session && response.user) {
+          const user = authUserToUser(response.user);
+          setState({
+            user,
+            session: { access_token: response.session.access_token, user },
+            role: response.user.role,
+            loading: false,
+            error: null,
+          });
+        }
+
         return { error: null };
       } catch (error) {
         return { error: error as Error };
       }
     },
-    [supabase]
+    []
   );
 
   const signIn = useCallback(
     async (email: string, password: string) => {
       try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
+        const response = await apiLogin(email, password);
+
+        const user = authUserToUser(response.user);
+        setState({
+          user,
+          session: { access_token: response.session.access_token, user },
+          role: response.user.role,
+          loading: false,
+          error: null,
         });
 
-        if (error) throw error;
         return { error: null };
       } catch (error) {
         return { error: error as Error };
       }
     },
-    [supabase]
+    []
   );
 
   const signInWithGoogle = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
+      // Redirect to backend OAuth endpoint
+      const redirectUrl = getGoogleLoginUrl(window.location.href);
+      window.location.href = redirectUrl;
       return { error: null };
     } catch (error) {
       return { error: error as Error };
     }
-  }, [supabase]);
+  }, []);
 
   const signOut = useCallback(async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await apiLogout();
+
+      setState({
+        user: null,
+        session: null,
+        role: 'user',
+        loading: false,
+        error: null,
+      });
+
       return { error: null };
     } catch (error) {
+      // Even if logout fails, clear local state
+      clearTokens();
+      setState({
+        user: null,
+        session: null,
+        role: 'user',
+        loading: false,
+        error: null,
+      });
       return { error: error as Error };
     }
-  }, [supabase]);
+  }, []);
 
   const resetPassword = useCallback(
     async (email: string) => {
       try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-
-        if (error) throw error;
+        await requestPasswordReset(email);
         return { error: null };
       } catch (error) {
         return { error: error as Error };
       }
     },
-    [supabase]
+    []
   );
 
   const updatePassword = useCallback(
     async (newPassword: string) => {
       try {
-        const { error } = await supabase.auth.updateUser({
-          password: newPassword,
-        });
-
-        if (error) throw error;
+        await confirmPasswordReset(newPassword);
         return { error: null };
       } catch (error) {
         return { error: error as Error };
       }
     },
-    [supabase]
+    []
   );
 
   const refreshSession = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.refreshSession();
-    if (session?.user) {
-      const role = await fetchUserRole(session.user.id);
-      setState({
-        user: session.user,
-        session,
-        role,
-        loading: false,
-        error: null,
-      });
+    const success = await refreshTokens();
+    if (success) {
+      const authUser = await getMe();
+      if (authUser) {
+        const user = authUserToUser(authUser);
+        const accessToken = getAccessToken();
+        setState({
+          user,
+          session: accessToken ? { access_token: accessToken, user } : null,
+          role: authUser.role,
+          loading: false,
+          error: null,
+        });
+      }
     }
-  }, [supabase, fetchUserRole]);
+  }, []);
 
   return {
     ...state,

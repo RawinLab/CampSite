@@ -12,14 +12,35 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
     test.beforeEach(async ({ page, context }) => {
       // Simulate authenticated session
       // In real scenario, this would use actual Supabase auth
+      const mockToken = 'mock-token-for-testing';
       await context.addCookies([
         {
-          name: 'sb-access-token',
-          value: 'mock-token-for-testing',
+          name: 'campsite_access_token',
+          value: mockToken,
           domain: 'localhost',
           path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'campsite_refresh_token',
+          value: mockToken,
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
         },
       ]);
+
+      // Also set localStorage tokens
+      await page.addInitScript((tokenData) => {
+        localStorage.setItem('campsite_access_token', tokenData.token);
+        localStorage.setItem('campsite_refresh_token', tokenData.token);
+        localStorage.setItem('campsite_token_expiry', tokenData.expiry);
+      }, {
+        token: mockToken,
+        expiry: (Date.now() + 3600000).toString(),
+      });
 
       // Store user data in localStorage to simulate profile data
       await page.goto('/');
@@ -364,14 +385,35 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
   test.describe('Pre-fill Data Source Validation', () => {
     test('T-INQ-009: Pre-filled data comes from user profile', async ({ page, context }) => {
       // Set up auth and different profile data
+      const mockToken = 'mock-token-for-testing';
       await context.addCookies([
         {
-          name: 'sb-access-token',
-          value: 'mock-token-for-testing',
+          name: 'campsite_access_token',
+          value: mockToken,
           domain: 'localhost',
           path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'campsite_refresh_token',
+          value: mockToken,
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
         },
       ]);
+
+      // Also set localStorage tokens
+      await page.addInitScript((tokenData) => {
+        localStorage.setItem('campsite_access_token', tokenData.token);
+        localStorage.setItem('campsite_refresh_token', tokenData.token);
+        localStorage.setItem('campsite_token_expiry', tokenData.expiry);
+      }, {
+        token: mockToken,
+        expiry: (Date.now() + 3600000).toString(),
+      });
 
       await page.goto('/');
       await page.evaluate(() => {
@@ -409,14 +451,35 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
     test('T-INQ-010: Form handles missing profile phone gracefully', async ({ page, context }) => {
       // Set up auth with profile missing phone
+      const mockToken = 'mock-token-for-testing';
       await context.addCookies([
         {
-          name: 'sb-access-token',
-          value: 'mock-token-for-testing',
+          name: 'campsite_access_token',
+          value: mockToken,
           domain: 'localhost',
           path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
+        },
+        {
+          name: 'campsite_refresh_token',
+          value: mockToken,
+          domain: 'localhost',
+          path: '/',
+          httpOnly: true,
+          sameSite: 'Lax',
         },
       ]);
+
+      // Also set localStorage tokens
+      await page.addInitScript((tokenData) => {
+        localStorage.setItem('campsite_access_token', tokenData.token);
+        localStorage.setItem('campsite_refresh_token', tokenData.token);
+        localStorage.setItem('campsite_token_expiry', tokenData.expiry);
+      }, {
+        token: mockToken,
+        expiry: (Date.now() + 3600000).toString(),
+      });
 
       await page.goto('/');
       await page.evaluate(() => {

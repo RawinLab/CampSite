@@ -121,10 +121,12 @@ test.describe('E2E: Duplicate Review Prevention', () => {
     await page.goto(`/campsites/${campsiteId1}`);
     await page.waitForLoadState('networkidle');
 
-    // Mock authentication by setting token in storage or cookie
-    await page.evaluate((token) => {
-      localStorage.setItem('supabase.auth.token', token);
-    }, authToken);
+    // Set authentication using new token storage keys
+    await page.evaluate((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
+    }, { token: authToken });
 
     // Reload to apply auth
     await page.reload();
@@ -200,10 +202,12 @@ test.describe('E2E: Duplicate Review Prevention', () => {
     await page.goto(`/campsites/${campsiteId1}`);
     await page.waitForLoadState('networkidle');
 
-    // Set authentication
-    await page.evaluate((token) => {
-      localStorage.setItem('supabase.auth.token', token);
-    }, authToken);
+    // Set authentication using new token storage keys
+    await page.evaluate((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
+    }, { token: authToken });
 
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -266,10 +270,12 @@ test.describe('E2E: Duplicate Review Prevention', () => {
     await page.goto(`/campsites/${campsiteId2}`);
     await page.waitForLoadState('networkidle');
 
-    // Set authentication
-    await page.evaluate((token) => {
-      localStorage.setItem('supabase.auth.token', token);
-    }, authToken);
+    // Set authentication using new token storage keys
+    await page.evaluate((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
+    }, { token: authToken });
 
     await page.reload();
     await page.waitForLoadState('networkidle');
@@ -338,10 +344,12 @@ test.describe('E2E: Duplicate Review Prevention', () => {
     await page.goto(`/campsites/${campsiteId1}`);
     await page.waitForLoadState('networkidle');
 
-    // Set authentication
-    await page.evaluate((token) => {
-      localStorage.setItem('supabase.auth.token', token);
-    }, authToken);
+    // Set authentication using new token storage keys
+    await page.evaluate((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
+    }, { token: authToken });
 
     await page.reload();
     await page.waitForLoadState('networkidle');

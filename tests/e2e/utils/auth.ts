@@ -2,7 +2,7 @@
  * E2E Test Authentication Utilities
  *
  * Shared utilities for real authentication in E2E tests.
- * Uses actual Supabase auth instead of mocking.
+ * Uses the new API-based authentication flow instead of direct Supabase calls.
  */
 
 import { Page, BrowserContext } from '@playwright/test';
@@ -33,6 +33,11 @@ export type UserRole = keyof typeof TEST_USERS;
 export const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3091';
 export const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3090';
 
+// Token storage keys used by the new auth system
+const ACCESS_TOKEN_KEY = 'campsite_access_token';
+const REFRESH_TOKEN_KEY = 'campsite_refresh_token';
+const TOKEN_EXPIRY_KEY = 'campsite_token_expiry';
+
 /**
  * Create Supabase admin client for test data manipulation
  */
@@ -51,6 +56,7 @@ export function createSupabaseAdmin(): SupabaseClient {
 
 /**
  * Login via UI form
+ * Uses the new API-based authentication flow
  */
 export async function loginViaUI(
   page: Page,
@@ -60,7 +66,7 @@ export async function loginViaUI(
 ): Promise<void> {
   const { timeout = 15000 } = options;
 
-  await page.goto('/auth/login');
+  await page.goto(`${FRONTEND_URL}/auth/login`);
   await page.waitForSelector('#email', { timeout });
 
   await page.fill('#email', email);
@@ -70,11 +76,28 @@ export async function loginViaUI(
   // Wait for navigation or error
   await page.waitForTimeout(3000);
 
-  // Check for error
-  const errorMsg = page.locator('.bg-red-50, [role="alert"]');
+  // Check for error messages
+  const errorMsg = page.locator('.bg-red-50, [role="alert"], .text-red-500, .text-red-700');
   if (await errorMsg.isVisible().catch(() => false)) {
     const text = await errorMsg.textContent();
     throw new Error(`Login failed: ${text}`);
+  }
+
+  // Verify tokens are stored in localStorage
+  const hasTokens = await page.evaluate((keys) => {
+    return Boolean(
+      localStorage.getItem(keys.access) &&
+      localStorage.getItem(keys.refresh) &&
+      localStorage.getItem(keys.expiry)
+    );
+  }, {
+    access: ACCESS_TOKEN_KEY,
+    refresh: REFRESH_TOKEN_KEY,
+    expiry: TOKEN_EXPIRY_KEY,
+  });
+
+  if (!hasTokens) {
+    throw new Error('Login succeeded but tokens were not stored');
   }
 
   // Wait for auth state to propagate
@@ -116,6 +139,7 @@ export async function loginAsUser(page: Page): Promise<void> {
 
 /**
  * Logout user
+ * Clears tokens from localStorage and cookies
  */
 export async function logout(page: Page): Promise<void> {
   // Try to find and click logout button
@@ -126,14 +150,17 @@ export async function logout(page: Page): Promise<void> {
     await page.waitForTimeout(1000);
   } else {
     // Navigate to login page to reset auth state
-    await page.goto('/auth/login');
+    await page.goto(`${FRONTEND_URL}/auth/login`);
   }
 
-  // Clear local storage
+  // Clear local storage and session storage
   await page.evaluate(() => {
     localStorage.clear();
     sessionStorage.clear();
   });
+
+  // Clear auth cookies by setting them to expired
+  await page.context().clearCookies();
 }
 
 /**
@@ -159,66 +186,124 @@ export async function waitForAuthReady(page: Page, timeout = 5000): Promise<void
 
 /**
  * Get auth token from browser storage
+ * Uses the new token storage keys
  */
 export async function getAuthToken(page: Page): Promise<string | null> {
-  return page.evaluate(() => {
-    // Try different storage keys used by Supabase
-    const keys = [
-      'supabase.auth.token',
-      'sb-access-token',
-      'auth-token',
-    ];
+  return page.evaluate((key) => {
+    return localStorage.getItem(key);
+  }, ACCESS_TOKEN_KEY);
+}
 
-    for (const key of keys) {
-      const value = localStorage.getItem(key);
-      if (value) return value;
-    }
-
-    // Try to find in Supabase session storage
-    for (const key of Object.keys(localStorage)) {
-      if (key.includes('supabase') && key.includes('auth')) {
-        try {
-          const data = JSON.parse(localStorage.getItem(key) || '{}');
-          if (data.access_token) return data.access_token;
-        } catch {
-          // ignore parse errors
-        }
-      }
-    }
-
-    return null;
+/**
+ * Get all auth tokens from browser storage
+ */
+export async function getAuthTokens(page: Page): Promise<{
+  accessToken: string | null;
+  refreshToken: string | null;
+  expiresAt: string | null;
+}> {
+  return page.evaluate((keys) => {
+    return {
+      accessToken: localStorage.getItem(keys.access),
+      refreshToken: localStorage.getItem(keys.refresh),
+      expiresAt: localStorage.getItem(keys.expiry),
+    };
+  }, {
+    access: ACCESS_TOKEN_KEY,
+    refresh: REFRESH_TOKEN_KEY,
+    expiry: TOKEN_EXPIRY_KEY,
   });
 }
 
 /**
  * Setup auth state in browser context for faster login
  * Use this to avoid UI login in each test
+ * NOTE: Uses the new API-based authentication flow
  */
 export async function setupAuthState(
   context: BrowserContext,
   role: UserRole
 ): Promise<void> {
   const user = TEST_USERS[role];
-  const supabase = createSupabaseAdmin();
 
-  // Sign in via API to get session
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: user.email,
-    password: user.password,
+  // Login via backend API to get tokens
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: user.email,
+      password: user.password,
+    }),
   });
 
-  if (error || !data.session) {
-    throw new Error(`Failed to get session for ${role}: ${error?.message}`);
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Login failed' }));
+    throw new Error(`Failed to login as ${role}: ${error.error || error.message}`);
   }
 
-  // Inject auth state into browser
-  await context.addInitScript((session) => {
-    const storageKey = `sb-${new URL(location.href).hostname}-auth-token`;
-    localStorage.setItem(storageKey, JSON.stringify({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token,
-      expires_at: session.expires_at,
-      user: session.user,
-    }));
-  }, data.session);
+  const data = await response.json();
+
+  if (!data.session) {
+    throw new Error(`No session returned for ${role}`);
+  }
+
+  // Inject auth tokens into browser localStorage
+  await context.addInitScript((tokenData) => {
+    localStorage.setItem(tokenData.keys.access, tokenData.session.access_token);
+    localStorage.setItem(tokenData.keys.refresh, tokenData.session.refresh_token);
+    localStorage.setItem(tokenData.keys.expiry, (tokenData.session.expires_at * 1000).toString());
+  }, {
+    session: data.session,
+    keys: {
+      access: ACCESS_TOKEN_KEY,
+      refresh: REFRESH_TOKEN_KEY,
+      expiry: TOKEN_EXPIRY_KEY,
+    },
+  });
+
+  // Also set cookies for SSR auth
+  await context.addCookies([
+    {
+      name: 'campsite_access_token',
+      value: data.session.access_token,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'campsite_refresh_token',
+      value: data.session.refresh_token,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
+}
+
+/**
+ * Login via API directly (faster than UI)
+ * Returns the session data
+ */
+export async function loginViaAPI(
+  email: string,
+  password: string
+): Promise<{ session: any; user: any }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Login failed' }));
+    throw new Error(error.error || error.message || 'Login failed');
+  }
+
+  return response.json();
 }

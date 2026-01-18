@@ -95,16 +95,36 @@ test.describe('Review Submission Authentication Requirement', () => {
   });
 
   test('T052.5: Review form elements only accessible when authenticated', async ({ page, context }) => {
-    // Simulate authenticated session by setting a mock auth cookie
-    // In a real scenario, this would use actual Supabase auth
+    // Simulate authenticated session using the new token storage system
+    const mockToken = 'mock-token-for-testing';
     await context.addCookies([
       {
-        name: 'sb-access-token',
-        value: 'mock-token-for-testing',
+        name: 'campsite_access_token',
+        value: mockToken,
         domain: 'localhost',
         path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
+      },
+      {
+        name: 'campsite_refresh_token',
+        value: mockToken,
+        domain: 'localhost',
+        path: '/',
+        httpOnly: true,
+        sameSite: 'Lax',
       },
     ]);
+
+    // Also set localStorage tokens
+    await page.addInitScript((tokenData) => {
+      localStorage.setItem('campsite_access_token', tokenData.token);
+      localStorage.setItem('campsite_refresh_token', tokenData.token);
+      localStorage.setItem('campsite_token_expiry', tokenData.expiry);
+    }, {
+      token: mockToken,
+      expiry: (Date.now() + 3600000).toString(),
+    });
 
     // Reload page to apply authentication
     await page.reload();

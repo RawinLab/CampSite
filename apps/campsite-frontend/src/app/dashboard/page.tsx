@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { getServerSession, getServerAccessToken } from '@/lib/auth/server';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -8,41 +8,45 @@ import { AnalyticsChart } from '@/components/dashboard/AnalyticsChart';
 import { CampsiteTable } from '@/components/dashboard/CampsiteTable';
 import { InquiryCard } from '@/components/dashboard/InquiryCard';
 import { Search, Eye, MousePointer, MessageSquare, Plus } from 'lucide-react';
-import type { DashboardStats, AnalyticsChartData, OwnerCampsiteSummary, InquiryWithCampsite } from '@campsite/shared';
+import type { DashboardStats, InquiryWithCampsite } from '@campsite/shared';
 
-async function getDashboardData(userId: string) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
+async function getDashboardData(token: string) {
   try {
     // Get stats
-    const statsRes = await fetch(`${apiUrl}/api/dashboard/stats?period=30`, {
+    const statsRes = await fetch(`${API_BASE_URL}/api/dashboard/stats?period=30`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
     });
 
     // Get analytics chart data
-    const analyticsRes = await fetch(`${apiUrl}/api/dashboard/analytics?period=30`, {
+    const analyticsRes = await fetch(`${API_BASE_URL}/api/dashboard/analytics?period=30`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
     });
 
     // Get campsites
-    const campsitesRes = await fetch(`${apiUrl}/api/dashboard/campsites?limit=5`, {
+    const campsitesRes = await fetch(`${API_BASE_URL}/api/dashboard/campsites?limit=5`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
     });
 
     // Get recent inquiries
-    const inquiriesRes = await fetch(`${apiUrl}/api/dashboard/inquiries?limit=5`, {
+    const inquiriesRes = await fetch(`${API_BASE_URL}/api/dashboard/inquiries?limit=5`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -71,25 +75,18 @@ async function getDashboardData(userId: string) {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  const session = await getServerSession();
 
   if (!session) {
     redirect('/auth/login');
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name')
-    .eq('id', session.user.id)
-    .single();
+  const token = await getServerAccessToken();
+  if (!token) {
+    redirect('/auth/login');
+  }
 
-  const { stats, chartData, campsites, inquiries, unreadCount } = await getDashboardData(
-    session.user.id
-  );
+  const { stats, chartData, campsites, inquiries, unreadCount } = await getDashboardData(token);
 
   const defaultStats: DashboardStats = {
     search_impressions: 0,
@@ -110,7 +107,7 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       {/* Welcome */}
       <div>
-        <h1 className="text-2xl font-bold">Welcome, {profile?.full_name || 'Owner'}</h1>
+        <h1 className="text-2xl font-bold">Welcome, {session.user.full_name || 'Owner'}</h1>
         <p className="text-muted-foreground">
           Here is an overview of your campsites performance
         </p>

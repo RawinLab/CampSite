@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { getAuthHeaders } from '@/lib/api/auth';
 import type {
   WishlistResponse,
   AddToWishlistResponse,
@@ -7,25 +7,7 @@ import type {
   BatchWishlistStatusResponse,
 } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-
-/**
- * Get auth headers for API requests
- */
-async function getAuthHeaders(): Promise<HeadersInit> {
-  const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
-
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-
-  if (session?.access_token) {
-    headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-
-  return headers;
-}
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 /**
  * Fetch user's wishlist
