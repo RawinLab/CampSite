@@ -9,7 +9,9 @@
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "google:sync": "tsx scripts/sync-google-places.ts",
+    "google:process": "tsx scripts/process-candidates.ts"
   },
   "dependencies": {
     "@campsite/shared": "workspace:*",
