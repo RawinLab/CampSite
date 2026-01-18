@@ -11,12 +11,14 @@ import {
   MessageSquareWarning,
   Settings,
   LogOut,
+  MapPin,
 } from 'lucide-react';
 
 interface AdminSidebarProps {
   pendingCampsites?: number;
   pendingOwnerRequests?: number;
   reportedReviews?: number;
+  pendingGooglePlaces?: number;
 }
 
 interface NavItem {
@@ -30,6 +32,7 @@ export function AdminSidebar({
   pendingCampsites = 0,
   pendingOwnerRequests = 0,
   reportedReviews = 0,
+  pendingGooglePlaces = 0,
 }: AdminSidebarProps) {
   const pathname = usePathname();
 
@@ -56,6 +59,12 @@ export function AdminSidebar({
       label: 'Reported Reviews',
       icon: MessageSquareWarning,
       badge: reportedReviews,
+    },
+    {
+      href: '/admin/google-places',
+      label: 'Google Places',
+      icon: MapPin,
+      badge: pendingGooglePlaces,
     },
   ];
 
