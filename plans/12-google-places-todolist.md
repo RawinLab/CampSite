@@ -66,8 +66,8 @@
 - [x] T011 P2 US-022 Create ENUMs migration [agent: backend-developer] [deps: none] [files: supabase/migrations/20260118000000_create_google_places_enums.sql]
 - [x] T012 P2 US-022 Create tables migration [agent: backend-developer] [deps: T011] [files: supabase migrations/20260118000001_create_google_places_tables.sql]
 - [x] T013 P2 US-022 Create RLS policies migration [agent: backend-developer] [deps: T012] [files: supabase/migrations/20260118000002_create_google_places_rls.sql]
-- [ ] T014 P3 US-022 Apply migrations to database [agent: devops] [deps: none] [files: -]
-- [ ] T015 P3 US-022 Verify tables exist in Supabase [agent: devops] [deps: T014] [files: -]
+- [x] T014 P3 US-022 Apply migrations to database [agent: devops] [deps: none] [files: -]
+- [x] T015 P3 US-022 Verify tables exist in Supabase [agent: devops] [deps: T014] [files: -]
 
 ### Phase 3: Admin API Routes
 - [x] T016 P1 US-024 Create google-places.routes.ts - 8 admin endpoints [agent: backend-developer] [deps: none] [files: apps/campsite-backend/src/routes/admin/google-places.routes.ts]
@@ -110,7 +110,7 @@
 
 ---
 
-## Story Progress: 33/45
+## Story Progress: 35/45
 
 ---
 
