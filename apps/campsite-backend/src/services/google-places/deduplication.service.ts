@@ -153,7 +153,7 @@ class DeduplicationService {
     }
 
     const results = data
-      .map(campsite => {
+      .map((campsite: any) => {
         const distance = this.haversineDistance(
           lat,
           lng,
@@ -167,7 +167,7 @@ class DeduplicationService {
           distance_km: distance,
         };
       })
-      .filter(c => c.distance_km <= radiusKm);
+      .filter((c: any) => c.distance_km <= radiusKm);
 
     return results;
   }

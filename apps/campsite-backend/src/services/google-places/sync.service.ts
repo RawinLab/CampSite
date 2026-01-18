@@ -19,7 +19,7 @@ import { GooglePlacesError } from './types';
 // CONFIGURATION
 // ============================================================================
 
-const GOOGLE_PLACES_API_BASE = 'https://maps.googleapis.com/maps/api';
+const GOOGLE_PLACES_API_BASE = 'https://places.googleapis.com';
 const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
 if (!API_KEY) {
@@ -294,7 +294,7 @@ class GooglePlacesSyncService {
   }
 
   /**
-   * Text Search API call
+   * Text Search API call using Places API (New)
    */
   private async textSearch(
     query: string,
@@ -307,26 +307,45 @@ class GooglePlacesSyncService {
         return [];
       }
 
-      const url = `${GOOGLE_PLACES_API_BASE}/place/textsearch/json`;
-      const response = await axios.get(url, {
+      // Using Places API (New) - POST request with FieldMask header
+      const url = 'https://places.googleapis.com/v1/places:searchText';
+      const headers = {
+        'Content-Type': 'application/json',
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.location',
+        'X-Goog-Api-Client': 'google-campsite-backend',
+      };
+
+      const response = await axios.post(url, {
+        textQuery: query,
+      }, {
         params: {
-          query,
-          language,
           key: API_KEY,
         },
         timeout: 10000,
+        headers: headers,
       });
 
-      const { status, results } = response.data;
-
-      if (status !== 'OK') {
-        logger.warn('Text search returned non-OK status', { status, query, error_message: response.data.error_message });
+      // Check for HTTP errors
+      if (response.status !== 200) {
+        logger.warn('Text search returned non-200 status', {
+          status: response.status,
+          query,
+          data: response.data,
+        });
         return [];
       }
 
-      return (results || []).map((r: any) => ({
-        place_id: r.place_id,
-        name: r.name,
+      // Places API (New) uses different response structure
+      const { places } = response.data;
+
+      if (!places || places.length === 0) {
+        logger.debug('Text search returned no places', { query });
+        return [];
+      }
+
+      return places.map((place: any) => ({
+        place_id: place.id, // New API uses 'id' instead of 'place_id'
+        name: place.displayName?.text || place.name,
       }));
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -349,6 +368,7 @@ class GooglePlacesSyncService {
 
   /**
    * Phase 2: Fetch Place Details
+   * Uses Places API (New) with FieldMask header
    */
   private async fetchDetailsPhase(
     placeIds: string[],
@@ -359,50 +379,126 @@ class GooglePlacesSyncService {
 
     for (const placeId of placeIds) {
       try {
-        const url = `${GOOGLE_PLACES_API_BASE}/place/details/json`;
+        if (!API_KEY) {
+          logger.error('API_KEY not set - cannot fetch place details', { placeId });
+          continue;
+        }
+
+        // Using Places API (New) - GET request with FieldMask header
+        const url = `${GOOGLE_PLACES_API_BASE}/v1/places/${placeId}`;
+        // Use minimal field mask to ensure compatibility with Places API (New)
+        const headers = {
+          'X-Goog-FieldMask': 'id,displayName,formattedAddress,location,internationalPhoneNumber,websiteUri,rating,userRatingCount,priceLevel,photos,reviews,types,businessStatus,googleMapsUri',
+          'X-Goog-Api-Client': 'google-campsite-backend',
+        };
+
         const response = await axios.get(url, {
           params: {
-            place_id,
-            fields: 'place_id,name,formatted_address,geometry,formatted_phone_number,international_phone_number,website,rating,user_ratings_total,price_level,photos,reviews,types,business_status,opening_hours,plus_code,url',
             key: API_KEY,
           },
           timeout: 10000,
+          headers: headers,
         });
 
         requests++;
 
-        const { status, result } = response.data;
-
-        if (status === 'OK' && result) {
-          // Save or update raw data
-          const { error: upsertError } = await supabaseAdmin
-            .from('google_places_raw')
-            .upsert({
-              place_id: result.place_id,
-              place_hash: this.generatePlaceHash(result.name, result.formatted_address),
-              raw_data: result,
-              data_fetched_at: new Date().toISOString(),
-              sync_status: 'pending',
-              has_photos: (result.photos?.length || 0) > 0,
-              photo_count: result.photos?.length || 0,
-              has_reviews: (result.reviews?.length || 0) > 0,
-              review_count: result.reviews?.length || 0,
-              rating: result.rating,
-            }, {
-            onConflict: 'place_id',
-            ignoreDuplicates: false,
+        // Check for HTTP errors
+        if (response.status !== 200) {
+          logger.warn('Place details returned non-200 status', {
+            status: response.status,
+            placeId,
+            data: response.data,
           });
+          await this.delay(100);
+          continue;
+        }
 
-          if (!upsertError) {
-            updated++;
-          }
+        const result = response.data;
+
+        if (!result || result.error) {
+          logger.warn('Place details returned error', { placeId, result });
+          await this.delay(100);
+          continue;
+        }
+
+        // Transform new API response to legacy-compatible format
+        const legacyResult = {
+          place_id: result.id,
+          name: result.displayName?.text || result.name,
+          formatted_address: result.formattedAddress,
+          geometry: {
+            location: result.location,
+            viewport: result.viewport,
+          },
+          formatted_phone_number: result.internationalPhoneNumber,
+          international_phone_number: result.internationalPhoneNumber,
+          website: result.websiteUri,
+          rating: result.rating,
+          user_ratings_total: result.userRatingCount,
+          price_level: result.priceLevel,
+          photos: result.photos?.map((photo: any) => ({
+            photo_reference: photo.name,
+            width: photo.widthPx,
+            height: photo.heightPx,
+          })) || [],
+          reviews: result.reviews?.map((review: any) => ({
+            author_name: review.authorAttribution?.displayName,
+            author_url: review.authorAttribution?.uri,
+            profile_photo_url: review.authorAttribution?.photoUri,
+            rating: review.rating,
+            relative_time_description: review.publishTimeExperience?.toString(),
+            text: review.originalText?.text || review.text,
+            time: Math.floor(Date.now() / 1000), // Default to now if not provided
+          })) || [],
+          types: result.types || [],
+          business_status: result.businessStatus,
+          url: result.googleMapsUri,
+        };
+
+        // Save or update raw data
+        const { error: upsertError } = await supabaseAdmin
+          .from('google_places_raw')
+          .upsert({
+            place_id: legacyResult.place_id,
+            place_hash: this.generatePlaceHash(legacyResult.name, legacyResult.formatted_address),
+            raw_data: legacyResult,
+            data_fetched_at: new Date().toISOString(),
+            sync_status: 'pending',
+            has_photos: (legacyResult.photos?.length || 0) > 0,
+            photo_count: legacyResult.photos?.length || 0,
+            has_reviews: (legacyResult.reviews?.length || 0) > 0,
+            review_count: legacyResult.reviews?.length || 0,
+            rating: legacyResult.rating,
+          }, {
+          onConflict: 'place_id',
+          ignoreDuplicates: false,
+        });
+
+        if (!upsertError) {
+          updated++;
+          logger.debug('Place details saved', { placeId, name: legacyResult.name });
+        } else {
+          logger.error('Failed to upsert place data', { placeId, error: upsertError });
         }
 
         // Small delay to avoid rate limiting
-        await this.delay(50);
+        await this.delay(100);
 
       } catch (error) {
-        logger.error('Failed to fetch place details', { placeId, error });
+        if (axios.isAxiosError(error)) {
+          const axiosError = error as any;
+          logger.error('Place details API error', {
+            placeId,
+            status: axiosError.response?.status,
+            data: axiosError.response?.data,
+            message: axiosError.message,
+          });
+          if (error.response?.status === 429) {
+            await this.delay(2000); // Wait 2 seconds on rate limit
+          }
+        } else {
+          logger.error('Failed to fetch place details', { placeId, error });
+        }
       }
     }
 
