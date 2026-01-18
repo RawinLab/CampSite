@@ -18,5 +18,13 @@ module.exports = {
       rootDir: '<rootDir>/tests/integration',
       testMatch: ['**/*.test.ts'],
     },
+    {
+      displayName: 'performance',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      rootDir: '<rootDir>/tests/performance',
+      testMatch: ['**/*.test.ts'],
+      testTimeout: 60000,
+    },
   ],
 };
