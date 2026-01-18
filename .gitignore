@@ -43,3 +43,6 @@ supabase/.branches/
 *.tgz
 .cache/
 *.tsbuildinfo
+
+# Scripts with credentials (local dev only)
+scripts/

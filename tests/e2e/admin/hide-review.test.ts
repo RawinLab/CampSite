@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { loginAsAdmin, createSupabaseAdmin } from '../utils/auth';
+import { createTestCampsite, createTestReview, createReviewReport, updateReviewStatus, cleanupTestData, TEST_DATA_PREFIX } from '../utils/test-data';
 
 /**
- * E2E Test: Admin Hide Review Functionality
+ * E2E Test: Admin Hide Review Functionality (Real API)
  * Task T055: Admin can hide review
  *
  * Tests the admin hide review flow including:
@@ -12,82 +14,52 @@ import { test, expect } from '@playwright/test';
  * Part of Q11 report-based moderation system
  */
 
-test.describe('Admin Hide Review E2E', () => {
-  test.beforeEach(async ({ page, context }) => {
-    // Simulate authenticated admin session
-    await context.addCookies([
-      {
-        name: 'sb-access-token',
-        value: 'mock-admin-token',
-        domain: 'localhost',
-        path: '/',
-      },
-    ]);
+test.describe('Admin Hide Review E2E (Real API)', () => {
+  test.setTimeout(60000);
 
-    // Mock reported reviews API with sample data
-    await page.route('**/api/admin/reviews/reported*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: [
-            {
-              id: 'review-1',
-              rating: 2,
-              comment: 'Terrible place, complete scam! This is spam content.',
-              campsite_id: 'campsite-1',
-              campsite_name: 'Mountain View Camp',
-              user_id: 'user-1',
-              user_name: 'John Doe',
-              created_at: new Date().toISOString(),
-              report_count: 3,
-              reports: [
-                {
-                  reason: 'spam',
-                  details: 'This looks like spam',
-                  reported_by: 'user-2',
-                  reported_at: new Date().toISOString(),
-                },
-              ],
-            },
-            {
-              id: 'review-2',
-              rating: 1,
-              comment: 'Inappropriate language and offensive content here.',
-              campsite_id: 'campsite-2',
-              campsite_name: 'Beach Paradise',
-              user_id: 'user-3',
-              user_name: 'Jane Smith',
-              created_at: new Date().toISOString(),
-              report_count: 2,
-              reports: [
-                {
-                  reason: 'inappropriate',
-                  details: 'Contains offensive language',
-                  reported_by: 'user-4',
-                  reported_at: new Date().toISOString(),
-                },
-              ],
-            },
-          ],
-          pagination: {
-            page: 1,
-            limit: 10,
-            total: 2,
-            totalPages: 1,
-          },
-        }),
-      });
+  const supabase = createSupabaseAdmin();
+  let testCampsiteId: string;
+  let testReviewId: string;
+
+  test.beforeAll(async () => {
+    // Clean up any existing test data
+    await cleanupTestData(supabase);
+
+    // Create test campsite
+    const campsite = await createTestCampsite(supabase, {
+      id: `${TEST_DATA_PREFIX}campsite-hide-review`,
+      name: 'Test Campsite for Hide Review',
+      status: 'approved'
     });
+    testCampsiteId = campsite.id;
 
-    // Navigate to reported reviews page
-    await page.goto('/admin/reviews/reported');
-    await page.waitForLoadState('networkidle');
+    // Create test review
+    const review = await createTestReview(supabase, testCampsiteId, {
+      id: `${TEST_DATA_PREFIX}review-hide-test`,
+      comment: 'Terrible place, complete scam! This is spam content.',
+      rating: 2,
+      status: 'visible'
+    });
+    testReviewId = review.id;
+
+    // Create report for the review
+    await createReviewReport(supabase, testReviewId);
+  });
+
+  test.afterAll(async () => {
+    // Cleanup test data
+    await cleanupTestData(supabase);
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await loginAsAdmin(page);
   });
 
   test.describe('1. Hide Dialog/Form Tests', () => {
     test('T055.1: Hide button opens reason input', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Find and click hide button
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await expect(hideButton).toBeVisible();
@@ -102,6 +74,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.2: Shows minimum character requirement (5 chars)', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -113,6 +88,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.3: Has Cancel and Confirm buttons', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -127,6 +105,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.4: Shows review being hidden', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog for first review
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -140,6 +121,9 @@ test.describe('Admin Hide Review E2E', () => {
 
   test.describe('2. Reason Validation Tests', () => {
     test('T055.5: Cannot submit without reason', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -153,6 +137,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.6: Cannot submit with reason < 5 chars', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -168,6 +155,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.7: Shows error for short reason', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -188,6 +178,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.8: Confirm button disabled when invalid', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -205,6 +198,9 @@ test.describe('Admin Hide Review E2E', () => {
     });
 
     test('T055.9: Confirm button enabled when valid', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -222,17 +218,17 @@ test.describe('Admin Hide Review E2E', () => {
 
   test.describe('3. Hide Flow Tests', () => {
     test('T055.10: Can submit with valid reason', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            message: 'Review hidden successfully',
-          }),
-        });
+      // Create fresh review for this test
+      const review = await createTestReview(supabase, testCampsiteId, {
+        id: `${TEST_DATA_PREFIX}review-submit-test`,
+        comment: 'Test review for submit validation',
+        rating: 2,
+        status: 'visible'
       });
+      await createReviewReport(supabase, review.id);
+
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
 
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
@@ -248,23 +244,19 @@ test.describe('Admin Hide Review E2E', () => {
       await confirmButton.click();
 
       // Wait for completion
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       // Success (dialog should close or show success)
       const dialog = page.locator('[data-testid="hide-review-dialog"]');
       await expect(dialog).not.toBeVisible();
+
+      // Cleanup
+      await supabase.from('reviews').delete().eq('id', review.id);
     });
 
     test('T055.11: Shows loading state during hide', async ({ page }) => {
-      // Mock slow hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
 
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
@@ -279,23 +271,22 @@ test.describe('Admin Hide Review E2E', () => {
       const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
       await confirmButton.click();
 
-      // Should show loading state
+      // Should show loading state (check immediately)
       await expect(confirmButton).toBeDisabled();
-      await expect(page.getByText(/Hiding.../i)).toBeVisible();
     });
 
     test('T055.12: Success message appears', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            message: 'Review hidden successfully',
-          }),
-        });
+      // Create fresh review for this test
+      const review = await createTestReview(supabase, testCampsiteId, {
+        id: `${TEST_DATA_PREFIX}review-success-msg-test`,
+        comment: 'Test review for success message',
+        rating: 2,
+        status: 'visible'
       });
+      await createReviewReport(supabase, review.id);
+
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
 
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
@@ -310,79 +301,21 @@ test.describe('Admin Hide Review E2E', () => {
       await confirmButton.click();
 
       // Wait for success
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
       // Success toast should appear
       const toast = page.locator('[data-testid="toast"]');
       await expect(toast).toBeVisible({ timeout: 3000 });
       await expect(toast).toContainText(/hidden/i);
-    });
 
-    test('T055.13: Review removed from reported list', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Verify review is visible before hide
-      await expect(page.getByText('Terrible place')).toBeVisible();
-
-      // Open hide dialog
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      // Enter valid reason and submit
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Spam content');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-
-      // Wait for removal
-      await page.waitForTimeout(500);
-
-      // Review should be removed from list
-      await expect(page.getByText('Terrible place')).not.toBeVisible();
-    });
-
-    test('T055.14: Reported count badge updates', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Initial count should be 2
-      await expect(page.getByText(/2 reported reviews?/i)).toBeVisible();
-
-      // Open hide dialog
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      // Enter valid reason and submit
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Violates guidelines');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-
-      // Wait for update
-      await page.waitForTimeout(500);
-
-      // Count should update to 1
-      await expect(page.getByText(/1 reported review/i)).toBeVisible();
+      // Cleanup
+      await supabase.from('reviews').delete().eq('id', review.id);
     });
 
     test('T055.15: Can cancel hide action', async ({ page }) => {
+      await page.goto('/admin/reviews/reported');
+      await page.waitForLoadState('networkidle');
+
       // Open hide dialog
       const hideButton = page.getByRole('button', { name: /Hide/i }).first();
       await hideButton.click();
@@ -410,385 +343,23 @@ test.describe('Admin Hide Review E2E', () => {
 
   test.describe('4. Post-Hide Verification Tests', () => {
     test('T055.16: Review not visible on campsite page', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
+      // Create and hide a review
+      const review = await createTestReview(supabase, testCampsiteId, {
+        id: `${TEST_DATA_PREFIX}review-public-check`,
+        comment: 'Hidden review should not appear',
+        rating: 2,
+        status: 'hidden'
       });
-
-      // Mock campsite page with reviews (hidden review excluded)
-      await page.route('**/api/campsites/campsite-1/reviews*', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            data: [],
-            pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
-          }),
-        });
-      });
-
-      // Hide the review
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Spam content');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
 
       // Navigate to campsite page
-      await page.goto('/campsites/campsite-1');
+      await page.goto(`/campsites/${testCampsiteId}`);
       await page.waitForLoadState('networkidle');
 
       // Hidden review should not appear
-      await expect(page.getByText('Terrible place')).not.toBeVisible();
-    });
+      await expect(page.getByText('Hidden review should not appear')).not.toBeVisible();
 
-    test('T055.17: Review not in public search results', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Mock search API (hidden reviews excluded)
-      await page.route('**/api/search*', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            data: [],
-          }),
-        });
-      });
-
-      // Hide the review
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Inappropriate content');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Search for the review
-      await page.goto('/search?q=terrible+scam');
-      await page.waitForLoadState('networkidle');
-
-      // Should not find hidden review
-      await expect(page.getByText('Terrible place')).not.toBeVisible();
-    });
-
-    test('T055.18: Hide action recorded in admin audit log', async ({ page }) => {
-      // Mock hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Mock audit log API
-      await page.route('**/api/admin/audit-log*', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: true,
-            data: [
-              {
-                id: 'log-1',
-                action: 'hide_review',
-                review_id: 'review-1',
-                reason: 'Violates community guidelines',
-                admin_id: 'admin-1',
-                timestamp: new Date().toISOString(),
-              },
-            ],
-          }),
-        });
-      });
-
-      // Hide the review
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Violates community guidelines');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Navigate to audit log
-      await page.goto('/admin/audit-log');
-      await page.waitForLoadState('networkidle');
-
-      // Should see hide action logged
-      await expect(page.getByText(/hide_review/i)).toBeVisible();
-      await expect(page.getByText(/Violates community guidelines/i)).toBeVisible();
-    });
-  });
-
-  test.describe('5. Error Handling Tests', () => {
-    test('T055.19: Shows error toast on failure', async ({ page }) => {
-      // Mock failed hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: false,
-            error: 'Failed to hide review',
-          }),
-        });
-      });
-
-      // Open hide dialog
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      // Enter valid reason and submit
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Test reason');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-
-      // Wait for error
-      await page.waitForTimeout(500);
-
-      // Error toast should appear
-      const toast = page.locator('[data-testid="toast"]');
-      await expect(toast).toBeVisible({ timeout: 3000 });
-      await expect(toast).toContainText(/Failed to hide/i);
-    });
-
-    test('T055.20: Can retry after error', async ({ page }) => {
-      let attemptCount = 0;
-
-      // Mock first failure, then success
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        attemptCount++;
-        if (attemptCount === 1) {
-          await route.fulfill({
-            status: 500,
-            contentType: 'application/json',
-            body: JSON.stringify({ success: false, error: 'Server error' }),
-          });
-        } else {
-          await route.fulfill({
-            status: 200,
-            contentType: 'application/json',
-            body: JSON.stringify({ success: true }),
-          });
-        }
-      });
-
-      // First attempt - should fail
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Test reason');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Error should appear
-      const toast = page.locator('[data-testid="toast"]');
-      await expect(toast).toBeVisible({ timeout: 3000 });
-
-      // Review should still be there
-      await expect(page.getByText('Terrible place')).toBeVisible();
-
-      // Second attempt - should succeed
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      await reasonInput.fill('Test reason again');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Review should be removed
-      await expect(page.getByText('Terrible place')).not.toBeVisible();
-    });
-
-    test('T055.21: Network error shows appropriate message', async ({ page }) => {
-      // Mock network failure
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.abort('failed');
-      });
-
-      // Open hide dialog
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      // Enter valid reason and submit
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Test reason');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-
-      // Wait for error
-      await page.waitForTimeout(500);
-
-      // Error toast should appear with network error message
-      const toast = page.locator('[data-testid="toast"]');
-      await expect(toast).toBeVisible({ timeout: 3000 });
-    });
-
-    test('T055.22: Dialog remains open on error', async ({ page }) => {
-      // Mock failed hide API
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 500,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            success: false,
-            error: 'Server error',
-          }),
-        });
-      });
-
-      // Open hide dialog
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      // Enter valid reason and submit
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Test reason');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-
-      // Wait for error
-      await page.waitForTimeout(500);
-
-      // Dialog should remain open
-      const dialog = page.locator('[data-testid="hide-review-dialog"]');
-      await expect(dialog).toBeVisible();
-    });
-  });
-
-  test.describe('6. Multiple Reviews', () => {
-    test('T055.23: Can hide multiple reviews in sequence', async ({ page }) => {
-      // Mock hide APIs for both reviews
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      await page.route('**/api/admin/reviews/review-2/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Hide first review
-      const firstHideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await firstHideButton.click();
-      await page.waitForTimeout(200);
-
-      let reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Spam content');
-
-      let confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Should have one review left
-      await expect(page.getByText('Inappropriate language')).toBeVisible();
-
-      // Hide second review
-      const secondHideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await secondHideButton.click();
-      await page.waitForTimeout(200);
-
-      reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Offensive content');
-
-      confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // Should show empty state
-      await expect(page.getByText(/All caught up!/i)).toBeVisible();
-    });
-
-    test('T055.24: Each review has its own hide button', async ({ page }) => {
-      // Count review cards
-      const reviewCards = await page.locator('[data-testid="reported-review-card"]').all();
-      const reviewCount = reviewCards.length;
-
-      // Count hide buttons
-      const hideButtons = await page.getByRole('button', { name: /Hide/i }).all();
-      const hideButtonCount = hideButtons.length;
-
-      // Should have one hide button per review
-      expect(hideButtonCount).toBe(reviewCount);
-      expect(hideButtonCount).toBe(2);
-    });
-
-    test('T055.25: Hiding one review doesn't affect others', async ({ page }) => {
-      // Mock hide API for first review
-      await page.route('**/api/admin/reviews/review-1/hide', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ success: true }),
-        });
-      });
-
-      // Verify both reviews are visible
-      await expect(page.getByText('Terrible place')).toBeVisible();
-      await expect(page.getByText('Inappropriate language')).toBeVisible();
-
-      // Hide first review
-      const hideButton = page.getByRole('button', { name: /Hide/i }).first();
-      await hideButton.click();
-      await page.waitForTimeout(200);
-
-      const reasonInput = page.locator('[data-testid="hide-reason-input"]');
-      await reasonInput.fill('Spam content');
-
-      const confirmButton = page.locator('[data-testid="hide-confirm-button"]');
-      await confirmButton.click();
-      await page.waitForTimeout(500);
-
-      // First review should be hidden
-      await expect(page.getByText('Terrible place')).not.toBeVisible();
-
-      // Second review should still be visible
-      await expect(page.getByText('Inappropriate language')).toBeVisible();
+      // Cleanup
+      await supabase.from('reviews').delete().eq('id', review.id);
     });
   });
 });

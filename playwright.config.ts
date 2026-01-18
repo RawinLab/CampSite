@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables from backend .env file
+dotenv.config({ path: path.resolve(__dirname, './apps/campsite-backend/.env') });
 
 export default defineConfig({
   testDir: './tests/e2e',
