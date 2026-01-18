@@ -53,36 +53,45 @@ export function useAuth(): UseAuthReturn {
 
   // Initialize auth state
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
 
+        if (!isMounted) return;
         if (error) throw error;
 
         if (session?.user) {
           const role = await fetchUserRole(session.user.id);
-          setState({
-            user: session.user,
-            session,
-            role,
-            loading: false,
-            error: null,
-          });
+          if (isMounted) {
+            setState({
+              user: session.user,
+              session,
+              role,
+              loading: false,
+              error: null,
+            });
+          }
         } else {
-          setState({
-            user: null,
-            session: null,
-            role: 'user',
-            loading: false,
-            error: null,
-          });
+          if (isMounted) {
+            setState({
+              user: null,
+              session: null,
+              role: 'user',
+              loading: false,
+              error: null,
+            });
+          }
         }
       } catch (error) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: error as Error,
-        }));
+        if (isMounted) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error: error as Error,
+          }));
+        }
       }
     };
 
@@ -113,6 +122,7 @@ export function useAuth(): UseAuthReturn {
     );
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, [supabase, fetchUserRole]);
