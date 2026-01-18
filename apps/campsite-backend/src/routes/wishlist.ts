@@ -116,7 +116,7 @@ router.get(
 
       const result = await wishlistService.isInWishlist(userId, campsiteId);
 
-      return sendSuccess(res, { data: result });
+      return sendSuccess(res, result);
     } catch (error) {
       console.error('Error checking wishlist:', error);
       return sendError(res, 'Failed to check wishlist status', 500);
@@ -140,7 +140,7 @@ router.post(
 
       const result = await wishlistService.batchCheckWishlist(userId, campsite_ids);
 
-      return sendSuccess(res, { data: result });
+      return sendSuccess(res, result);
     } catch (error) {
       console.error('Error batch checking wishlist:', error);
       return sendError(res, 'Failed to check wishlist status', 500);
@@ -161,7 +161,7 @@ router.get(
       const userId = req.user!.id;
       const count = await wishlistService.getWishlistCount(userId);
 
-      return sendSuccess(res, { data: { count } });
+      return sendSuccess(res, { count });
     } catch (error) {
       console.error('Error getting wishlist count:', error);
       return sendError(res, 'Failed to get wishlist count', 500);

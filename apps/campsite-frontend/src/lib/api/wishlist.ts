@@ -149,17 +149,21 @@ export async function batchCheckWishlist(
  * Get wishlist count for user
  */
 export async function getWishlistCount(): Promise<number> {
-  const headers = await getAuthHeaders();
+  try {
+    const headers = await getAuthHeaders();
 
-  const response = await fetch(`${API_BASE_URL}/api/wishlist/count`, {
-    method: 'GET',
-    headers,
-  });
+    const response = await fetch(`${API_BASE_URL}/api/wishlist/count`, {
+      method: 'GET',
+      headers,
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return 0;
+    }
+
+    const result = await response.json();
+    return result.data?.count || 0;
+  } catch (error) {
     return 0;
   }
-
-  const result = await response.json();
-  return result.data?.count || 0;
 }
