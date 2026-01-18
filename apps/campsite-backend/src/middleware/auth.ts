@@ -37,14 +37,14 @@ export async function authMiddleware(
     // Get user profile with role
     const { data: profile } = await supabase
       .from('profiles')
-      .select('user_role')
-      .eq('id', user.id)
+      .select('role')
+      .eq('auth_user_id', user.id)
       .single();
 
     req.user = {
       id: user.id,
       email: user.email!,
-      role: profile?.user_role || 'user',
+      role: profile?.role || 'user',
     };
     req.supabase = supabase;
 
@@ -74,14 +74,14 @@ export async function optionalAuthMiddleware(
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('user_role')
-          .eq('id', user.id)
+          .select('role')
+          .eq('auth_user_id', user.id)
           .single();
 
         req.user = {
           id: user.id,
           email: user.email!,
-          role: profile?.user_role || 'user',
+          role: profile?.role || 'user',
         };
         req.supabase = supabase;
       }
