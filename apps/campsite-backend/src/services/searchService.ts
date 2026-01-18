@@ -53,7 +53,7 @@ export class SearchService {
           slug
         ),
         campsite_photos (
-          photo_url,
+          url,
           is_primary,
           sort_order
         ),
@@ -211,7 +211,7 @@ export class SearchService {
           slug
         ),
         campsite_photos (
-          photo_url,
+          url,
           is_primary,
           sort_order
         ),
@@ -312,11 +312,11 @@ export class SearchService {
     if (!photos || photos.length === 0) return null;
 
     const primary = photos.find((p) => p.is_primary);
-    if (primary) return primary.photo_url;
+    if (primary) return primary.url;
 
     // Fall back to first photo sorted by sort_order
     const sorted = [...photos].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-    return sorted[0]?.photo_url || null;
+    return sorted[0]?.url || null;
   }
 
   /**
