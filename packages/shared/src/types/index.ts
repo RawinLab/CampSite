@@ -33,3 +33,6 @@ export * from './analytics';
 
 // Inquiry types
 export * from './inquiry';
+
+// Google Places types
+export * from './google-places';

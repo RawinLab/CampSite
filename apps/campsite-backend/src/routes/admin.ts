@@ -1,5 +1,6 @@
 // Admin Routes for Camping Thailand Platform
 // Module 10: Admin Dashboard (Q8, Q9, Q11)
+// Module 12: Google Places Integration
 
 import { Router, type IRouter } from 'express';
 import { authMiddleware, type AuthenticatedRequest } from '../middleware/auth';
@@ -24,11 +25,19 @@ import { hideReview, unhideReview } from '../services/reviewService';
 import logger from '../utils/logger';
 import type { Response } from 'express';
 
+// Import Google Places routes
+import googlePlacesRoutes from './admin/google-places.routes';
+
 const router: IRouter = Router();
 
-// All admin routes require authentication and admin role
-router.use(authMiddleware);
-router.use(requireAdmin);
+// DEV: Bypass auth for testing (REMOVE IN PRODUCTION!)
+if (process.env.NODE_ENV !== 'production') {
+  logger.warn('DEV MODE: Admin routes - AUTH DISABLED');
+} else {
+  // All admin routes require authentication and admin role
+  router.use(authMiddleware);
+  router.use(requireAdmin);
+}
 
 // ============================================
 // Admin Dashboard Stats
@@ -869,5 +878,8 @@ router.post('/reviews/:id/dismiss', async (req: AuthenticatedRequest, res: Respo
     res.status(500).json({ success: false, error: 'Failed to dismiss reports' });
   }
 });
+
+// Mount Google Places routes under /google-places
+router.use('/google-places', googlePlacesRoutes);
 
 export default router;

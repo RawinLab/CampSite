@@ -1,18 +1,33 @@
 // Load environment variables BEFORE any imports that might use them
-import dotenv from 'dotenv';
-import path from 'path';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
-// Load from .env in backend directory (one level up from src/)
-// Note: __dirname is available in CommonJS context
-dotenv.config({ path: path.join(__dirname, '..', '.env') });
+// Load dotenv first
+const path = require('path');
+const { fileURLToPath } = require('url');
+const dotenv = require('dotenv');
 
-// Debug: log loaded CORS origins (remove in production)
+// Get __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load from .env in backend directory
+const envPath = path.resolve(__dirname, '..', '.env');
+const result = dotenv.config({ path: envPath });
+
+if (result.error) {
+  console.warn('Warning: .env file not found at', envPath, '- using system environment variables only');
+} else {
+  console.log('Loaded .env from:', envPath);
+}
+
+// Debug: log loaded CORS origins
 if (process.env.CORS_ORIGINS) {
   console.log('Loaded CORS_ORIGINS:', process.env.CORS_ORIGINS);
 }
 
-// Now import the rest of the application
-import app from './app';
+// Now use require to load app synchronously
+const { default: app } = require('./app.js');
 
 const PORT = process.env.PORT || 4000;
 

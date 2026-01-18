@@ -77,3 +77,6 @@ export {
 
 // Photo schemas
 export * from './photo';
+
+// Google Places schemas
+export * from './google-places';
