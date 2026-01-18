@@ -16,7 +16,7 @@ class TypeClassifierService {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       logger.info('Gemini AI initialized for type classification');
     } else {
       logger.warn('GEMINI_API_KEY or GOOGLE_AI_API_KEY not set - AI classification disabled, using keyword-based only');
