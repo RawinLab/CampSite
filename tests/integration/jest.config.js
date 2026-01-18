@@ -4,6 +4,7 @@ module.exports = {
   testEnvironment: 'node',
   rootDir: '.',
   testMatch: ['**/*.test.ts'],
+  setupFilesAfterEnv: ['<rootDir>/setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/../../apps/campsite-backend/src/$1',
   },
