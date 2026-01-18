@@ -2,13 +2,25 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, Search, Eye, MousePointer, MessageSquare } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+// Map of icon names to components for Server Component compatibility
+const iconMap = {
+  search: Search,
+  eye: Eye,
+  'mouse-pointer': MousePointer,
+  'message-square': MessageSquare,
+} as const;
+
+type IconName = keyof typeof iconMap;
 
 interface StatCardProps {
   title: string;
   value: number | string;
   change?: number;
-  icon: LucideIcon;
+  iconName?: IconName;
+  iconElement?: ReactNode;
   highlight?: boolean;
   className?: string;
 }
@@ -17,12 +29,16 @@ export function StatCard({
   title,
   value,
   change,
-  icon: Icon,
+  iconName,
+  iconElement,
   highlight = false,
   className,
 }: StatCardProps) {
   const isPositive = change !== undefined && change >= 0;
   const hasChange = change !== undefined && change !== 0;
+
+  // Get the icon component from the name, or use the passed element
+  const Icon = iconName ? iconMap[iconName] : null;
 
   return (
     <Card className={cn(highlight && 'ring-2 ring-primary', className)}>
@@ -35,7 +51,7 @@ export function StatCard({
                 highlight ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
               )}
             >
-              <Icon className="h-5 w-5" />
+              {Icon ? <Icon className="h-5 w-5" /> : iconElement}
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{title}</p>

@@ -55,8 +55,8 @@ export function createSupabaseAdmin(): SupabaseClient {
 }
 
 /**
- * Login via UI form
- * Uses the new API-based authentication flow
+ * Login via API injection (bypassing UI form)
+ * Uses the new API-based authentication flow and injects tokens directly
  */
 export async function loginViaUI(
   page: Page,
@@ -66,42 +66,88 @@ export async function loginViaUI(
 ): Promise<void> {
   const { timeout = 15000 } = options;
 
-  await page.goto(`${FRONTEND_URL}/auth/login`);
-  await page.waitForSelector('#email', { timeout });
+  // Login via backend API to get tokens
+  const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
 
-  await page.fill('#email', email);
-  await page.fill('#password', password);
-  await page.click('button[type="submit"]');
-
-  // Wait for navigation or error
-  await page.waitForTimeout(3000);
-
-  // Check for error messages
-  const errorMsg = page.locator('.bg-red-50, [role="alert"], .text-red-500, .text-red-700');
-  if (await errorMsg.isVisible().catch(() => false)) {
-    const text = await errorMsg.textContent();
-    throw new Error(`Login failed: ${text}`);
+  if (!loginResponse.ok) {
+    const error = await loginResponse.json().catch(() => ({ error: 'Login failed' }));
+    throw new Error(`Login failed: ${error.error || error.message || 'Unknown error'}`);
   }
 
-  // Verify tokens are stored in localStorage
-  const hasTokens = await page.evaluate((keys) => {
-    return Boolean(
-      localStorage.getItem(keys.access) &&
-      localStorage.getItem(keys.refresh) &&
-      localStorage.getItem(keys.expiry)
-    );
+  const data = await loginResponse.json();
+
+  if (!data.session) {
+    throw new Error('No session returned from login');
+  }
+
+  console.log(`Logged in as ${email}, injecting tokens into page`);
+
+  // Get browser context for setting cookies
+  const context = page.context();
+
+  // Set cookies for SSR auth (critical - server reads cookies, not localStorage)
+  await context.addCookies([
+    {
+      name: 'campsite_access_token',
+      value: data.session.access_token,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+    {
+      name: 'campsite_refresh_token',
+      value: data.session.refresh_token,
+      domain: 'localhost',
+      path: '/',
+      httpOnly: true,
+      sameSite: 'Lax',
+    },
+  ]);
+
+  // Navigate to frontend to establish page context
+  await page.goto(`${FRONTEND_URL}/`);
+  await page.waitForLoadState('domcontentloaded', { timeout });
+
+  // Inject tokens into localStorage for client-side auth
+  await page.evaluate((tokenData) => {
+    localStorage.setItem('campsite_access_token', tokenData.access);
+    localStorage.setItem('campsite_refresh_token', tokenData.refresh);
+    localStorage.setItem('campsite_token_expiry', tokenData.expiry);
   }, {
-    access: ACCESS_TOKEN_KEY,
-    refresh: REFRESH_TOKEN_KEY,
-    expiry: TOKEN_EXPIRY_KEY,
+    access: data.session.access_token,
+    refresh: data.session.refresh_token,
+    expiry: (data.session.expires_at * 1000).toString(),
+  });
+
+  // Verify tokens were stored in localStorage
+  const hasTokens = await page.evaluate(() => {
+    return Boolean(
+      localStorage.getItem('campsite_access_token') &&
+      localStorage.getItem('campsite_refresh_token') &&
+      localStorage.getItem('campsite_token_expiry')
+    );
   });
 
   if (!hasTokens) {
-    throw new Error('Login succeeded but tokens were not stored');
+    throw new Error('Failed to inject tokens into localStorage');
   }
 
-  // Wait for auth state to propagate
+  console.log('Tokens and cookies injected, reloading page for auth to initialize');
+
+  // Reload the page so SSR can pick up the auth cookies
+  await page.reload({ waitUntil: 'networkidle' });
+
+  // Wait a bit more for auth context to fully initialize
   await page.waitForTimeout(1000);
+
+  console.log('Auth ready');
 }
 
 /**

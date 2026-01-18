@@ -6,10 +6,16 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { createSupabaseAdmin, TEST_USERS } from './auth';
+import { createSupabaseAdmin as _createSupabaseAdmin, TEST_USERS } from './auth';
+
+// Re-export for convenience
+export { createSupabaseAdmin } from './auth';
 
 // Test data IDs for easy cleanup
 export const TEST_DATA_PREFIX = 'e2e-test-';
+
+// Use the imported function internally
+const createSupabaseAdmin = _createSupabaseAdmin;
 
 export interface TestCampsite {
   id: string;
@@ -43,19 +49,19 @@ export interface TestInquiry {
 
 /**
  * Get user ID by email
+ * Queries auth.users table which contains the email
  */
 export async function getUserIdByEmail(
   supabase: SupabaseClient,
   email: string
 ): Promise<string | null> {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('auth_user_id')
-    .eq('email', email)
-    .single();
+  // Use admin API to access auth.users
+  const { data, error } = await supabase.auth.admin.listUsers();
 
-  if (error || !data) return null;
-  return data.auth_user_id;
+  if (error || !data?.users) return null;
+
+  const user = data.users.find(u => u.email === email);
+  return user?.id || null;
 }
 
 /**
@@ -92,7 +98,17 @@ export async function createTestCampsite(
   supabase: SupabaseClient,
   data: Partial<TestCampsite> = {}
 ): Promise<TestCampsite> {
-  const ownerId = await getOwnerUserId(supabase);
+  // Get owner profile ID (not auth_user_id, but profiles.id)
+  const ownerAuthId = await getOwnerUserId(supabase);
+  const { data: ownerProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', ownerAuthId)
+    .single();
+
+  if (!ownerProfile) {
+    throw new Error('Owner profile not found');
+  }
 
   // Get first province for testing
   const { data: provinces } = await supabase
@@ -102,19 +118,33 @@ export async function createTestCampsite(
 
   const provinceId = provinces?.[0]?.id;
 
-  const campsite = {
-    id: data.id || `${TEST_DATA_PREFIX}campsite-${Date.now()}`,
+  // Get first campsite type (camping)
+  const { data: types } = await supabase
+    .from('campsite_types')
+    .select('id')
+    .eq('slug', 'camping')
+    .single();
+
+  const typeId = types?.id || 1; // Default to 1 if not found
+
+  const campsite: Record<string, any> = {
     name: data.name || `Test Campsite ${Date.now()}`,
     description: data.description || 'Test campsite for E2E testing',
+    address: 'Test Address, Bangkok',
     status: data.status || 'pending',
-    owner_id: data.owner_id || ownerId,
+    owner_id: data.owner_id || ownerProfile.id,
     province_id: data.province_id || provinceId,
-    campsite_type: data.campsite_type || 'camping',
+    type_id: typeId,
     price_min: data.price_min || 500,
     price_max: data.price_max || 1500,
     latitude: 13.7563,
     longitude: 100.5018,
   };
+
+  // Only add ID if provided (let database generate UUID otherwise)
+  if (data.id) {
+    campsite.id = data.id;
+  }
 
   const { data: created, error } = await supabase
     .from('campsites')

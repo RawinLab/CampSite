@@ -7,7 +7,7 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { AnalyticsChart } from '@/components/dashboard/AnalyticsChart';
 import { CampsiteTable } from '@/components/dashboard/CampsiteTable';
 import { InquiryCard } from '@/components/dashboard/InquiryCard';
-import { Search, Eye, MousePointer, MessageSquare, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { DashboardStats, InquiryWithCampsite } from '@campsite/shared';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
@@ -119,24 +119,24 @@ export default async function DashboardPage() {
           title="Search Impressions"
           value={displayStats.search_impressions}
           change={displayStats.search_impressions_change}
-          icon={Search}
+          iconName="search"
         />
         <StatCard
           title="Profile Views"
           value={displayStats.profile_views}
           change={displayStats.profile_views_change}
-          icon={Eye}
+          iconName="eye"
         />
         <StatCard
           title="Booking Clicks"
           value={displayStats.booking_clicks}
           change={displayStats.booking_clicks_change}
-          icon={MousePointer}
+          iconName="mouse-pointer"
         />
         <StatCard
           title="New Inquiries"
           value={displayStats.new_inquiries}
-          icon={MessageSquare}
+          iconName="message-square"
           highlight={displayStats.new_inquiries > 0}
         />
       </div>

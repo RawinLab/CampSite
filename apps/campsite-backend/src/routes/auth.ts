@@ -387,10 +387,11 @@ router.get(
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
+      // req.user.id is the auth_user_id (from Supabase Auth), not profile.id
       const { data: profile, error } = await supabaseAdmin
         .from('profiles')
         .select('*')
-        .eq('id', req.user!.id)
+        .eq('auth_user_id', req.user!.id)
         .single();
 
       if (error) {
@@ -431,10 +432,11 @@ router.patch(
         }
       });
 
+      // req.user.id is the auth_user_id (from Supabase Auth), not profile.id
       const { data: profile, error } = await supabaseAdmin
         .from('profiles')
         .update(updateData)
-        .eq('id', req.user!.id)
+        .eq('auth_user_id', req.user!.id)
         .select()
         .single();
 

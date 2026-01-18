@@ -55,10 +55,12 @@ export async function middleware(request: NextRequest) {
   );
 
   // Get user from session (checking cookie)
-  const supabaseAuthCookie = request.cookies.get('sb-access-token')?.value ||
+  // Check for our new API-based auth cookie first, then fall back to Supabase cookies
+  const authCookie = request.cookies.get('campsite_access_token')?.value ||
+    request.cookies.get('sb-access-token')?.value ||
     request.cookies.getAll().find(c => c.name.includes('auth-token'))?.value;
 
-  const isAuthenticated = !!supabaseAuthCookie;
+  const isAuthenticated = !!authCookie;
 
   // Redirect authenticated users away from auth pages
   if (isAuthRoute && isAuthenticated) {

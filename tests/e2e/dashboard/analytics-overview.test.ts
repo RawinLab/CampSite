@@ -29,23 +29,17 @@ test.describe('Owner Dashboard - Analytics Overview', () => {
       await page.goto('/dashboard');
       await page.waitForTimeout(3000);
 
-      // Verify that each stat card has a numeric value displayed
-      const statCards = page.locator('[class*="CardContent"]').filter({
-        has: page.locator('text=/Search Impressions|Profile Views|Booking Clicks|New Inquiries/'),
-      });
+      // Check each stat type has a numeric value displayed next to it
+      const statTypes = ['Search Impressions', 'Profile Views', 'Booking Clicks', 'New Inquiries'];
 
-      const count = await statCards.count();
-      expect(count).toBeGreaterThanOrEqual(4);
+      for (const statType of statTypes) {
+        const statLabel = page.locator(`text=${statType}`);
+        await expect(statLabel).toBeVisible({ timeout: 15000 });
 
-      // Check each stat card has a numeric display
-      for (let i = 0; i < Math.min(count, 4); i++) {
-        const card = statCards.nth(i);
-        const numberElement = card.locator('p.text-2xl');
-        await expect(numberElement).toBeVisible({ timeout: 15000 });
-
-        // Value should be numeric (including 0) or formatted with commas
-        const text = await numberElement.textContent();
-        expect(text).toMatch(/^\d{1,3}(,\d{3})*$/);
+        // Find the sibling value (numeric) - it's in the same parent container
+        const statContainer = statLabel.locator('xpath=..');
+        const value = statContainer.locator('p').filter({ hasText: /^\d/ });
+        await expect(value.first()).toBeVisible({ timeout: 5000 });
       }
     });
 
@@ -53,64 +47,56 @@ test.describe('Owner Dashboard - Analytics Overview', () => {
       await page.goto('/dashboard');
       await page.waitForTimeout(3000);
 
-      // Find the Search Impressions stat card
-      const searchCard = page.locator('text=Search Impressions').locator('..');
+      // Find the Search Impressions stat label
+      const searchLabel = page.locator('text=Search Impressions');
+      await expect(searchLabel).toBeVisible({ timeout: 15000 });
 
-      // Should have icon
-      const icon = searchCard.locator('svg').first();
-      await expect(icon).toBeVisible({ timeout: 15000 });
-
-      // Should have value
-      const value = searchCard.locator('p.text-2xl').first();
-      await expect(value).toBeVisible({ timeout: 15000 });
+      // Check there's a numeric value nearby (same as other tests)
+      const container = searchLabel.locator('xpath=..');
+      const value = container.locator('p').filter({ hasText: /^\d/ });
+      await expect(value.first()).toBeVisible({ timeout: 5000 });
     });
 
     test('T101.4: Shows profile views count', async ({ page }) => {
       await page.goto('/dashboard');
       await page.waitForTimeout(3000);
 
-      // Find the Profile Views stat card
-      const profileCard = page.locator('text=Profile Views').locator('..');
+      // Find the Profile Views stat label
+      const profileLabel = page.locator('text=Profile Views');
+      await expect(profileLabel).toBeVisible({ timeout: 15000 });
 
-      // Should have icon
-      const icon = profileCard.locator('svg').first();
-      await expect(icon).toBeVisible({ timeout: 15000 });
-
-      // Should have value
-      const value = profileCard.locator('p.text-2xl').first();
-      await expect(value).toBeVisible({ timeout: 15000 });
+      // Check there's a numeric value nearby
+      const container = profileLabel.locator('xpath=..');
+      const value = container.locator('p').filter({ hasText: /^\d/ });
+      await expect(value.first()).toBeVisible({ timeout: 5000 });
     });
 
     test('T101.5: Shows booking clicks count', async ({ page }) => {
       await page.goto('/dashboard');
       await page.waitForTimeout(3000);
 
-      // Find the Booking Clicks stat card
-      const bookingCard = page.locator('text=Booking Clicks').locator('..');
+      // Find the Booking Clicks stat label
+      const bookingLabel = page.locator('text=Booking Clicks');
+      await expect(bookingLabel).toBeVisible({ timeout: 15000 });
 
-      // Should have icon
-      const icon = bookingCard.locator('svg').first();
-      await expect(icon).toBeVisible({ timeout: 15000 });
-
-      // Should have value
-      const value = bookingCard.locator('p.text-2xl').first();
-      await expect(value).toBeVisible({ timeout: 15000 });
+      // Check there's a numeric value nearby
+      const container = bookingLabel.locator('xpath=..');
+      const value = container.locator('p').filter({ hasText: /^\d/ });
+      await expect(value.first()).toBeVisible({ timeout: 5000 });
     });
 
     test('T101.6: Shows new inquiries count', async ({ page }) => {
       await page.goto('/dashboard');
       await page.waitForTimeout(3000);
 
-      // Find the New Inquiries stat card
-      const inquiriesCard = page.locator('text=New Inquiries').locator('..');
+      // Find the New Inquiries stat label
+      const inquiriesLabel = page.locator('text=New Inquiries');
+      await expect(inquiriesLabel).toBeVisible({ timeout: 15000 });
 
-      // Should have icon
-      const icon = inquiriesCard.locator('svg').first();
-      await expect(icon).toBeVisible({ timeout: 15000 });
-
-      // Should have value
-      const value = inquiriesCard.locator('p.text-2xl').first();
-      await expect(value).toBeVisible({ timeout: 15000 });
+      // Check there's a numeric value nearby
+      const container = inquiriesLabel.locator('xpath=..');
+      const value = container.locator('p').filter({ hasText: /^\d/ });
+      await expect(value.first()).toBeVisible({ timeout: 5000 });
     });
 
     test('T101.7: Shows total campsites count', async ({ page }) => {

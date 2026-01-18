@@ -41,12 +41,16 @@ export const corsOptions = {
 };
 
 // Rate limiting - general API
+// Skip rate limiting in test environment
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
+
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: isTestEnv ? 0 : 100, // 0 = unlimited in test, 100 in production
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTestEnv, // Skip rate limiting in test environment
 });
 
 // Rate limiting - inquiry endpoint (Q18: 5 per 24h)
@@ -65,10 +69,11 @@ export const inquiryLimiter = rateLimit({
 // Rate limiting - auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 auth requests per 15 minutes
+  max: isTestEnv ? 0 : 10, // 0 = unlimited in test, 10 in production
   message: { error: 'Too many authentication attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTestEnv, // Skip rate limiting in test environment
 });
 
 // Apply security middleware

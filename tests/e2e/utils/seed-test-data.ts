@@ -93,7 +93,6 @@ async function main() {
         .update({
           role: userData.role,
           full_name: userData.full_name,
-          email: userData.email,
         })
         .eq('auth_user_id', userId);
 
@@ -109,15 +108,26 @@ async function main() {
 
   console.log('\n📋 Creating test data...\n');
 
-  // Get owner user ID
-  const { data: ownerProfile } = await supabase
+  // Wait a bit for database consistency
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Get owner user ID by role
+  const { data: ownerProfile, error: ownerError } = await supabase
     .from('profiles')
-    .select('auth_user_id')
-    .eq('email', TEST_USERS.owner.email)
+    .select('auth_user_id, full_name')
+    .eq('role', 'owner')
+    .limit(1)
     .single();
 
-  if (!ownerProfile) {
+  if (!ownerProfile || ownerError) {
     console.error('❌ Could not find owner profile');
+    console.error('Error:', ownerError);
+    console.error('Checking all profiles...');
+    const { data: allProfiles } = await supabase
+      .from('profiles')
+      .select('full_name, auth_user_id, role')
+      .limit(10);
+    console.error('Profiles:', allProfiles);
     process.exit(1);
   }
 
