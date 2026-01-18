@@ -97,7 +97,7 @@
 - [x] T034 P1 US-022 Add Google Places API keys to .env.example [agent: backend-developer] [deps: none] [files: apps/campsite-backend/.env.example]
 - [x] T035 P1 US-022 Add Gemini AI key to .env.example [agent: backend-developer] [deps: none] [files: apps/campsite-backend/.env.example]
 - [x] T036 P1 US-022 Add sync configuration to .env.example [agent: backend-developer] [deps: none] [files: apps/campsite-backend/.env.example]
-- [ ] T037 P2 US-022 Verify environment variables are configured [agent: devops] [deps: none] [files: apps/campsite-backend/.env]
+- [x] T037 P2 US-022 Verify environment variables are configured [agent: devops] [deps: none] [files: apps/campsite-backend/.env]
 - [ ] T038 P3 US-022 Configure cron schedule for weekly syncs [agent: devops] [deps: none] [files: apps/campsite-backend/src/services/google-places/sync.service.ts]
 - [ ] T039 P3 US-022 Set up Supabase Storage bucket for photos [agent: devops] [deps: T034] [files: -]
 - [ ] T040 P3 US-022 Configure rate limits and cost tracking [agent: devops] [deps: T038] [files: -]
@@ -110,7 +110,7 @@
 
 ---
 
-## Story Progress: 35/45
+## Story Progress: 36/45
 
 ---
 
