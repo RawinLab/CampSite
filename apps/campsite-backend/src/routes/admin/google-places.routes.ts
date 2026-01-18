@@ -15,19 +15,15 @@ import {
   triggerAIProcessingRequestSchema,
 } from '@campsite/shared';
 import googlePlacesSync from '../../services/google-places/sync.service';
+import aiProcessingService from '../../services/google-places/ai-processing.service';
 import logger from '../../utils/logger';
 import type { Response } from 'express';
 
 const router: IRouter = Router();
 
-// DEV: Bypass auth for testing (REMOVE IN PRODUCTION!)
-if (process.env.NODE_ENV !== 'production') {
-  logger.warn('DEV MODE: Google Places admin routes - AUTH DISABLED');
-} else {
-  // All admin routes require authentication and admin role
-  router.use(authMiddleware);
-  router.use(requireAdmin);
-}
+// All admin routes require authentication and admin role
+router.use(authMiddleware);
+router.use(requireAdmin);
 
 // ============================================
 // Google Places Sync Management
@@ -46,7 +42,14 @@ router.post('/sync/trigger', async (req: AuthenticatedRequest, res: Response) =>
       return res.status(400).json({ success: false, error: parsed.error.errors });
     }
 
-    const config = parsed.data;
+    const { syncType, provinces, maxPlaces } = parsed.data;
+    const config = {
+      type: syncType,
+      provinces,
+      maxPlaces,
+      downloadPhotos: true,
+      fetchReviews: true,
+    };
 
     // Start sync asynchronously (don't await)
     googlePlacesSync.startSync(config).catch((err) => {
@@ -410,8 +413,8 @@ router.get('/candidates/:id', async (req: AuthenticatedRequest, res: Response) =
         const lng1 = rawData.geometry.location.lng;
 
         similarCampsites.push(...nearby
-          .filter(c => c.id !== candidate.duplicate_of_campsite_id)
-          .map(c => {
+          .filter((c: any) => c.id !== candidate.duplicate_of_campsite_id)
+          .map((c: any) => {
             const lat2 = c.latitude;
             const lng2 = c.longitude;
             const distance = Math.sqrt(
@@ -804,8 +807,11 @@ router.post('/process', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // This would trigger the AI processing service
-    // For now, return a placeholder response
+    // Trigger AI processing asynchronously
+    aiProcessingService.processPlaces(placeIdsToProcess).catch((err) => {
+      logger.error('Background AI processing failed', { error: err });
+    });
+
     logger.info('AI processing triggered', {
       placesToProcess: placeIdsToProcess.length,
       adminId: req.user!.id,
@@ -816,7 +822,15 @@ router.post('/process', async (req: AuthenticatedRequest, res: Response) => {
       message: 'Processing started',
       placesToProcess: placeIdsToProcess.length,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'AI processing is already running') {
+      return res.status(409).json({
+        success: false,
+        error: 'AI processing is already running',
+        code: 'PROCESSING_ALREADY_RUNNING',
+      });
+    }
+
     logger.error('Error triggering AI processing', { error });
     res.status(500).json({ success: false, error: 'Failed to trigger AI processing' });
   }

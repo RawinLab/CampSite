@@ -3,6 +3,9 @@
  * Module 12 - Google Places Data Ingestion
  */
 
+// Import shared types
+import type { CampsiteStatus } from './campsite';
+
 // ============================================================================
 // ENUMS
 // ============================================================================
@@ -180,8 +183,6 @@ export interface ImportCandidate {
   photos?: string[];
   rating?: number;
 }
-
-export type CampsiteStatus = 'pending' | 'approved' | 'rejected';
 
 export interface ProcessedCampsiteData {
   // Basic Info
@@ -392,7 +393,7 @@ export interface SyncConfig {
   fetchReviews?: boolean;
 }
 
-export interface SyncStatus {
+export interface SyncStatusDetails {
   id: string;
   status: SyncStatus;
   progress: {
