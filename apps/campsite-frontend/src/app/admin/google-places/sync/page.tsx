@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/admin/data-table';
-import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
 import type { SyncLog } from '@campsite/shared';
 
 interface Column {
@@ -116,7 +116,7 @@ export default function SyncManagementPage() {
         alert('Sync started! Sync Log ID: ' + data.syncLogId);
         // Refresh the page after a short delay
         setTimeout(() => {
-          router.push(router.pathname); // Reload page
+          router.refresh();
         }, 2000);
       } else {
         alert('Failed to start sync: ' + (data.error || 'Unknown error'));
@@ -157,7 +157,7 @@ export default function SyncManagementPage() {
         setSyncStatus('idle');
         // Refresh the page
         setTimeout(() => {
-          router.push(router.pathname);
+          router.refresh();
         }, 1000);
       } else {
         alert('Failed to cancel sync: ' + (data.error || 'Unknown error'));

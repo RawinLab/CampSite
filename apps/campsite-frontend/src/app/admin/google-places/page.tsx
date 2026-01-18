@@ -62,16 +62,17 @@ export default function GooglePlacesPage() {
         // Get imported campsites count
         const imported = 0; // TODO: Add endpoint to get stats
 
+        let total = 0;
         if (pendingRes.ok) {
           const data = await pendingRes.json();
           if (data.success) {
-            const total = data.pagination?.total || 0;
+            total = data.pagination?.total || 0;
           }
         }
 
         setStats({
           total_raw_places: totalRaw,
-          pending_candidates: total || 0,
+          pending_candidates: total,
           synced_last: null, // Will get from sync logs
           total_imported: imported,
         });
@@ -85,18 +86,15 @@ export default function GooglePlacesPage() {
     fetchStats();
   }, [user, role]);
 
-  if (loading || authLoading) {
+  if (statsLoading || authLoading) {
     return (
-      <div className="flex h-screen">
-        <AdminSidebar />
-        <main className="flex-1 p-8">
-          <Skeleton className="h-8 w-64 mb-4" />
-          <div className="space-y-4">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </main>
+      <div className="p-8">
+        <Skeleton className="h-8 w-64 mb-4" />
+        <div className="space-y-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
       </div>
     );
   }
@@ -106,9 +104,7 @@ export default function GooglePlacesPage() {
   }
 
   return (
-    <div className="flex h-screen">
-      <AdminSidebar />
-      <main className="flex-1 p-8">
+    <div className="p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Google Places Integration</h1>
           <p className="text-muted-foreground">
@@ -250,7 +246,6 @@ export default function GooglePlacesPage() {
             </Link>
           </div>
         </div>
-      </main>
     </div>
   );
 }

@@ -196,8 +196,8 @@ export default function CandidatesPage() {
       header: 'Campsite',
       cell: (row) => (
         <div>
-          <div className="font-medium">{row.name}</div>
-          <div className="text-sm text-muted-foreground">{row.address}</div>
+          <div className="font-medium">{row.processed_data.name}</div>
+          <div className="text-sm text-muted-foreground">{row.processed_data.address}</div>
         </div>
       ),
     },
@@ -230,11 +230,11 @@ export default function CandidatesPage() {
       header: 'Rating',
       cell: (row) => (
         <div className="flex items-center">
-          {row.rating ? (
+          {row.processed_data.google_rating ? (
             <>
               <Star className="h-4 w-4 mr-1 fill-yellow-400" />
-              {row.rating.toFixed(1)}
-              <span className="text-sm text-muted-foreground ml-1">({row.rating_count || 0} reviews)</span>
+              {row.processed_data.google_rating.toFixed(1)}
+              <span className="text-sm text-muted-foreground ml-1">({row.processed_data.google_review_count || 0} reviews)</span>
             </>
           ) : (
             <span className="text-sm text-muted-foreground">No rating</span>

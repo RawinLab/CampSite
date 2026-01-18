@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User, Session } from '@supabase/supabase-js';
 import type { UserRole } from '@campsite/shared';
@@ -32,7 +32,8 @@ export function useAuth(): UseAuthReturn {
     error: null,
   });
 
-  const supabase = createClient();
+  // Memoize the supabase client to prevent recreation on each render
+  const supabase = useMemo(() => createClient(), []);
 
   // Fetch user role from profiles table
   const fetchUserRole = useCallback(async (userId: string): Promise<UserRole> => {
