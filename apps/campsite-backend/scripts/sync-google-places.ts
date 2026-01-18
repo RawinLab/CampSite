@@ -19,20 +19,16 @@
  *   pnpm tsx scripts/sync-google-places.ts --max-places 10 --no-photos
  */
 
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-import googlePlacesSyncService from '../src/services/google-places/sync.service';
-import { supabaseAdmin } from '../src/lib/supabase';
 import type { SyncConfig } from '@campsite/shared';
 
+interface CliConfig extends SyncConfig {
+  help?: boolean;
+}
+
 // Parse command line arguments
-function parseArgs(): SyncConfig & { help?: boolean } {
+function parseArgs(): CliConfig {
   const args = process.argv.slice(2);
-  const config: SyncConfig & { help?: boolean } = {
+  const config: CliConfig = {
     type: 'incremental',
     maxPlaces: 100,
     downloadPhotos: true,
@@ -129,11 +125,21 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Load environment variables BEFORE importing modules
+  const path = await import('path');
+  const dotenv = await import('dotenv');
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
   // Check required environment variables
   if (!process.env.GOOGLE_PLACES_API_KEY) {
     console.error('Error: GOOGLE_PLACES_API_KEY environment variable is not set');
     process.exit(1);
   }
+
+  // Now dynamically import modules that depend on environment variables
+  const syncServiceModule = await import('../src/services/google-places/sync.service');
+  const googlePlacesSyncService = syncServiceModule.default;
+  const { supabaseAdmin } = await import('../src/lib/supabase');
 
   console.log('\n========================================');
   console.log('  Google Places Sync CLI');

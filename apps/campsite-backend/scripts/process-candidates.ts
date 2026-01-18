@@ -23,15 +23,6 @@
  *   pnpm tsx scripts/process-candidates.ts --ids abc123,def456
  */
 
-import dotenv from 'dotenv';
-import path from 'path';
-
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-import { supabaseAdmin } from '../src/lib/supabase';
-import aiProcessingService from '../src/services/google-places/ai-processing.service';
-
 interface CliOptions {
   all: boolean;
   ids: string[];
@@ -127,52 +118,6 @@ Environment Variables Required:
 `);
 }
 
-async function getUnprocessedPlaceIds(limit: number, reprocess: boolean): Promise<string[]> {
-  if (reprocess) {
-    // Get all raw places
-    const { data, error } = await supabaseAdmin
-      .from('google_places_raw')
-      .select('id')
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      throw new Error(`Failed to fetch raw places: ${error.message}`);
-    }
-
-    return (data || []).map(p => p.id);
-  } else {
-    // Get raw places that don't have import candidates yet
-    const { data, error } = await supabaseAdmin
-      .from('google_places_raw')
-      .select('id')
-      .not('id', 'in', supabaseAdmin.from('google_places_import_candidates').select('google_place_raw_id'))
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    // If the NOT IN subquery doesn't work, use a different approach
-    if (error) {
-      // Fallback: Get all raw places and filter manually
-      const { data: allRaw } = await supabaseAdmin
-        .from('google_places_raw')
-        .select('id')
-        .order('created_at', { ascending: false })
-        .limit(limit * 2);
-
-      const { data: existing } = await supabaseAdmin
-        .from('google_places_import_candidates')
-        .select('google_place_raw_id');
-
-      const existingIds = new Set((existing || []).map(c => c.google_place_raw_id));
-      const unprocessed = (allRaw || []).filter(p => !existingIds.has(p.id));
-
-      return unprocessed.slice(0, limit).map(p => p.id);
-    }
-
-    return (data || []).map(p => p.id);
-  }
-}
-
 async function main(): Promise<void> {
   const options = parseArgs();
 
@@ -187,11 +132,54 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Load environment variables BEFORE importing modules
+  const path = await import('path');
+  const dotenv = await import('dotenv');
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+  // Now dynamically import modules that depend on environment variables
+  const { supabaseAdmin } = await import('../src/lib/supabase');
+  const aiProcessingServiceModule = await import('../src/services/google-places/ai-processing.service');
+  const aiProcessingService = aiProcessingServiceModule.default;
+
   console.log('\n========================================');
   console.log('  AI Processing CLI');
   console.log('========================================\n');
 
   let placeIds: string[] = [];
+
+  async function getUnprocessedPlaceIds(limit: number, reprocess: boolean): Promise<string[]> {
+    if (reprocess) {
+      // Get all raw places
+      const { data, error } = await supabaseAdmin
+        .from('google_places_raw')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        throw new Error(`Failed to fetch raw places: ${error.message}`);
+      }
+
+      return (data || []).map((p: any) => p.id);
+    } else {
+      // Get all raw places and filter manually
+      const { data: allRaw } = await supabaseAdmin
+        .from('google_places_raw')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(limit * 2);
+
+      const { data: existing } = await supabaseAdmin
+        .from('google_places_import_candidates')
+        .select('google_place_raw_id');
+
+      const existingIds = new Set((existing || []).map((c: any) => c.google_place_raw_id));
+      const unprocessed = (allRaw || []).filter((p: any) => !existingIds.has(p.id));
+
+      return unprocessed.slice(0, limit).map((p: any) => p.id);
+    }
+  }
 
   if (options.ids.length > 0) {
     placeIds = options.ids;
@@ -236,7 +224,7 @@ async function main(): Promise<void> {
       .in('google_place_raw_id', placeIds);
 
     if (candidateSummary && candidateSummary.length > 0) {
-      const statusCounts = candidateSummary.reduce((acc: Record<string, number>, c) => {
+      const statusCounts = candidateSummary.reduce((acc: Record<string, number>, c: any) => {
         acc[c.status] = (acc[c.status] || 0) + 1;
         return acc;
       }, {});
