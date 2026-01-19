@@ -398,7 +398,19 @@ router.get(
         return res.status(404).json({ error: 'Profile not found' });
       }
 
-      res.json({ profile });
+      // Return user object that matches frontend AuthUser interface
+      const user = {
+        id: req.user!.id,
+        email: req.user!.email,
+        full_name: profile.full_name,
+        phone: profile.phone,
+        avatar_url: profile.avatar_url,
+        role: profile.role,
+        created_at: profile.created_at,
+        email_confirmed_at: null, // Not stored in profile, would need to fetch from auth.users
+      };
+
+      res.json({ user, profile });
     } catch (error) {
       console.error('Get profile error:', error);
       res.status(500).json({ error: 'Failed to get profile' });

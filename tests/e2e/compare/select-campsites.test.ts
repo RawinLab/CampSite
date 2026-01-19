@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { loginAsUser, waitForApi, assertNoErrors } from '../utils';
 
 test.describe('Campsite Selection for Comparison', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to wishlist page where comparison is available
+    // Login and navigate to wishlist page where comparison is available
+    await loginAsUser(page);
+
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForLoadState('networkidle');
+    await wishlistApiPromise;
+    await assertNoErrors(page);
   });
 
   test('T101.1: Single campsite can be selected with checkbox', async ({ page }) => {
@@ -61,11 +66,9 @@ test.describe('Campsite Selection for Comparison', () => {
 
     // Scroll down
     await page.evaluate(() => window.scrollBy(0, 500));
-    await page.waitForTimeout(200);
 
     // Scroll back up
     await page.evaluate(() => window.scrollBy(0, -500));
-    await page.waitForTimeout(200);
 
     // Verify selection is still active
     await expect(checkboxes.first()).toBeChecked();
@@ -100,9 +103,6 @@ test.describe('Campsite Selection for Comparison', () => {
 
     // Select the campsite
     await firstCheckbox.click();
-
-    // Wait for visual update
-    await page.waitForTimeout(100);
 
     // Verify card has selection styling (border color changes or has selected class)
     const selectedBorderColor = await firstCard.evaluate((el) =>

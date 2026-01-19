@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getAccessToken } from '@/lib/auth/token';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface AdminStats {
   pending_campsites: number;
@@ -35,9 +38,11 @@ export default function AdminLayout({
       if (!user || role !== 'admin') return;
 
       try {
-        const response = await fetch('/api/admin/stats', {
+        const token = getAccessToken();
+        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           credentials: 'include',
         });

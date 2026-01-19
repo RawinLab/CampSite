@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loginAsOwner } from '../utils/auth';
 import { createSupabaseAdmin } from '../utils/auth';
 import { createTestCampsite, createTestInquiry, cleanupTestData } from '../utils/test-data';
+import { assertNoErrors, DASHBOARD_API } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Owner Dashboard - Inquiry List Management
@@ -23,7 +24,6 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
   test.beforeEach(async ({ page }) => {
     // Login as owner
     await loginAsOwner(page);
-    await page.waitForTimeout(2000);
   });
 
   test.afterAll(async () => {
@@ -46,9 +46,19 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Test inquiry for list',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       // Navigate to inquiry list
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Verify page loads
       const content = page.locator('h1, main');
@@ -68,20 +78,32 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Guest info test',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Wait for inquiry cards
       const inquiryCard = page.locator('[data-testid="inquiry-card"]').or(
         page.locator('[data-testid="inquiry-item"]')
       ).first();
 
-      if (await inquiryCard.isVisible({ timeout: 10000 }).catch(() => false)) {
+      const isVisible = await inquiryCard.isVisible({ timeout: 10000 }).catch(() => false);
+
+      if (isVisible && data.data && data.data.length > 0) {
         await expect(inquiryCard).toBeVisible();
 
         // Check for guest name
         const guestName = page.getByText('Jane Smith');
-        if (await guestName.isVisible({ timeout: 3000 }).catch(() => false)) {
+        const hasGuestName = await guestName.isVisible({ timeout: 3000 }).catch(() => false);
+        if (hasGuestName) {
           await expect(guestName).toBeVisible();
         }
       }
@@ -99,15 +121,26 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Badge test',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Look for status badge
       const statusBadge = page.locator('[data-testid="inquiry-status"]').or(
         page.locator('[data-testid="status-badge"]')
       ).first();
 
-      if (await statusBadge.isVisible({ timeout: 10000 }).catch(() => false)) {
+      const isVisible = await statusBadge.isVisible({ timeout: 10000 }).catch(() => false);
+
+      if (isVisible && data.data && data.data.length > 0) {
         await expect(statusBadge).toBeVisible();
       }
     });
@@ -124,8 +157,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Date test',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Look for timestamp
       const timestamp = page.locator('[data-testid="inquiry-date"]').or(
@@ -134,7 +176,9 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         )
       ).first();
 
-      if (await timestamp.isVisible({ timeout: 10000 }).catch(() => false)) {
+      const isVisible = await timestamp.isVisible({ timeout: 10000 }).catch(() => false);
+
+      if (isVisible && data.data && data.data.length > 0) {
         await expect(timestamp).toBeVisible();
       }
     });
@@ -153,28 +197,46 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Navigation test',
       });
 
+      // Wait for list API
+      const listApiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const listResponse = await listApiPromise;
+
+      // Verify API response
+      const listData = await listResponse.json();
+      expect(listData.success).toBe(true);
 
       const inquiryCard = page.locator('[data-testid="inquiry-card"]').or(
         page.locator('[data-testid="inquiry-item"]')
       ).first();
 
-      if (await inquiryCard.isVisible({ timeout: 10000 }).catch(() => false)) {
+      const isVisible = await inquiryCard.isVisible({ timeout: 10000 }).catch(() => false);
+
+      if (isVisible && listData.data && listData.data.length > 0) {
+        // Wait for detail API when clicking
+        const detailApiPromise = page.waitForResponse(
+          res => res.url().includes('/api/owner/inquiries/') && res.status() === 200
+        );
+
         // Try clicking the card
         await inquiryCard.click();
-        await page.waitForTimeout(3000);
+        await detailApiPromise;
 
         // Should navigate to detail page or stay on list
-        const url = page.url();
-        // URL might change or modal might open
-        // Just verify page is still responsive
         const content = page.locator('main');
         await expect(content).toBeVisible({ timeout: 10000 });
+        await assertNoErrors(page);
       } else {
         // No cards visible - navigate directly to detail
+        const detailApiPromise = page.waitForResponse(
+          res => res.url().includes(`/api/owner/inquiries/${inquiry.id}`) && res.status() === 200
+        );
+
         await page.goto(`/dashboard/inquiries/${inquiry.id}`);
-        await page.waitForTimeout(3000);
+        await detailApiPromise;
 
         const content = page.locator('main');
         await expect(content).toBeVisible({ timeout: 10000 });
@@ -184,8 +246,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
 
   test.describe('3. Filtering', () => {
     test('T083.8: Filter controls are present', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Look for status filter
       const statusFilter = page.locator('[data-testid="status-filter"]').or(
@@ -201,8 +272,13 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
     });
 
     test('T083.14: Search functionality if available', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Check for search input
       const searchInput = page.locator('[data-testid="inquiry-search"]').or(
@@ -221,9 +297,19 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
 
   test.describe('4. Empty States', () => {
     test('T083.29: Shows appropriate message when no inquiries', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       // Navigate directly without creating inquiries
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Page should load (either with inquiries or empty state)
       const content = page.locator('main, [data-testid="inquiry-list"], [data-testid="empty-state"]');
@@ -263,8 +349,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
 
       const startTime = Date.now();
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Verify page loads
       const content = page.locator('main, h1');
@@ -277,8 +372,8 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
     });
 
     test('T083.35: Shows skeleton or loading state', async ({ page }) => {
-      // Navigate to page
-      await page.goto(DASHBOARD_INQUIRIES_URL);
+      // Start navigation
+      const navigationPromise = page.goto(DASHBOARD_INQUIRIES_URL);
 
       // Check for loading skeleton (may appear briefly)
       const skeleton = page.locator('[data-testid="inquiry-skeleton"]').or(
@@ -289,8 +384,15 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         )
       );
 
+      // Wait for API and navigation
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
+      await navigationPromise;
+      await apiPromise;
+
       // Wait for actual content
-      await page.waitForTimeout(3000);
       const content = page.locator('main');
       await expect(content).toBeVisible({ timeout: 15000 });
 
@@ -302,8 +404,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
 
   test.describe('6. Pagination', () => {
     test('T083.20: Shows pagination if many inquiries exist', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Check if pagination exists
       const pagination = page.locator('[data-testid="pagination"]').or(
@@ -335,8 +446,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Mobile test',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Verify page loads on mobile
       const content = page.locator('main');
@@ -347,7 +467,9 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         page.locator('main > *').first()
       );
 
-      if (await firstCard.isVisible({ timeout: 5000 }).catch(() => false)) {
+      const isVisible = await firstCard.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (isVisible) {
         const boundingBox = await firstCard.boundingBox();
 
         if (boundingBox) {
@@ -372,8 +494,17 @@ test.describe('Owner Dashboard - Inquiry List Management', () => {
         message: 'Owner test',
       });
 
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.inquiries) && res.status() === 200
+      );
+
       await page.goto(DASHBOARD_INQUIRIES_URL);
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Get all campsite names from inquiry cards
       const campsiteNames = await page.locator('[data-testid="campsite-name"]').allTextContents();

@@ -48,6 +48,7 @@ export interface RegisterResponse {
 
 export interface MeResponse {
   user: AuthUser;
+  profile?: Profile;
 }
 
 export interface RefreshResponse {

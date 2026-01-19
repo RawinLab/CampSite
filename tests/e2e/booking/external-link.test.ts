@@ -29,7 +29,7 @@ test.describe('External Booking Link', () => {
   test('external booking link opens in new tab with correct URL', async ({ page, context }) => {
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Wait for the booking button to be visible
     const bookingButton = page.getByRole('button', { name: /book now/i });
@@ -55,7 +55,7 @@ test.describe('External Booking Link', () => {
   test('booking button has security attributes (noopener, noreferrer)', async ({ page }) => {
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Wait for the booking button to be visible
     const bookingButton = page.getByRole('button', { name: /book now/i });
@@ -111,7 +111,7 @@ test.describe('External Booking Link', () => {
 
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Prevent window.open from actually opening a new window
     await page.evaluate(() => {
@@ -124,7 +124,7 @@ test.describe('External Booking Link', () => {
     await bookingButton.click();
 
     // Wait a bit for async analytics call
-    await page.waitForTimeout(500);
+    
 
     // Verify analytics was tracked (optional feature)
     if (analyticsTracked) {
@@ -138,7 +138,7 @@ test.describe('External Booking Link', () => {
   test('shows ExternalLink icon on booking button', async ({ page }) => {
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Wait for the booking button to be visible
     const bookingButton = page.getByRole('button', { name: /book now/i });
@@ -160,7 +160,7 @@ test.describe('External Booking Link', () => {
 
     // Navigate to campsite without booking URL
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Verify "Book Now" button is not present
     const bookingButton = page.getByRole('button', { name: /book now/i });
@@ -190,7 +190,7 @@ test.describe('External Booking Link', () => {
 
     // Navigate to campsite with phone only
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Verify "Call to Book" link is shown
     const phoneLink = page.getByRole('link', { name: /call to book/i });

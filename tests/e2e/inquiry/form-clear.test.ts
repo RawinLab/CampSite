@@ -70,7 +70,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission to complete
-    await page.waitForTimeout(1000);
+    
 
     // Check for success message/confirmation
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -114,7 +114,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success indicator
     const successIndicator = page.locator('[data-testid="success-message"]').or(
@@ -153,7 +153,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success
     const success = page.locator('[data-testid="success-message"]').or(
@@ -194,7 +194,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success
     const success = page.locator('[data-testid="success-message"]').or(
@@ -229,7 +229,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for first submission
-    await page.waitForTimeout(1500);
+    
 
     // Check if form cleared
     const success = page.locator('[data-testid="success-message"]').or(
@@ -259,7 +259,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
       await submitButton.click();
 
       // Wait for second submission
-      await page.waitForTimeout(1000);
+      
 
       // Should show success again
       if (await success.isVisible({ timeout: 5000 }).catch(() => false)) {
@@ -300,7 +300,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success
     const success = page.locator('[data-testid="success-message"]').or(
@@ -322,7 +322,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
       await inquiryButton.click();
     }
 
-    await page.waitForTimeout(500);
+    
 
     // Change inquiry type if type selector exists
     const bookingTypeButton = page.getByRole('button', { name: /booking inquiry/i });
@@ -330,7 +330,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
 
     if (await bookingTypeButton.isVisible()) {
       await bookingTypeButton.click();
-      await page.waitForTimeout(200);
+      
     }
 
     // Fill required fields
@@ -348,7 +348,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success
     const success = page.locator('[data-testid="success-message"]').or(
@@ -378,13 +378,13 @@ test.describe('Inquiry Form Clearing After Submission', () => {
       await inquiryButton.click();
     }
 
-    await page.waitForTimeout(500);
+    
 
     // Show dates section if it's collapsible
     const showDatesButton = page.getByRole('button', { name: /add.*date|show.*date/i });
     if (await showDatesButton.isVisible()) {
       await showDatesButton.click();
-      await page.waitForTimeout(300);
+      
     }
 
     // Fill date fields if visible
@@ -422,7 +422,7 @@ test.describe('Inquiry Form Clearing After Submission', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success
     const success = page.locator('[data-testid="success-message"]').or(

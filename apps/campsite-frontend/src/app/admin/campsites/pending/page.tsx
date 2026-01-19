@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tent, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CampsiteType } from '@campsite/shared';
+import { getAccessToken } from '@/lib/auth/token';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface PendingCampsite {
   id: string;
@@ -42,9 +45,16 @@ export default function PendingCampsitesPage() {
     setError(null);
 
     try {
+      const token = getAccessToken();
       const response = await fetch(
-        `/api/admin/campsites/pending?page=${page}&limit=10`,
-        { credentials: 'include' }
+        `${API_BASE_URL}/api/admin/campsites/pending?page=${page}&limit=10`,
+        {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
       );
 
       if (!response.ok) {
@@ -71,9 +81,13 @@ export default function PendingCampsitesPage() {
 
   const handleApprove = async (id: string) => {
     try {
-      const response = await fetch(`/api/admin/campsites/${id}/approve`, {
+      const token = getAccessToken();
+      const response = await fetch(`${API_BASE_URL}/api/admin/campsites/${id}/approve`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         credentials: 'include',
       });
 
@@ -98,9 +112,13 @@ export default function PendingCampsitesPage() {
 
   const handleReject = async (id: string, reason: string) => {
     try {
-      const response = await fetch(`/api/admin/campsites/${id}/reject`, {
+      const token = getAccessToken();
+      const response = await fetch(`${API_BASE_URL}/api/admin/campsites/${id}/reject`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ rejection_reason: reason }),
         credentials: 'include',
       });

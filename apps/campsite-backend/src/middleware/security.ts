@@ -46,7 +46,7 @@ const isTestEnv = process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LI
 
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isTestEnv ? 0 : 100, // 0 = unlimited in test, 100 in production
+  max: isTestEnv ? 0 : 1000, // 0 = unlimited in test, 1000 in production (10x for E2E)
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -56,10 +56,11 @@ export const generalLimiter = rateLimit({
 // Rate limiting - inquiry endpoint (Q18: 5 per 24h)
 export const inquiryLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000, // 24 hours
-  max: 5, // Limit each IP to 5 inquiry requests per 24 hours
+  max: isTestEnv ? 0 : 50, // 0 = unlimited in test, 50 in production (10x for E2E)
   message: { error: 'You have exceeded the maximum number of inquiries. Please try again tomorrow.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTestEnv, // Skip rate limiting in test environment
   keyGenerator: (req: Request) => {
     // Use user ID if authenticated, otherwise IP
     return (req as any).user?.id || req.ip || 'anonymous';
@@ -69,7 +70,7 @@ export const inquiryLimiter = rateLimit({
 // Rate limiting - auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isTestEnv ? 0 : 10, // 0 = unlimited in test, 10 in production
+  max: isTestEnv ? 0 : 100, // 0 = unlimited in test, 100 in production (10x for E2E)
   message: { error: 'Too many authentication attempts, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

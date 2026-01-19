@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from '../utils/auth';
 import { createSupabaseAdmin, createTestCampsite, cleanupTestData } from '../utils/test-data';
+import { waitForApi, waitForApiSuccess, gotoWithApi, assertNoErrors, ADMIN_API } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Admin Pending Campsites Page
@@ -29,15 +30,23 @@ test.describe('Admin Pending Campsites Page', () => {
       test.setTimeout(60000);
 
       await loginAsAdmin(page);
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+
+      // Wait for API call before navigation
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      // Verify API response
+      expect(data.success).toBe(true);
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
 
       // Should successfully load the admin page
       await expect(page).toHaveURL(/\/admin\/campsites\/pending/);
 
-      // Verify page content is visible
-      const heading = page.locator('h1, h2').filter({ hasText: /pending|campsites/i });
-      await expect(heading.first()).toBeVisible({ timeout: 10000 });
+      // Verify no errors on page
+      await assertNoErrors(page);
+
+      // Verify specific page content
+      await expect(page.locator('h1')).toContainText('Pending Campsites');
     });
   });
 
@@ -48,12 +57,14 @@ test.describe('Admin Pending Campsites Page', () => {
     });
 
     test('shows page title "Pending Campsites" or similar', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Verify page title
-      const heading = page.locator('h1, h2').filter({ hasText: /pending|campsites/i });
-      await expect(heading.first()).toBeVisible({ timeout: 10000 });
+      // Verify API response
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
+
+      // Verify exact page title
+      await expect(page.locator('h1')).toContainText('Pending Campsites');
     });
 
     test('shows empty state when no pending campsites', async ({ page }) => {
@@ -73,13 +84,15 @@ test.describe('Admin Pending Campsites Page', () => {
         }
       }
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Verify empty state message or zero count
-      const emptyMessage = page.locator('text=/no pending|no campsites|none pending|0.*pending/i');
-      const hasEmpty = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
-      expect(hasEmpty).toBeTruthy();
+      // Verify API returns empty array
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual([]);
+      await assertNoErrors(page);
+
+      // Verify empty state message
+      await expect(page.locator('text=/All caught up|no pending campsites/i')).toBeVisible();
     });
 
     test('shows pending campsites list when data exists', async ({ page }) => {
@@ -93,17 +106,18 @@ test.describe('Admin Pending Campsites Page', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Verify campsites appear
-      const campsite1 = page.locator('text=/E2E Test Camp 1/i');
-      const campsite2 = page.locator('text=/E2E Test Camp 2/i');
+      // Verify API returns data
+      expect(data.success).toBe(true);
+      expect(data.data).toBeDefined();
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThanOrEqual(2);
+      await assertNoErrors(page);
 
-      const has1 = await campsite1.isVisible({ timeout: 10000 }).catch(() => false);
-      const has2 = await campsite2.isVisible({ timeout: 10000 }).catch(() => false);
-
-      expect(has1 || has2).toBeTruthy();
+      // Verify campsites appear in UI
+      await expect(page.locator('text=E2E Test Camp 1')).toBeVisible();
+      await expect(page.locator('text=E2E Test Camp 2')).toBeVisible();
     });
   });
 
@@ -124,22 +138,23 @@ test.describe('Admin Pending Campsites Page', () => {
     });
 
     test('shows campsite name and basic info', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      const campsiteName = page.locator('text=/Display Test Camp/i');
-      await expect(campsiteName).toBeVisible({ timeout: 10000 });
+      expect(data.success).toBe(true);
+      expect(data.data.length).toBeGreaterThanOrEqual(1);
+      await assertNoErrors(page);
+
+      await expect(page.locator('text=Display Test Camp')).toBeVisible();
     });
 
     test('shows campsite description or province', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Look for description or province name
-      const description = page.locator('text=/Beautiful camping spot|camping|glamping/i');
-      const hasDescription = await description.first().isVisible({ timeout: 5000 }).catch(() => false);
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
-      expect(hasDescription).toBeTruthy();
+      // Verify description is shown in UI
+      await expect(page.locator('text=Beautiful camping spot for testing')).toBeVisible();
     });
   });
 
@@ -161,8 +176,11 @@ test.describe('Admin Pending Campsites Page', () => {
     });
 
     test('shows Approve and Reject buttons on each card', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      expect(data.data.length).toBeGreaterThanOrEqual(2);
+      await assertNoErrors(page);
 
       const approveButtons = page.getByRole('button', { name: /approve/i });
       const rejectButtons = page.getByRole('button', { name: /reject/i });
@@ -171,36 +189,36 @@ test.describe('Admin Pending Campsites Page', () => {
       const rejectCount = await rejectButtons.count();
 
       // Should have at least 2 approve and 2 reject buttons
-      expect(approveCount).toBeGreaterThanOrEqual(1);
-      expect(rejectCount).toBeGreaterThanOrEqual(1);
+      expect(approveCount).toBeGreaterThanOrEqual(2);
+      expect(rejectCount).toBeGreaterThanOrEqual(2);
     });
 
     test('Approve button has green color styling', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 5000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        const buttonClasses = await approveButton.getAttribute('class');
-        const hasGreenColor = buttonClasses?.includes('green') || buttonClasses?.includes('success');
-        expect(hasGreenColor).toBeTruthy();
-      }
+      const buttonClasses = await approveButton.getAttribute('class');
+      const hasGreenColor = buttonClasses?.includes('green') || buttonClasses?.includes('success');
+      expect(hasGreenColor).toBeTruthy();
     });
 
     test('Reject button has red color styling', async ({ page }) => {
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const rejectButton = page.getByRole('button', { name: /reject/i }).first();
-      const isVisible = await rejectButton.isVisible({ timeout: 5000 }).catch(() => false);
+      await expect(rejectButton).toBeVisible();
 
-      if (isVisible) {
-        const buttonClasses = await rejectButton.getAttribute('class');
-        const hasRedColor = buttonClasses?.includes('red') || buttonClasses?.includes('destructive') || buttonClasses?.includes('danger');
-        expect(hasRedColor).toBeTruthy();
-      }
+      const buttonClasses = await rejectButton.getAttribute('class');
+      const hasRedColor = buttonClasses?.includes('red') || buttonClasses?.includes('destructive') || buttonClasses?.includes('danger');
+      expect(hasRedColor).toBeTruthy();
     });
   });
 
@@ -209,14 +227,15 @@ test.describe('Admin Pending Campsites Page', () => {
       test.setTimeout(60000);
 
       await loginAsAdmin(page);
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
 
-      // Look for admin navigation elements
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
+
+      // Verify admin navigation elements are present
       const adminNav = page.locator('nav, aside, [role="navigation"]');
-      const hasNav = await adminNav.first().isVisible({ timeout: 5000 }).catch(() => false);
-
-      expect(hasNav).toBeTruthy();
+      await expect(adminNav.first()).toBeVisible();
     });
   });
 
@@ -232,22 +251,27 @@ test.describe('Admin Pending Campsites Page', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 5000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        await approveButton.click();
-        await page.waitForTimeout(2000);
+      // Wait for approve API call
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(`/api/admin/campsites/${campsite.id}/approve`) && res.status() === 200
+      );
 
-        // Should show some kind of feedback (toast, dialog, or campsite removed)
-        const feedback = page.locator('text=/approved|success|confirm/i');
-        const hasFeedback = await feedback.first().isVisible({ timeout: 5000 }).catch(() => false);
+      await approveButton.click();
 
-        expect(hasFeedback).toBeTruthy();
-      }
+      const response = await apiPromise;
+      const responseData = await response.json();
+      expect(responseData.success).toBe(true);
+
+      // Verify success feedback
+      await expect(page.locator('text=/approved|success/i')).toBeVisible();
 
       // Clean up
       await supabase.from('campsites').delete().eq('id', campsite.id);
@@ -264,22 +288,19 @@ test.describe('Admin Pending Campsites Page', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const rejectButton = page.getByRole('button', { name: /reject/i }).first();
-      const isVisible = await rejectButton.isVisible({ timeout: 5000 }).catch(() => false);
+      await expect(rejectButton).toBeVisible();
 
-      if (isVisible) {
-        await rejectButton.click();
-        await page.waitForTimeout(1000);
+      await rejectButton.click();
 
-        // Should show dialog or reason input
-        const dialog = page.locator('[role="dialog"], text=/reason|reject|confirm/i');
-        const hasDialog = await dialog.first().isVisible({ timeout: 5000 }).catch(() => false);
-
-        expect(hasDialog).toBeTruthy();
-      }
+      // Verify dialog opens
+      await expect(page.locator('[role="dialog"]')).toBeVisible();
+      await expect(page.locator('text=/reason|reject/i')).toBeVisible();
     });
   });
 
@@ -292,14 +313,15 @@ test.describe('Admin Pending Campsites Page', () => {
       // Ensure no pending campsites
       await cleanupTestData(supabase);
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Should show empty state without errors
-      const emptyState = page.locator('text=/no pending|no campsites|empty|0/i');
-      const hasEmpty = await emptyState.first().isVisible({ timeout: 5000 }).catch(() => false);
+      // Verify API returns empty array
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual([]);
+      await assertNoErrors(page);
 
-      expect(hasEmpty).toBeTruthy();
+      // Verify empty state message
+      await expect(page.locator('text=/All caught up|no pending campsites/i')).toBeVisible();
     });
   });
 
@@ -312,14 +334,13 @@ test.describe('Admin Pending Campsites Page', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Verify page loads
-      const heading = page.locator('h1, h2').filter({ hasText: /pending|campsites/i });
-      const isVisible = await heading.first().isVisible({ timeout: 10000 }).catch(() => false);
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
-      expect(isVisible).toBeTruthy();
+      // Verify page heading is visible
+      await expect(page.locator('h1')).toContainText('Pending Campsites');
     });
   });
 });

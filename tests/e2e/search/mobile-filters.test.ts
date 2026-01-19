@@ -1,11 +1,11 @@
 import { test, expect, devices } from '@playwright/test';
 
-test.describe('Mobile Filter Modal', () => {
-  // Configure mobile viewport for all tests in this suite
-  test.use({
-    ...devices['iPhone 12'],
-  });
+// Configure mobile viewport for all tests in this file
+test.use({
+  ...devices['iPhone 12'],
+});
 
+test.describe('Mobile Filter Modal', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to search page
     await page.goto('/search');

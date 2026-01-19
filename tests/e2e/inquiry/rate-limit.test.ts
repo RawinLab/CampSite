@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAsUser, createSupabaseAdmin } from '../utils/auth';
+import { PUBLIC_API } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Inquiry Rate Limiting
@@ -31,7 +32,7 @@ test.describe('Inquiry Rate Limiting', () => {
 
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   test.afterEach(async () => {
@@ -58,7 +59,7 @@ test.describe('Inquiry Rate Limiting', () => {
     await inquiryButton.click();
 
     // Wait for dialog
-    await page.waitForTimeout(500);
+    
 
     // Fill form
     const nameInput = page.getByLabel(/your name/i);
@@ -76,7 +77,7 @@ test.describe('Inquiry Rate Limiting', () => {
     await submitButton.click();
 
     // Wait for success
-    await page.waitForTimeout(2000);
+    
 
     // Should see success message
     const successMessage = page.getByText(/inquiry sent|successfully/i);
@@ -88,7 +89,7 @@ test.describe('Inquiry Rate Limiting', () => {
     const inquiryButton = page.getByRole('button', { name: /send inquiry|contact owner/i });
     await inquiryButton.click();
 
-    await page.waitForTimeout(500);
+    
 
     await page.getByLabel(/your name/i).fill('Test User 2');
     await page.getByLabel(/email/i).fill('ratelimit2.test@example.com');
@@ -97,7 +98,7 @@ test.describe('Inquiry Rate Limiting', () => {
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
     await submitButton.click();
 
-    await page.waitForTimeout(2000);
+    
 
     // Check for success state or rate limit info
     const successOrInfo = page.getByText(/sent|successfully|remaining/i);
@@ -109,7 +110,7 @@ test.describe('Inquiry Rate Limiting', () => {
     const inquiryButton = page.getByRole('button', { name: /send inquiry|contact owner/i });
     await inquiryButton.click();
 
-    await page.waitForTimeout(500);
+    
 
     // Initially submit button should be disabled
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
@@ -120,7 +121,7 @@ test.describe('Inquiry Rate Limiting', () => {
     await page.getByLabel(/email/i).fill('ratelimit3.test@example.com');
     await page.getByLabel(/message/i).fill('Testing form validation before submission works correctly.');
 
-    await page.waitForTimeout(300);
+    
 
     // Now should be enabled
     await expect(submitButton).toBeEnabled();
@@ -131,7 +132,7 @@ test.describe('Inquiry Rate Limiting', () => {
     const inquiryButton = page.getByRole('button', { name: /send inquiry|contact owner/i });
     await inquiryButton.click();
 
-    await page.waitForTimeout(500);
+    
 
     // Dialog should be visible
     const dialog = page.locator('[role="dialog"]').or(page.locator('[data-testid="inquiry-dialog"]'));
@@ -144,7 +145,7 @@ test.describe('Inquiry Rate Limiting', () => {
 
     if (await closeButton.first().isVisible().catch(() => false)) {
       await closeButton.first().click();
-      await page.waitForTimeout(300);
+      
 
       // Dialog should be closed
       const isDialogVisible = await dialog.first().isVisible().catch(() => false);
@@ -160,38 +161,38 @@ test.describe('Inquiry Rate Limiting', () => {
     const inquiryButton = page.getByRole('button', { name: /send inquiry|contact owner/i });
     await inquiryButton.click();
 
-    await page.waitForTimeout(500);
+    
 
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
 
     // Test name field
     const nameInput = page.getByLabel(/your name/i);
     await nameInput.fill('A');
-    await page.waitForTimeout(100);
+    
     // Still disabled
     await expect(submitButton).toBeDisabled();
 
     // Test email field
     const emailInput = page.getByLabel(/email/i);
     await emailInput.fill('invalid');
-    await page.waitForTimeout(100);
+    
     // Still disabled
     await expect(submitButton).toBeDisabled();
 
     // Valid email
     await emailInput.fill('valid@example.com');
-    await page.waitForTimeout(100);
+    
 
     // Test message field - too short
     const messageInput = page.getByLabel(/message/i);
     await messageInput.fill('Short');
-    await page.waitForTimeout(300);
+    
     // Still disabled
     await expect(submitButton).toBeDisabled();
 
     // Valid message
     await messageInput.fill('This is a properly formatted message that meets all validation requirements.');
-    await page.waitForTimeout(300);
+    
 
     // Now should be enabled
     await expect(submitButton).toBeEnabled();

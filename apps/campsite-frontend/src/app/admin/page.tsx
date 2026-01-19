@@ -5,6 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tent, Users, MessageSquareWarning, Star, FileText } from 'lucide-react';
+import { getAccessToken } from '@/lib/auth/token';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface AdminStats {
   pending_campsites: number;
@@ -23,8 +26,13 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const response = await fetch('/api/admin/stats', {
+        const token = getAccessToken();
+        const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
         });
 
         if (!response.ok) {

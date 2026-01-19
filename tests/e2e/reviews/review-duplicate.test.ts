@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 import request from 'supertest';
 import app from '../../../apps/campsite-backend/src/app';
 import { supabaseAdmin } from '../../../apps/campsite-backend/src/lib/supabase';
@@ -117,10 +118,6 @@ test.describe('E2E: Duplicate Review Prevention', () => {
   });
 
   test('T057.1: User can submit first review successfully', async ({ page }) => {
-    // Navigate to campsite page
-    await page.goto(`/campsites/${campsiteId1}`);
-    await page.waitForLoadState('networkidle');
-
     // Set authentication using new token storage keys
     await page.evaluate((tokenData) => {
       localStorage.setItem('campsite_access_token', tokenData.token);
@@ -128,9 +125,22 @@ test.describe('E2E: Duplicate Review Prevention', () => {
       localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
     }, { token: authToken });
 
-    // Reload to apply auth
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to campsite page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(campsiteId1), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(campsiteId1), { status: 200 }),
+      page.goto(`/campsites/${campsiteId1}`)
+    ]);
+
+    // Verify API responses
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
+
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Find and click "Write a Review" button
     const writeReviewButton = page.getByRole('button', { name: /write.*review/i });
@@ -146,16 +156,27 @@ test.describe('E2E: Duplicate Review Prevention', () => {
       'This is my first review for this campsite. Great location and facilities!'
     );
 
+    // Wait for review submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(campsiteId1), {
+      method: 'POST',
+      status: 200
+    });
+
     // Submit the form
     const submitButton = page.getByRole('button', { name: /submit.*review/i });
     await submitButton.click();
 
-    // Wait for success message
-    await page.waitForTimeout(1000);
+    // Wait for API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
-    // Verify success message or redirect
+    // Verify success message
     const successMessage = page.getByText(/review.*submitted.*successfully/i);
     await expect(successMessage).toBeVisible({ timeout: 5000 });
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Store review ID for cleanup
     const { data: review } = await supabaseAdmin
@@ -198,19 +219,26 @@ test.describe('E2E: Duplicate Review Prevention', () => {
       }
     }
 
-    // Navigate to campsite page
-    await page.goto(`/campsites/${campsiteId1}`);
-    await page.waitForLoadState('networkidle');
-
-    // Set authentication using new token storage keys
+    // Set authentication
     await page.evaluate((tokenData) => {
       localStorage.setItem('campsite_access_token', tokenData.token);
       localStorage.setItem('campsite_refresh_token', tokenData.token);
       localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
     }, { token: authToken });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to campsite page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(campsiteId1), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(campsiteId1), { status: 200 }),
+      page.goto(`/campsites/${campsiteId1}`)
+    ]);
+
+    // Verify API responses
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Check for message indicating user already reviewed
     const alreadyReviewedMessage = page.getByText(/you.*already.*reviewed/i);
@@ -262,23 +290,31 @@ test.describe('E2E: Duplicate Review Prevention', () => {
 
     // Should return 400 error
     expect(response.status).toBe(400);
-    expect(response.body.error).toBe('You have already reviewed this campsite');
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toMatch(/already.*reviewed/i);
   });
 
   test('T057.4: User can still review different campsites', async ({ page }) => {
-    // Navigate to second campsite page
-    await page.goto(`/campsites/${campsiteId2}`);
-    await page.waitForLoadState('networkidle');
-
-    // Set authentication using new token storage keys
+    // Set authentication
     await page.evaluate((tokenData) => {
       localStorage.setItem('campsite_access_token', tokenData.token);
       localStorage.setItem('campsite_refresh_token', tokenData.token);
       localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
     }, { token: authToken });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to second campsite page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(campsiteId2), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(campsiteId2), { status: 200 }),
+      page.goto(`/campsites/${campsiteId2}`)
+    ]);
+
+    // Verify API responses
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Verify "Write a Review" button is available
     const writeReviewButton = page.getByRole('button', { name: /write.*review/i });
@@ -297,16 +333,27 @@ test.describe('E2E: Duplicate Review Prevention', () => {
       'This is a review for a different campsite. Excellent glamping experience!'
     );
 
+    // Wait for review submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(campsiteId2), {
+      method: 'POST',
+      status: 200
+    });
+
     // Submit the form
     const submitButton = page.getByRole('button', { name: /submit.*review/i });
     await submitButton.click();
 
-    // Wait for success message
-    await page.waitForTimeout(1000);
+    // Wait for API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify success message
     const successMessage = page.getByText(/review.*submitted.*successfully/i);
     await expect(successMessage).toBeVisible({ timeout: 5000 });
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Verify review was created
     const { data: review } = await supabaseAdmin
@@ -340,19 +387,26 @@ test.describe('E2E: Duplicate Review Prevention', () => {
       });
     }
 
-    // Navigate to campsite page
-    await page.goto(`/campsites/${campsiteId1}`);
-    await page.waitForLoadState('networkidle');
-
-    // Set authentication using new token storage keys
+    // Set authentication
     await page.evaluate((tokenData) => {
       localStorage.setItem('campsite_access_token', tokenData.token);
       localStorage.setItem('campsite_refresh_token', tokenData.token);
       localStorage.setItem('campsite_token_expiry', (Date.now() + 3600000).toString());
     }, { token: authToken });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate to campsite page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(campsiteId1), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(campsiteId1), { status: 200 }),
+      page.goto(`/campsites/${campsiteId1}`)
+    ]);
+
+    // Verify API responses
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Look for "Your Review" section or similar heading
     const yourReviewHeading = page.getByText(/your.*review/i);

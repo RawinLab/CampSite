@@ -1,10 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 
 test.describe('E2E: Price Filter Validation', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to search page with price filters
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await apiPromise;
+    await assertNoErrors(page);
   });
 
   test('min slider cannot exceed max slider', async ({ page }) => {
@@ -88,17 +93,25 @@ test.describe('E2E: Price Filter Validation', () => {
     const maxSlider = page.locator('[data-testid="price-max-slider"]');
     const resetButton = page.locator('[data-testid="filters-reset"]');
 
-    // Set custom price range
+    // Set custom price range and wait for API call
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     await minSlider.fill('800');
     await maxSlider.fill('3000');
+    await apiPromise;
 
     // Verify values are set
     expect(await minSlider.inputValue()).toBe('800');
     expect(await maxSlider.inputValue()).toBe('3000');
 
-    // Click reset button
+    // Click reset button and wait for API call
+    const resetApiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
     await resetButton.click();
-    await page.waitForTimeout(300); // Wait for reset animation
+    await resetApiPromise;
 
     // Verify prices are reset to defaults
     const minAfterReset = await minSlider.inputValue();
@@ -114,19 +127,29 @@ test.describe('E2E: Price Filter Validation', () => {
     await page.waitForSelector('[data-testid="campsite-card"]', { timeout: 5000 });
     const initialCount = await page.locator('[data-testid="campsite-card"]').count();
 
-    // Apply price filter
+    // Apply price filter and wait for API call
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     const minSlider = page.locator('[data-testid="price-min-slider"]');
     const maxSlider = page.locator('[data-testid="price-max-slider"]');
 
     await minSlider.fill('1000');
     await maxSlider.fill('2000');
 
-    // Wait for search results to update
-    await page.waitForTimeout(500);
+    // Wait for API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
+    expect(data.data).toBeDefined();
 
-    // Results should exist (may be same or different count)
+    await assertNoErrors(page);
+
+    // Verify UI matches API data
     const filteredResults = page.locator('[data-testid="campsite-card"]');
     const filteredCount = await filteredResults.count();
+    expect(filteredCount).toBe(data.data.length);
 
     // Verify at least one result or "no results" message
     const hasResults = filteredCount > 0;
@@ -163,9 +186,14 @@ test.describe('E2E: Price Filter Validation', () => {
     const minSlider = page.locator('[data-testid="price-min-slider"]');
     const maxSlider = page.locator('[data-testid="price-max-slider"]');
 
-    // Set price range
+    // Set price range and wait for API
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     await minSlider.fill('1200');
     await maxSlider.fill('2800');
+    await apiPromise;
 
     // Navigate to a campsite detail page (if available)
     const firstCampsite = page.locator('[data-testid="campsite-card"]').first();
@@ -177,7 +205,10 @@ test.describe('E2E: Price Filter Validation', () => {
 
       // Go back to search
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      const backApiPromise = page.waitForResponse(
+        res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+      );
+      await backApiPromise;
 
       // Verify filters are preserved
       expect(await minSlider.inputValue()).toBe('1200');

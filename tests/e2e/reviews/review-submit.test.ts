@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, waitForApiSuccess, assertNoErrors, PUBLIC_API, interceptApi } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Review Submission Flow (T053)
@@ -18,13 +19,10 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Review Submission Flow', () => {
   const TEST_CAMPSITE_SLUG = 'test-campsite-for-reviews';
+  const TEST_CAMPSITE_ID = 'test-campsite-for-reviews'; // Assuming slug is used as ID
 
   // Mock authentication state
   test.beforeEach(async ({ page }) => {
-    // Navigate to campsite detail page
-    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
-    await page.waitForLoadState('networkidle');
-
     // Mock authentication by setting localStorage/cookies
     // This simulates a logged-in user
     await page.evaluate(() => {
@@ -36,9 +34,22 @@ test.describe('Review Submission Flow', () => {
       }));
     });
 
-    // Reload to apply auth state
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Navigate and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`)
+    ]);
+
+    // Verify API responses
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
+
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T053.1: Review form displays when logged in', async ({ page }) => {
@@ -168,11 +179,8 @@ test.describe('Review Submission Flow', () => {
     const contentTextarea = page.getByLabel(/review content/i);
     await contentTextarea.fill('This is a great campsite with beautiful views and friendly staff.');
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
-    // Submit button should now be enabled
-    await expect(submitButton).toBeEnabled();
+    // Wait for form validation to complete
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
   });
 
   test('T053.8: Successful submission shows success message', async ({ page }) => {
@@ -188,21 +196,28 @@ test.describe('Review Submission Flow', () => {
     const contentTextarea = page.getByLabel(/review content/i);
     await contentTextarea.fill('This is a great campsite with beautiful views and friendly staff. Highly recommended!');
 
+    // Intercept review submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     // Submit the form
     const submitButton = page.getByRole('button', { name: /submit review/i });
     await submitButton.click();
 
-    // Wait for submission
-    await page.waitForTimeout(500);
+    // Wait for API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Check for success message
-    const successMessage = page.locator('[data-testid="success-message"]').or(
-      page.getByText(/review submitted successfully/i)
-    );
+    const successMessage = page.locator('[data-testid="success-message"]');
     await expect(successMessage).toBeVisible();
-
-    // Success message should contain confirmation text
     await expect(successMessage).toContainText(/success/i);
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T053.9: Form resets after submission', async ({ page }) => {
@@ -221,12 +236,20 @@ test.describe('Review Submission Flow', () => {
     const contentTextarea = page.getByLabel(/review content/i);
     await contentTextarea.fill('This is a great campsite with beautiful views and friendly staff. Highly recommended!');
 
+    // Intercept review submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     // Submit the form
     const submitButton = page.getByRole('button', { name: /submit review/i });
     await submitButton.click();
 
-    // Wait for submission
-    await page.waitForTimeout(1000);
+    // Wait for API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Check that form fields are reset
     await expect(contentTextarea).toHaveValue('');
@@ -247,21 +270,17 @@ test.describe('Review Submission Flow', () => {
     // Enter content less than 20 characters
     await contentTextarea.fill('Too short');
 
-    // Wait for validation
-    await page.waitForTimeout(300);
+    // Blur to trigger validation
+    await contentTextarea.blur();
 
     // Check for validation error
-    const errorMessage = page.locator('[data-testid="content-error"]').or(
-      page.getByText(/at least 20 characters/i)
-    );
+    const errorMessage = page.locator('[data-testid="content-error"]');
+    await expect(errorMessage).toBeVisible({ timeout: 3000 });
+    await expect(errorMessage).toContainText(/20.*character/i);
 
-    // Error should be visible or submit button should be disabled
+    // Submit button should be disabled
     const submitButton = page.getByRole('button', { name: /submit review/i });
-    if (await errorMessage.isVisible()) {
-      await expect(errorMessage).toBeVisible();
-    } else {
-      await expect(submitButton).toBeDisabled();
-    }
+    await expect(submitButton).toBeDisabled();
   });
 
   test('T053.11: All required fields filled enables submit', async ({ page }) => {
@@ -276,21 +295,18 @@ test.describe('Review Submission Flow', () => {
 
     // 1. Overall rating
     await page.locator('[data-testid="rating-stars"]').locator('[data-rating="5"]').click();
-    await page.waitForTimeout(100);
 
     // 2. Reviewer type
     const reviewerTypeSelect = page.getByLabel(/reviewer type/i);
     await reviewerTypeSelect.click();
     await page.getByRole('option', { name: /family/i }).click();
-    await page.waitForTimeout(100);
 
     // 3. Review content
     const contentTextarea = page.getByLabel(/review content/i);
     await contentTextarea.fill('Amazing campsite for families! Our kids loved the playground and the clean facilities. Staff was very helpful and friendly.');
-    await page.waitForTimeout(300);
 
     // Submit button should be enabled
-    await expect(submitButton).toBeEnabled();
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
   });
 
   test('T053.12: Rating stars are interactive', async ({ page }) => {
@@ -334,24 +350,22 @@ test.describe('Review Submission Flow', () => {
     const contentTextarea = page.getByLabel(/review content/i);
     const charCount = page.locator('[data-testid="char-count"]');
 
-    if (await charCount.isVisible()) {
+    // Check if char count exists
+    const charCountVisible = await charCount.isVisible().catch(() => false);
+    if (charCountVisible) {
       // Type content
       const content = 'This is my review content.';
       await contentTextarea.fill(content);
 
-      // Wait for update
-      await page.waitForTimeout(200);
-
-      // Character count should reflect content length
-      await expect(charCount).toContainText(`${content.length}`);
+      // Wait for char count to update
+      await expect(charCount).toContainText(`${content.length}`, { timeout: 2000 });
 
       // Type more
       await contentTextarea.fill(content + ' Adding more text.');
-      await page.waitForTimeout(200);
 
       // Count should update
       const newLength = (content + ' Adding more text.').length;
-      await expect(charCount).toContainText(`${newLength}`);
+      await expect(charCount).toContainText(`${newLength}`, { timeout: 2000 });
     }
   });
 
@@ -366,7 +380,6 @@ test.describe('Review Submission Flow', () => {
 
     // Fill only rating
     await page.locator('[data-testid="rating-stars"]').locator('[data-rating="4"]').click();
-    await page.waitForTimeout(100);
 
     // Still disabled (missing reviewer type and content)
     await expect(submitButton).toBeDisabled();
@@ -375,7 +388,6 @@ test.describe('Review Submission Flow', () => {
     const reviewerTypeSelect = page.getByLabel(/reviewer type/i);
     await reviewerTypeSelect.click();
     await page.getByRole('option', { name: /solo/i }).click();
-    await page.waitForTimeout(100);
 
     // Still disabled (missing content)
     await expect(submitButton).toBeDisabled();
@@ -383,9 +395,8 @@ test.describe('Review Submission Flow', () => {
     // Add content
     const contentTextarea = page.getByLabel(/review content/i);
     await contentTextarea.fill('This campsite exceeded all my expectations. Great location and amenities!');
-    await page.waitForTimeout(300);
 
     // Now should be enabled
-    await expect(submitButton).toBeEnabled();
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
   });
 });

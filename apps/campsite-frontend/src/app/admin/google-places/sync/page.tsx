@@ -10,6 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable } from '@/components/admin/data-table';
 import { Calendar, Clock, MapPin, CheckCircle, XCircle, AlertCircle, Play } from 'lucide-react';
 import type { SyncLog } from '@campsite/shared';
+import { getAccessToken } from '@/lib/auth/token';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface Column {
   key: string;
@@ -36,11 +39,15 @@ export default function SyncManagementPage() {
   useEffect(() => {
     if (!user || role !== 'admin') return;
 
+    const token = getAccessToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
     function fetchSyncLogs() {
-      fetch(`/api/admin/google-places/sync/logs?limit=10`, {
-        headers: {
-          'content-type': 'application/json',
-        },
+      fetch(`${API_BASE_URL}/api/admin/google-places/sync/logs?limit=10`, {
+        headers,
         credentials: 'include',
       })
         .then((res) => res.json())
@@ -58,7 +65,8 @@ export default function SyncManagementPage() {
     }
 
     function fetchCurrentSyncStatus() {
-      fetch('/api/admin/google-places/sync/status', {
+      fetch(`${API_BASE_URL}/api/admin/google-places/sync/status`, {
+        headers,
         credentials: 'include',
       })
         .then((res) => res.json())
@@ -98,10 +106,12 @@ export default function SyncManagementPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/google-places/sync/trigger', {
+      const token = getAccessToken();
+      const response = await fetch(`${API_BASE_URL}/api/admin/google-places/sync/trigger`, {
         method: 'POST',
         headers: {
-          'content-type': 'application/json',
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({

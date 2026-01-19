@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Play, Settings, Users, Calendar, Database, ArrowRight } from 'lucide-react';
+import { getAccessToken } from '@/lib/auth/token';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface GooglePlacesStats {
   total_raw_places: number;
@@ -34,24 +37,24 @@ export default function GooglePlacesPage() {
       if (!user || role !== 'admin') return;
 
       try {
+        const token = getAccessToken();
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+
         // Get candidate counts
         const [pendingRes, totalRes, lastSyncRes] = await Promise.all([
-          fetch('/api/admin/google-places/candidates?status=pending&limit=1', {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          fetch(`${API_BASE_URL}/api/admin/google-places/candidates?status=pending&limit=1`, {
+            headers,
             credentials: 'include',
           }),
-          fetch('/api/admin/google-places/candidates?limit=1', {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          fetch(`${API_BASE_URL}/api/admin/google-places/candidates?limit=1`, {
+            headers,
             credentials: 'include',
           }),
-          fetch('/api/admin/google-places/sync/logs?limit=1', {
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          fetch(`${API_BASE_URL}/api/admin/google-places/sync/logs?limit=1`, {
+            headers,
             credentials: 'include',
           }),
         ]);
@@ -289,10 +292,12 @@ function StatsCard({ title, value, description, icon, href }: StatsCardProps) {
 
 async function handleAIProcess() {
   try {
-    const response = await fetch('/api/admin/google-places/process', {
+    const token = getAccessToken();
+    const response = await fetch(`${API_BASE_URL}/api/admin/google-places/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       credentials: 'include',
       body: JSON.stringify({ processAll: true }),

@@ -1,12 +1,12 @@
 import { test, expect, devices } from '@playwright/test';
 
-test.describe('Mobile Pinch Zoom - Map View', () => {
-  // Configure mobile viewport for all tests in this suite
-  test.use({
-    ...devices['iPhone 12'],
-    hasTouch: true,
-  });
+// Configure mobile viewport for all tests in this file
+test.use({
+  ...devices['iPhone 12'],
+  hasTouch: true,
+});
 
+test.describe('Mobile Pinch Zoom - Map View', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to search page
     await page.goto('/search');

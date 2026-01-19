@@ -69,7 +69,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500); // Wait for form to appear
+         // Wait for form to appear
       }
 
       // Find name input field
@@ -104,7 +104,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Find email input field
@@ -141,7 +141,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Find phone input field
@@ -183,7 +183,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Find name input
@@ -215,7 +215,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Try to submit form without message (should trigger validation)
@@ -227,7 +227,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await submitButton.isVisible()) {
         await submitButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Verify pre-filled fields still have values
@@ -268,7 +268,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Find form fields
@@ -319,7 +319,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Try to submit without filling required fields
@@ -331,7 +331,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await submitButton.isVisible()) {
         await submitButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Should show validation errors for required fields
@@ -355,7 +355,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Fill in all fields manually
@@ -434,7 +434,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Verify fields match profile data
@@ -500,7 +500,7 @@ test.describe('Inquiry Form Pre-filled Fields for Logged-in Users', () => {
 
       if (await inquiryButton.isVisible()) {
         await inquiryButton.click();
-        await page.waitForTimeout(500);
+        
       }
 
       // Verify name and email are filled, phone is empty

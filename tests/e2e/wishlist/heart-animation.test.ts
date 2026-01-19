@@ -1,17 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { loginAsUser, waitForApi, assertNoErrors } from '../utils';
 
 test.describe('Heart Icon Animation Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
-    await page.goto('/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.fill('input[type="password"]', 'password123');
-    await page.click('button[type="submit"]');
-    await page.waitForLoadState('networkidle');
+    await loginAsUser(page);
 
-    // Navigate to search page
+    // Navigate to search page with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
   });
 
   test('T-WISHLIST-17: Heart icon changes from outline to filled when added', async ({ page }) => {
@@ -22,9 +21,13 @@ test.describe('Heart Icon Animation Functionality', () => {
     const outlineIcon = heartButton.locator('[data-testid="heart-icon-outline"]');
     await expect(outlineIcon).toBeVisible();
 
-    // Click to add to wishlist
+    // Click to add to wishlist with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const response = await addApiPromise;
+
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify icon changed to filled
     const filledIcon = heartButton.locator('[data-testid="heart-icon-filled"]');
@@ -36,17 +39,22 @@ test.describe('Heart Icon Animation Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
 
-    // Add to wishlist first
+    // Add to wishlist first with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Verify filled state
     const filledIcon = heartButton.locator('[data-testid="heart-icon-filled"]');
     await expect(filledIcon).toBeVisible();
 
-    // Click to remove
+    // Click to remove with API verification
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const removeResponse = await removeApiPromise;
+
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
 
     // Verify icon changed to outline
     const outlineIcon = heartButton.locator('[data-testid="heart-icon-outline"]');
@@ -58,9 +66,10 @@ test.describe('Heart Icon Animation Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
 
-    // Add to wishlist
+    // Add to wishlist with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Get filled icon
     const filledIcon = heartButton.locator('[data-testid="heart-icon-filled"]');
@@ -78,20 +87,19 @@ test.describe('Heart Icon Animation Functionality', () => {
     // Get button before click
     const buttonBefore = await heartButton.boundingBox();
 
-    // Click to add to wishlist
+    // Click to add to wishlist with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
+    const response = await addApiPromise;
 
-    // Wait a small amount for animation to start
-    await page.waitForTimeout(100);
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify button still exists and is in same position
     const buttonAfter = await heartButton.boundingBox();
     expect(buttonAfter).toBeTruthy();
     expect(buttonAfter?.x).toBe(buttonBefore?.x);
     expect(buttonAfter?.y).toBe(buttonBefore?.y);
-
-    // Wait for animation to complete
-    await page.waitForTimeout(500);
 
     // Verify filled icon is visible after animation
     const filledIcon = heartButton.locator('[data-testid="heart-icon-filled"]');
@@ -103,10 +111,11 @@ test.describe('Heart Icon Animation Functionality', () => {
     const cardCount = await campsiteCards.count();
     expect(cardCount).toBeGreaterThanOrEqual(2);
 
-    // Add first campsite to wishlist
+    // Add first campsite to wishlist with API verification
     const firstHeartButton = campsiteCards.nth(0).locator('[data-testid="wishlist-button"]');
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await firstHeartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Verify first is filled
     await expect(firstHeartButton.locator('[data-testid="heart-icon-filled"]')).toBeVisible();
@@ -122,7 +131,6 @@ test.describe('Heart Icon Animation Functionality', () => {
 
     // Hover over heart button
     await heartButton.hover();
-    await page.waitForTimeout(200);
 
     // Verify button is still visible and interactive
     await expect(heartButton).toBeVisible();
@@ -141,20 +149,23 @@ test.describe('Heart Icon Animation Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
 
-    // Add to wishlist
+    // Add to wishlist with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Verify filled state
     await expect(heartButton.locator('[data-testid="heart-icon-filled"]')).toBeVisible();
 
     // Navigate away
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await assertNoErrors(page);
 
-    // Navigate back to search
+    // Navigate back to search with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     // Verify heart is still filled for the same campsite
     const sameCard = page.locator('[data-testid="campsite-card"]').first();

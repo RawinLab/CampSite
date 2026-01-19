@@ -77,7 +77,7 @@ test.describe('Inquiry Success Message', () => {
     await submitButton.click();
 
     // Wait for submission
-    await page.waitForTimeout(1000);
+    
 
     // Check for success message
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -122,7 +122,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('What are the check-in and check-out times for your campsite?');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(1000);
+    
 
     // Check success message visibility
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -171,7 +171,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('Are pets allowed at your campsite? I have a small dog.');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(1000);
+    
 
     // Check success message content
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -224,7 +224,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('I had an issue with the booking process. Can you help me?');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(1000);
+    
 
     // Find success message
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -340,7 +340,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('What activities are available near your campsite?');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(500);
+    
 
     // Check if success message is visible
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -354,7 +354,7 @@ test.describe('Inquiry Success Message', () => {
     // Wait for auto-hide (typically 3-5 seconds)
     // If auto-hide is implemented, message should disappear
     // If not, it will remain visible (which is also acceptable)
-    await page.waitForTimeout(6000);
+    
 
     // Check if message is still visible or has been hidden
     const isStillVisible = await successMessage.isVisible().catch(() => false);
@@ -405,7 +405,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('Is there a discount for group bookings of more than 5 people?');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(500);
+    
 
     // Check if success message is visible
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -476,7 +476,7 @@ test.describe('Inquiry Success Message', () => {
 
     // Submit
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(1000);
+    
 
     // Verify success message
     const successMessage = page.locator('[data-testid="success-message"]').or(
@@ -487,7 +487,7 @@ test.describe('Inquiry Success Message', () => {
     await expect(successMessage).toBeVisible();
 
     // Wait a bit for form to clear
-    await page.waitForTimeout(500);
+    
 
     // Check if form fields are cleared
     // Message should definitely be cleared
@@ -538,7 +538,7 @@ test.describe('Inquiry Success Message', () => {
     await messageTextarea.fill('First inquiry message - checking availability for this weekend.');
 
     await page.getByRole('button', { name: /send message|submit/i }).click();
-    await page.waitForTimeout(1000);
+    
 
     // Verify first success message
     let successMessage = page.locator('[data-testid="success-message"]').or(
@@ -549,13 +549,13 @@ test.describe('Inquiry Success Message', () => {
     await expect(successMessage).toBeVisible();
 
     // Wait for form to close/reset
-    await page.waitForTimeout(2000);
+    
 
     // Second submission (note: may be blocked by rate limiting in real implementation)
     // Re-open form if it closed
     if (!await inquiryForm.isVisible()) {
       await page.getByRole('button', { name: /send inquiry/i }).click();
-      await page.waitForTimeout(500);
+      
     }
 
     inquiryForm = page.locator('[data-testid="inquiry-form"]').or(
@@ -583,7 +583,7 @@ test.describe('Inquiry Success Message', () => {
       await messageTextarea.fill('Second inquiry message - asking about pet policies.');
 
       await page.getByRole('button', { name: /send message|submit/i }).click();
-      await page.waitForTimeout(1000);
+      
 
       // Verify second success message
       successMessage = page.locator('[data-testid="success-message"]').or(

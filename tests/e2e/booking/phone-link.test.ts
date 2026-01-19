@@ -11,12 +11,13 @@ import { createSupabaseAdmin } from '../utils/auth';
  * - Backend running at localhost:3091
  */
 
+// Configure mobile viewport for all tests in this file
+test.use({
+  ...devices['iPhone 12'],
+});
+
 test.describe('Phone Link on Mobile', () => {
   test.setTimeout(60000);
-
-  test.use({
-    ...devices['iPhone 12'],
-  });
 
   const TEST_CAMPSITE_ID = 'e2e-test-campsite-approved-1';
 
@@ -32,7 +33,7 @@ test.describe('Phone Link on Mobile', () => {
 
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Find the phone link button
     const phoneButton = page.getByRole('link', { name: /call to book/i });
@@ -57,7 +58,7 @@ test.describe('Phone Link on Mobile', () => {
       .eq('id', TEST_CAMPSITE_ID);
 
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     const phoneButton = page.getByRole('link', { name: /call to book/i });
     await expect(phoneButton).toBeVisible({ timeout: 10000 });
@@ -77,7 +78,7 @@ test.describe('Phone Link on Mobile', () => {
       .eq('id', TEST_CAMPSITE_ID);
 
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     const phoneButton = page.getByRole('link', { name: /call to book/i });
 
@@ -118,14 +119,14 @@ test.describe('Phone Link on Mobile', () => {
     });
 
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     const phoneButton = page.getByRole('link', { name: /call to book/i });
     await expect(phoneButton).toBeVisible({ timeout: 10000 });
     await phoneButton.click();
 
     // Wait for potential analytics call
-    await page.waitForTimeout(500);
+    
 
     // Analytics tracking is optional
     // Test passes whether or not analytics is implemented
@@ -142,7 +143,7 @@ test.describe('Phone Link on Mobile', () => {
       .eq('id', TEST_CAMPSITE_ID);
 
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     // Should show "Book Now" button instead of phone link
     const bookNowButton = page.getByRole('button', { name: /book now/i });
@@ -164,7 +165,7 @@ test.describe('Phone Link on Mobile', () => {
       .eq('id', TEST_CAMPSITE_ID);
 
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    
 
     const phoneButton = page.getByRole('link', { name: /call to book/i });
     await expect(phoneButton).toBeVisible({ timeout: 10000 });

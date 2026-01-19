@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { assertNoErrors, waitForApi } from '../utils';
 
 test.describe('Wishlist Login Prompt Functionality', () => {
   test.beforeEach(async ({ page }) => {
-    // Start logged out for these tests
+    // Start logged out for these tests with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
   });
 
   test('T-WISHLIST-30: Non-logged-in user sees login prompt when clicking heart button', async ({ page }) => {
@@ -14,7 +17,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
 
     // Click heart button
     await heartButton.click();
-    await page.waitForTimeout(500);
 
     // Verify login prompt/modal appears
     const loginPrompt = page.getByText(/log in|sign in|เข้าสู่ระบบ/i);
@@ -26,7 +28,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
     await heartButton.click();
-    await page.waitForTimeout(500);
 
     // Click login button in prompt/modal
     const loginButton = page.getByRole('button', { name: /log in|sign in|เข้าสู่ระบบ/i });
@@ -42,7 +43,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
     await heartButton.click();
-    await page.waitForTimeout(500);
 
     // Verify prompt is visible
     const loginPrompt = page.getByText(/log in|sign in|เข้าสู่ระบบ/i);
@@ -51,7 +51,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // Click cancel or close button
     const cancelButton = page.getByRole('button', { name: /cancel|close|ปิด|ยกเลิก/i });
     await cancelButton.click();
-    await page.waitForTimeout(300);
 
     // Verify prompt is dismissed
     await expect(loginPrompt).not.toBeVisible();
@@ -62,7 +61,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
     await heartButton.click();
-    await page.waitForTimeout(500);
 
     // Click login button
     const loginButton = page.getByRole('button', { name: /log in|sign in|เข้าสู่ระบบ/i });
@@ -75,15 +73,19 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
 
-    // Navigate back to search page
+    // Navigate back to search page with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
-    // Try adding to wishlist again
+    // Try adding to wishlist again with API verification
     const newCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const newHeartButton = newCampsiteCard.locator('[data-testid="wishlist-button"]');
+
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await newHeartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Verify heart is filled (item added successfully)
     await expect(newHeartButton.locator('[data-testid="heart-icon-filled"]')).toBeVisible();
@@ -108,7 +110,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
 
     // Hover over heart button
     await heartButton.hover();
-    await page.waitForTimeout(300);
 
     // Verify tooltip appears
     const tooltip = page.getByText(/log in to add|sign in to save|เข้าสู่ระบบเพื่อบันทึก/i);
@@ -119,7 +120,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // If no tooltip, clicking should show login prompt
     if (!tooltipVisible) {
       await heartButton.click();
-      await page.waitForTimeout(500);
 
       const loginPrompt = page.getByText(/log in|sign in|เข้าสู่ระบบ/i);
       await expect(loginPrompt).toBeVisible();
@@ -146,7 +146,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // Click heart button
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
     await heartButton.click();
-    await page.waitForTimeout(500);
 
     // Click login button
     const loginButton = page.getByRole('button', { name: /log in|sign in|เข้าสู่ระบบ/i });
@@ -163,9 +162,11 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // OR verify user is redirected to search page
     const currentUrl = page.url();
 
-    // Navigate to wishlist to check if item was auto-added
+    // Navigate to wishlist to check if item was auto-added with API verification
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForLoadState('networkidle');
+    await wishlistApiPromise;
+    await assertNoErrors(page);
 
     // Item might have been auto-added or user needs to manually add again
     // This depends on implementation - test both scenarios
@@ -180,7 +181,6 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // Click first heart button
     const firstHeartButton = campsiteCards.nth(0).locator('[data-testid="wishlist-button"]');
     await firstHeartButton.click();
-    await page.waitForTimeout(500);
 
     // Verify login prompt appears
     const firstLoginPrompt = page.getByText(/log in|sign in|เข้าสู่ระบบ/i);
@@ -189,12 +189,10 @@ test.describe('Wishlist Login Prompt Functionality', () => {
     // Close first prompt
     const cancelButton = page.getByRole('button', { name: /cancel|close|ปิด|ยกเลิก/i });
     await cancelButton.click();
-    await page.waitForTimeout(300);
 
     // Click second heart button
     const secondHeartButton = campsiteCards.nth(1).locator('[data-testid="wishlist-button"]');
     await secondHeartButton.click();
-    await page.waitForTimeout(500);
 
     // Verify login prompt appears again
     const secondLoginPrompt = page.getByText(/log in|sign in|เข้าสู่ระบบ/i);

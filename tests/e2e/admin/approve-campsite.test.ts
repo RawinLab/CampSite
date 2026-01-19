@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loginAsAdmin } from '../utils/auth';
 import { createSupabaseAdmin, createTestCampsite, cleanupTestData } from '../utils/test-data';
+import { waitForApi, gotoWithApi, assertNoErrors, ADMIN_API } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Admin Campsite Approval
@@ -33,19 +34,15 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
 
-      // Find the approve button
+      expect(data.success).toBe(true);
+      expect(Array.isArray(data.data)).toBe(true);
+      await assertNoErrors(page);
+
       const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 10000 }).catch(() => false);
-
-      if (isVisible) {
-        await expect(approveButton).toBeEnabled();
-      } else {
-        // If no approve button, it might be in a different state
-        expect(isVisible).toBeTruthy();
-      }
+      await expect(approveButton).toBeVisible();
+      await expect(approveButton).toBeEnabled();
     });
 
     test('T023.3: Success message appears after approval', async ({ page }) => {
@@ -59,32 +56,37 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 10000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        await approveButton.click();
-        await page.waitForTimeout(2000);
+      // Wait for approve API call
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(`/api/admin/campsites/${campsite.id}/approve`) && res.status() === 200
+      );
 
-        // Look for success feedback
-        const feedback = page.locator('text=/approved|success/i');
-        const hasFeedback = await feedback.first().isVisible({ timeout: 5000 }).catch(() => false);
+      await approveButton.click();
 
-        expect(hasFeedback).toBeTruthy();
+      const response = await apiPromise;
+      const responseData = await response.json();
+      expect(responseData.success).toBe(true);
 
-        // Verify campsite status in database
-        const { data: updated } = await supabase
-          .from('campsites')
-          .select('status')
-          .eq('id', campsite.id)
-          .single();
+      // Verify success feedback
+      await expect(page.locator('text=/approved|success/i')).toBeVisible();
 
-        if (updated) {
-          expect(updated.status).toBe('approved');
-        }
+      // Verify campsite status in database
+      const { data: updated } = await supabase
+        .from('campsites')
+        .select('status')
+        .eq('id', campsite.id)
+        .single();
+
+      if (updated) {
+        expect(updated.status).toBe('approved');
       }
     });
 
@@ -100,25 +102,35 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      let data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Verify campsite is visible before approval
-      const campsiteBeforeApproval = page.locator(`text=${uniqueName}`);
-      const isVisibleBefore = await campsiteBeforeApproval.isVisible({ timeout: 5000 }).catch(() => false);
+      await expect(page.locator(`text=${uniqueName}`)).toBeVisible();
 
-      if (isVisibleBefore) {
-        const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-        await approveButton.click();
-        await page.waitForTimeout(3000);
+      const approveButton = page.getByRole('button', { name: /Approve/i }).first();
+      await expect(approveButton).toBeVisible();
 
-        // Campsite should disappear from list (or list should update)
-        const campsiteAfterApproval = page.locator(`text=${uniqueName}`);
-        const isVisibleAfter = await campsiteAfterApproval.isVisible({ timeout: 2000 }).catch(() => false);
+      // Wait for approve API call
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes('/approve') && res.status() === 200
+      );
 
-        // Should not be visible OR page should show different content
-        expect(isVisibleAfter).toBeFalsy();
-      }
+      await approveButton.click();
+
+      const response = await apiPromise;
+      const responseData = await response.json();
+      expect(responseData.success).toBe(true);
+
+      // Wait for list to refresh
+      await waitForApi(page, ADMIN_API.pendingCampsites);
+
+      // Campsite should disappear from list
+      const campsiteAfterApproval = page.locator(`text=${uniqueName}`);
+      const isVisibleAfter = await campsiteAfterApproval.isVisible({ timeout: 2000 }).catch(() => false);
+      expect(isVisibleAfter).toBeFalsy();
     });
   });
 
@@ -134,22 +146,19 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 10000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        await approveButton.click();
+      await approveButton.click();
 
-        // Button should be disabled immediately after click
-        await page.waitForTimeout(100);
-        const isDisabled = await approveButton.isDisabled().catch(() => false);
-
-        // Some implementations might disable, others might show loading
-        expect(isDisabled || isVisible).toBeTruthy();
-      }
+      // Button should be disabled immediately after click
+      const isDisabled = await approveButton.isDisabled();
+      expect(isDisabled).toBeTruthy();
     });
   });
 
@@ -166,14 +175,13 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Verify campsite is visible
-      const campsite = page.locator(`text=${uniqueName}`);
-      const isVisible = await campsite.isVisible({ timeout: 5000 }).catch(() => false);
-
-      expect(isVisible).toBeTruthy();
+      await expect(page.locator(`text=${uniqueName}`)).toBeVisible();
     });
   });
 
@@ -189,26 +197,34 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 10000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        await approveButton.click();
-        await page.waitForTimeout(3000);
+      // Wait for approve API call
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes('/approve') && res.status() === 200
+      );
 
-        // Check database status
-        const { data: updatedCampsite } = await supabase
-          .from('campsites')
-          .select('status')
-          .eq('id', campsite.id)
-          .single();
+      await approveButton.click();
 
-        if (updatedCampsite) {
-          expect(updatedCampsite.status).toBe('approved');
-        }
+      const response = await apiPromise;
+      const responseData = await response.json();
+      expect(responseData.success).toBe(true);
+
+      // Check database status
+      const { data: updatedCampsite } = await supabase
+        .from('campsites')
+        .select('status')
+        .eq('id', campsite.id)
+        .single();
+
+      if (updatedCampsite) {
+        expect(updatedCampsite.status).toBe('approved');
       }
     });
   });
@@ -225,19 +241,27 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       const approveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible = await approveButton.isVisible({ timeout: 10000 }).catch(() => false);
+      await expect(approveButton).toBeVisible();
 
-      if (isVisible) {
-        await approveButton.click();
-        await page.waitForTimeout(2000);
+      // Wait for approve API call
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes('/approve') && res.status() === 200
+      );
 
-        // Should still be on pending page
-        await expect(page).toHaveURL(/\/admin\/campsites\/pending/);
-      }
+      await approveButton.click();
+
+      const response = await apiPromise;
+      const responseData = await response.json();
+      expect(responseData.success).toBe(true);
+
+      // Should still be on pending page
+      await expect(page).toHaveURL(/\/admin\/campsites\/pending/);
     });
   });
 
@@ -250,14 +274,14 @@ test.describe('Admin Campsite Approval E2E', () => {
       // Ensure no pending campsites
       await cleanupTestData(supabase);
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual([]);
+      await assertNoErrors(page);
 
       // Should show empty state
-      const emptyState = page.locator('text=/All caught up|no pending|empty|0/i');
-      const hasEmpty = await emptyState.first().isVisible({ timeout: 5000 }).catch(() => false);
-
-      expect(hasEmpty).toBeTruthy();
+      await expect(page.locator('text=/All caught up|no pending/i')).toBeVisible();
     });
   });
 
@@ -278,31 +302,49 @@ test.describe('Admin Campsite Approval E2E', () => {
         status: 'pending',
       });
 
-      await page.goto('/admin/campsites/pending');
-      await page.waitForTimeout(3000);
+      const data = await gotoWithApi(page, '/admin/campsites/pending', ADMIN_API.pendingCampsites);
+
+      expect(data.success).toBe(true);
+      expect(data.data.length).toBeGreaterThanOrEqual(2);
+      await assertNoErrors(page);
 
       // Approve first campsite
       const firstApproveButton = page.getByRole('button', { name: /Approve/i }).first();
-      const isVisible1 = await firstApproveButton.isVisible({ timeout: 10000 }).catch(() => false);
+      await expect(firstApproveButton).toBeVisible();
 
-      if (isVisible1) {
-        await firstApproveButton.click();
-        await page.waitForTimeout(3000);
+      const apiPromise1 = page.waitForResponse(
+        res => res.url().includes('/approve') && res.status() === 200
+      );
 
-        // Check if second campsite is still visible
-        const secondApproveButton = page.getByRole('button', { name: /Approve/i }).first();
-        const isVisible2 = await secondApproveButton.isVisible({ timeout: 5000 }).catch(() => false);
+      await firstApproveButton.click();
 
-        if (isVisible2) {
-          await secondApproveButton.click();
-          await page.waitForTimeout(3000);
+      const response1 = await apiPromise1;
+      const responseData1 = await response1.json();
+      expect(responseData1.success).toBe(true);
 
-          // Should show empty state or fewer campsites
-          const emptyOrLess = page.locator('text=/All caught up|no pending|0/i');
-          const hasEmpty = await emptyOrLess.first().isVisible({ timeout: 5000 }).catch(() => false);
+      // Wait for list to refresh
+      await waitForApi(page, ADMIN_API.pendingCampsites);
 
-          expect(hasEmpty).toBeTruthy();
-        }
+      // Check if second campsite is still visible
+      const secondApproveButton = page.getByRole('button', { name: /Approve/i }).first();
+      const isVisible2 = await secondApproveButton.isVisible({ timeout: 5000 }).catch(() => false);
+
+      if (isVisible2) {
+        const apiPromise2 = page.waitForResponse(
+          res => res.url().includes('/approve') && res.status() === 200
+        );
+
+        await secondApproveButton.click();
+
+        const response2 = await apiPromise2;
+        const responseData2 = await response2.json();
+        expect(responseData2.success).toBe(true);
+
+        // Wait for final refresh
+        await waitForApi(page, ADMIN_API.pendingCampsites);
+
+        // Should show empty state
+        await expect(page.locator('text=/All caught up|no pending/i')).toBeVisible();
       }
     });
   });

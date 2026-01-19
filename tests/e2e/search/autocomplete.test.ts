@@ -1,17 +1,22 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 
 test.describe('Province Autocomplete Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to search page where autocomplete is available
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await apiPromise;
+    await assertNoErrors(page);
   });
 
   test('T014.1: Autocomplete dropdown does not show with 1 character', async ({ page }) => {
     const input = page.getByRole('combobox', { name: 'ค้นหาจังหวัด' });
     await input.fill('B');
 
-    // Wait a bit to ensure no dropdown appears
+    // Wait for debounce
     await page.waitForTimeout(500);
 
     // Dropdown should not be visible
@@ -22,10 +27,10 @@ test.describe('Province Autocomplete Functionality', () => {
   test('T014.2: Autocomplete dropdown appears after typing 2 characters', async ({ page }) => {
     const input = page.getByRole('combobox', { name: 'ค้นหาจังหวัด' });
 
-    // Type 2 characters
+    // Type 2 characters - autocomplete API should be called
     await input.fill('Ba');
 
-    // Wait for debounce and API call (300ms debounce + network time)
+    // Wait for debounce and API call
     await page.waitForTimeout(500);
 
     // Dropdown should be visible
@@ -69,8 +74,7 @@ test.describe('Province Autocomplete Functionality', () => {
     // Check for loading text
     const loadingText = page.getByText('กำลังค้นหา...');
 
-    // Loading indicator should appear (it might be very brief)
-    // We check if it exists at any point during the request
+    // Loading indicator might appear (it might be very brief)
     const isLoading = await loadingText.isVisible().catch(() => false);
 
     // Wait for results to load
@@ -134,13 +138,21 @@ test.describe('Province Autocomplete Functionality', () => {
     const dropdown = page.getByRole('listbox');
     await expect(dropdown).toBeVisible();
 
+    // Wait for search API to be called when selecting province
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     // Click on the first suggestion
     const firstOption = page.getByRole('option').first();
-    const optionText = await firstOption.textContent();
     await firstOption.click();
 
-    // Wait a bit for selection to process
-    await page.waitForTimeout(100);
+    // Wait for search API call
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
+
+    await assertNoErrors(page);
 
     // Dropdown should be closed
     await expect(dropdown).not.toBeVisible();
@@ -158,17 +170,30 @@ test.describe('Province Autocomplete Functionality', () => {
     await page.waitForTimeout(500);
 
     // Select a suggestion
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     const firstOption = page.getByRole('option').first();
     await firstOption.click();
+    await apiPromise;
     await page.waitForTimeout(100);
 
     // Verify input has value
     let inputValue = await input.inputValue();
     expect(inputValue.length).toBeGreaterThan(0);
 
+    // Wait for clear to trigger new search
+    const clearApiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     // Click clear button
     const clearButton = page.getByRole('button', { name: 'ล้าง' });
     await clearButton.click();
+
+    // Wait for API call
+    await clearApiPromise;
 
     // Input should be empty
     inputValue = await input.inputValue();
@@ -206,8 +231,13 @@ test.describe('Province Autocomplete Functionality', () => {
     await input.fill('กร');
     await page.waitForTimeout(500);
 
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.search) && res.status() === 200
+    );
+
     const firstOption = page.getByRole('option').first();
     await firstOption.click();
+    await apiPromise;
     await page.waitForTimeout(100);
 
     // Dropdown should be closed

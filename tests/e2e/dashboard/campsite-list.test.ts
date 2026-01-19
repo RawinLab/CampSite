@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAsOwner } from '../utils/auth';
+import { waitForApi, assertNoErrors, DASHBOARD_API } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Owner Dashboard - Campsite Listing Management with Real API
@@ -41,8 +42,18 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
   test.describe('1. Campsite List Display', () => {
     test('T120.1: Shows owner\'s campsites with complete information', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Verify page title shows count
       const pageTitle = page.getByRole('heading', { name: /campsites/i });
@@ -52,7 +63,7 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         // Verify campsites are displayed
         const campsiteCards = page.locator('[class*="Card"]');
         const count = await campsiteCards.count();
@@ -61,14 +72,24 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T120.2: Displays campsite name and thumbnail correctly', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Check if there are campsites
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         // Find first campsite card
         const firstCampsite = page.locator('[class*="Card"]').first();
         await expect(firstCampsite).toBeVisible({ timeout: 15000 });
@@ -82,14 +103,24 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T120.3: Shows status badge for each campsite', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Check if there are campsites
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         // Check for status badges (one of: Active, Pending Approval, Rejected)
         const activeBadge = page.getByText('Active');
         const pendingBadge = page.getByText('Pending Approval');
@@ -105,8 +136,18 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T120.6: Handles campsites without thumbnails gracefully', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Check if there are campsites
       const emptyMessage = page.getByText(/no campsites yet/i);
@@ -126,16 +167,24 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
   test.describe('2. List Filtering and Sorting', () => {
     test('T121.1: Filter by status - All shows all campsites', async ({ page }) => {
+      // Wait for initial API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Click "All" filter if it exists
       const allFilter = page.getByRole('button', { name: 'All' });
       const hasFilter = await allFilter.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasFilter) {
+        const filterApiPromise = page.waitForResponse(
+          res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+        );
         await allFilter.click();
-        await page.waitForTimeout(1000);
+        await filterApiPromise;
 
         // Verify URL updated
         expect(page.url()).toContain('status=all');
@@ -143,16 +192,28 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T121.2: Filter by status - Approved shows only approved', async ({ page }) => {
+      // Wait for initial API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Click "Active" (approved) filter
       const activeFilter = page.getByRole('button', { name: 'Active' });
       const hasFilter = await activeFilter.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasFilter) {
+        const filterApiPromise = page.waitForResponse(
+          res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+        );
         await activeFilter.click();
-        await page.waitForTimeout(1000);
+        const response = await filterApiPromise;
+
+        // Verify API response
+        const data = await response.json();
+        expect(data.success).toBe(true);
 
         // Verify URL updated
         expect(page.url()).toContain('status=approved');
@@ -170,16 +231,24 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T121.3: Filter by status - Pending shows only pending', async ({ page }) => {
+      // Wait for initial API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Click "Pending" filter
       const pendingFilter = page.getByRole('button', { name: 'Pending' });
       const hasFilter = await pendingFilter.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasFilter) {
+        const filterApiPromise = page.waitForResponse(
+          res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+        );
         await pendingFilter.click();
-        await page.waitForTimeout(1000);
+        await filterApiPromise;
 
         // Verify URL updated
         expect(page.url()).toContain('status=pending');
@@ -187,16 +256,24 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T121.4: Filter by status - Rejected shows only rejected', async ({ page }) => {
+      // Wait for initial API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Click "Rejected" filter
       const rejectedFilter = page.getByRole('button', { name: 'Rejected' });
       const hasFilter = await rejectedFilter.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasFilter) {
+        const filterApiPromise = page.waitForResponse(
+          res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+        );
         await rejectedFilter.click();
-        await page.waitForTimeout(1000);
+        await filterApiPromise;
 
         // Verify URL updated
         expect(page.url()).toContain('status=rejected');
@@ -206,21 +283,29 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
   test.describe('3. Campsite Actions', () => {
     test('T122.1: Edit button navigates to edit page', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Check API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Check if there are campsites
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         // Open actions dropdown for first campsite
         const moreButton = page.getByRole('button', { name: '' }).filter({ has: page.locator('svg') }).first();
         const hasMoreButton = await moreButton.isVisible({ timeout: 5000 }).catch(() => false);
 
         if (hasMoreButton) {
           await moreButton.click();
-          await page.waitForTimeout(500);
 
           // Click Edit option
           const editOption = page.getByRole('menuitem', { name: /edit/i });
@@ -230,7 +315,7 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
             await editOption.click();
 
             // Verify navigation to edit page
-            await page.waitForTimeout(1000);
+            await assertNoErrors(page);
             expect(page.url()).toContain('/dashboard/campsites/');
           }
         }
@@ -238,29 +323,40 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T122.2: View public page shown for approved campsites only', async ({ page }) => {
+      // Wait for initial API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Filter to approved campsites first
       const activeFilter = page.getByRole('button', { name: 'Active' });
       const hasActiveFilter = await activeFilter.isVisible({ timeout: 5000 }).catch(() => false);
 
       if (hasActiveFilter) {
+        const filterApiPromise = page.waitForResponse(
+          res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+        );
         await activeFilter.click();
-        await page.waitForTimeout(1000);
+        const response = await filterApiPromise;
+
+        // Verify API response
+        const data = await response.json();
+        expect(data.success).toBe(true);
 
         // Check if there are approved campsites
         const activeBadge = page.getByText('Active');
         const hasActive = await activeBadge.isVisible({ timeout: 5000 }).catch(() => false);
 
-        if (hasActive) {
+        if (hasActive && data.data && data.data.length > 0) {
           // Open actions for first approved campsite
           const moreButton = page.getByRole('button', { name: '' }).filter({ has: page.locator('svg') }).first();
           const hasMoreButton = await moreButton.isVisible({ timeout: 5000 }).catch(() => false);
 
           if (hasMoreButton) {
             await moreButton.click();
-            await page.waitForTimeout(500);
 
             // Verify "View Public Page" option exists
             const viewPublicOption = page.getByRole('menuitem', { name: /view public page/i });
@@ -271,14 +367,23 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T122.3: Delete shows confirmation dialog', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Check API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
 
       // Check if there are campsites
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         // Mock dialog confirmation
         page.on('dialog', async (dialog) => {
           expect(dialog.type()).toBe('confirm');
@@ -292,16 +397,12 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
         if (hasMoreButton) {
           await moreButton.click();
-          await page.waitForTimeout(500);
 
           const deleteOption = page.getByRole('menuitem', { name: /delete/i });
           const hasDeleteOption = await deleteOption.isVisible({ timeout: 5000 }).catch(() => false);
 
           if (hasDeleteOption) {
             await deleteOption.click();
-
-            // Wait for dialog to be handled
-            await page.waitForTimeout(500);
           }
         }
       }
@@ -311,8 +412,17 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
   test.describe('4. Empty State', () => {
     test('T123.1: Shows empty state when no campsites exist', async ({ page }) => {
       // Navigate to rejected filter which likely has no data
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites?status=rejected');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Check for either data or empty state
       const emptyMessage = page.getByText(/no campsites/i);
@@ -326,8 +436,12 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
     test('T123.2: Empty state shows helpful CTA message', async ({ page }) => {
       // Navigate to filter that might be empty
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites?status=rejected');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Check for empty state
       const emptyMessage = page.getByText(/no campsites/i);
@@ -342,8 +456,12 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
     });
 
     test('T123.3: Empty state has CTA button to create campsite', async ({ page }) => {
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
 
       // Verify CTA button exists (should be visible regardless of data)
       const ctaButton = page.getByRole('link', { name: /create campsite|add campsite/i });
@@ -359,8 +477,18 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
   test.describe('5. Owner Authorization', () => {
     test('T124.1: Only shows owner\'s own campsites', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      const response = await apiPromise;
+
+      // Verify API response
+      const data = await response.json();
+      expect(data.success).toBe(true);
+      await assertNoErrors(page);
 
       // Verify page loads successfully
       const pageTitle = page.getByRole('heading', { name: /campsites/i });
@@ -371,7 +499,7 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
       const emptyMessage = page.getByText(/no campsites yet/i);
       const hasEmptyState = await emptyMessage.isVisible({ timeout: 5000 }).catch(() => false);
 
-      if (!hasEmptyState) {
+      if (!hasEmptyState && data.data && data.data.length > 0) {
         const campsiteCards = page.locator('[class*="Card"]');
         const count = await campsiteCards.count();
         expect(count).toBeGreaterThan(0);
@@ -381,8 +509,14 @@ test.describe('Owner Dashboard - Campsite List Management', () => {
 
   test.describe('6. Loading and Error States', () => {
     test('T125.3: Add campsite button always visible', async ({ page }) => {
+      // Wait for API
+      const apiPromise = page.waitForResponse(
+        res => res.url().includes(DASHBOARD_API.myCampsites) && res.status() === 200
+      );
+
       await page.goto('/dashboard/campsites');
-      await page.waitForTimeout(3000);
+      await apiPromise;
+      await assertNoErrors(page);
 
       // Verify "Add Campsite" button is visible
       const addButton = page.getByRole('link', { name: /add campsite|create campsite/i });

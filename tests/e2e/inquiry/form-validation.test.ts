@@ -9,16 +9,13 @@ test.describe('Inquiry Form Validation', () => {
 
     // Scroll to inquiry section and click "Send Inquiry" button
     await page.locator('[data-testid="send-inquiry-button"]').click();
-    await page.waitForSelector('form', { timeout: 5000 });
+    await expect(page.locator('form')).toBeVisible({ timeout: 5000 });
   });
 
   test('Submit empty form shows all required field errors', async ({ page }) => {
     // Click submit button without filling any fields
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
-
-    // Wait for validation errors to appear
-    await page.waitForTimeout(300);
 
     // Check that all required field errors are visible
     const nameError = page.locator('p.text-red-500:has-text("Name is required")');
@@ -39,9 +36,6 @@ test.describe('Inquiry Form Validation', () => {
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
     // Check name error is visible
     const nameError = page.locator('p.text-red-500:has-text("Name is required")');
     await expect(nameError).toBeVisible();
@@ -55,9 +49,6 @@ test.describe('Inquiry Form Validation', () => {
     // Click submit
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Check email error is visible
     const emailError = page.locator('p.text-red-500:has-text("Email is required")');
@@ -73,9 +64,6 @@ test.describe('Inquiry Form Validation', () => {
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
     // Check message error is visible
     const messageError = page.locator('p.text-red-500:has-text("Message is required")');
     await expect(messageError).toBeVisible();
@@ -89,7 +77,6 @@ test.describe('Inquiry Form Validation', () => {
     // Click different inquiry types
     const bookingButton = page.locator('button:has-text("Booking Inquiry")');
     await bookingButton.click();
-    await page.waitForTimeout(200);
 
     // Verify booking is now selected
     await expect(bookingButton).toHaveClass(/bg-primary|variant-default/);
@@ -99,9 +86,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill email with invalid format
     await page.locator('#guest_email').fill('invalid-email');
     await page.locator('#guest_email').blur();
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Check for email format error
     const emailError = page.locator('p.text-red-500:has-text("valid email")');
@@ -121,7 +105,6 @@ test.describe('Inquiry Form Validation', () => {
       await page.locator('#guest_email').clear();
       await page.locator('#guest_email').fill(email);
       await page.locator('#guest_email').blur();
-      await page.waitForTimeout(200);
 
       // Check error appears
       const emailError = page.locator('p.text-red-500:has-text("valid email")');
@@ -133,9 +116,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill message with less than 20 characters
     await page.locator('#message').fill('Too short');
     await page.locator('#message').blur();
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Check for message length error
     const messageError = page.locator('p.text-red-500:has-text("at least 20 characters")');
@@ -152,9 +132,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#message').fill(shortMessage);
     await page.locator('#message').blur();
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
     // Check for message length error
     const messageError = page.locator('p.text-red-500:has-text("at least 20 characters")');
     await expect(messageError).toBeVisible();
@@ -165,9 +142,6 @@ test.describe('Inquiry Form Validation', () => {
     const validMessage = 'a'.repeat(20);
     await page.locator('#message').fill(validMessage);
     await page.locator('#message').blur();
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Check no message error
     const messageError = page.locator('p.text-red-500:has-text("at least 20 characters")');
@@ -182,9 +156,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill phone with invalid Thai format
     await page.locator('#guest_phone').fill('123456');
     await page.locator('#guest_phone').blur();
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Check for phone format error
     const phoneError = page.locator('p.text-red-500:has-text("Invalid Thai phone number")');
@@ -204,7 +175,6 @@ test.describe('Inquiry Form Validation', () => {
       await page.locator('#guest_phone').clear();
       await page.locator('#guest_phone').fill(phone);
       await page.locator('#guest_phone').blur();
-      await page.waitForTimeout(200);
 
       // Check error appears
       const phoneError = page.locator('p.text-red-500:has-text("Invalid Thai phone number")');
@@ -223,7 +193,6 @@ test.describe('Inquiry Form Validation', () => {
       await page.locator('#guest_phone').clear();
       await page.locator('#guest_phone').fill(phone);
       await page.locator('#guest_phone').blur();
-      await page.waitForTimeout(200);
 
       // Check no error appears
       const phoneError = page.locator('p.text-red-500:has-text("Invalid Thai phone number")');
@@ -236,9 +205,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_phone').clear();
     await page.locator('#guest_phone').blur();
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
     // Check no phone error
     const phoneError = page.locator('p.text-red-500:has-text("Invalid Thai phone number")');
     await expect(phoneError).not.toBeVisible();
@@ -248,7 +214,6 @@ test.describe('Inquiry Form Validation', () => {
     // Submit empty form to trigger errors
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
-    await page.waitForTimeout(300);
 
     // Verify name error is visible
     const nameError = page.locator('p.text-red-500:has-text("Name is required")');
@@ -256,9 +221,6 @@ test.describe('Inquiry Form Validation', () => {
 
     // Enter valid name
     await page.locator('#guest_name').fill('John Doe');
-
-    // Wait for error to clear
-    await page.waitForTimeout(200);
 
     // Error should be gone
     await expect(nameError).not.toBeVisible();
@@ -268,7 +230,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill invalid email
     await page.locator('#guest_email').fill('invalid-email');
     await page.locator('#guest_email').blur();
-    await page.waitForTimeout(300);
 
     // Verify error is visible
     const emailError = page.locator('p.text-red-500:has-text("valid email")');
@@ -278,9 +239,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_email').clear();
     await page.locator('#guest_email').fill('test@example.com');
 
-    // Wait for error to clear
-    await page.waitForTimeout(200);
-
     // Error should be gone
     await expect(emailError).not.toBeVisible();
   });
@@ -289,7 +247,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill short message
     await page.locator('#message').fill('Short');
     await page.locator('#message').blur();
-    await page.waitForTimeout(300);
 
     // Verify error is visible
     const messageError = page.locator('p.text-red-500:has-text("at least 20 characters")');
@@ -299,9 +256,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#message').clear();
     await page.locator('#message').fill('This is a valid inquiry message with sufficient length.');
 
-    // Wait for error to clear
-    await page.waitForTimeout(200);
-
     // Error should be gone
     await expect(messageError).not.toBeVisible();
   });
@@ -310,7 +264,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill invalid phone
     await page.locator('#guest_phone').fill('123456');
     await page.locator('#guest_phone').blur();
-    await page.waitForTimeout(300);
 
     // Verify error is visible
     const phoneError = page.locator('p.text-red-500:has-text("Invalid Thai phone number")');
@@ -320,9 +273,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_phone').clear();
     await page.locator('#guest_phone').fill('0812345678');
 
-    // Wait for error to clear
-    await page.waitForTimeout(200);
-
     // Error should be gone
     await expect(phoneError).not.toBeVisible();
   });
@@ -331,15 +281,11 @@ test.describe('Inquiry Form Validation', () => {
     // Submit empty form to trigger all errors
     const submitButton = page.locator('button[type="submit"]:has-text("Send Inquiry")');
     await submitButton.click();
-    await page.waitForTimeout(300);
 
     // Fill all required fields with valid data
     await page.locator('#guest_name').fill('John Doe');
     await page.locator('#guest_email').fill('test@example.com');
     await page.locator('#message').fill('This is a valid inquiry message with sufficient length for submission.');
-
-    // Wait for all errors to clear
-    await page.waitForTimeout(300);
 
     // Verify all errors are gone
     const nameError = page.locator('p.text-red-500:has-text("Name is required")');
@@ -360,7 +306,6 @@ test.describe('Inquiry Form Validation', () => {
     // Type message and check counter
     const testMessage = 'This is a test inquiry message.';
     await messageInput.fill(testMessage);
-    await page.waitForTimeout(200);
 
     // Check counter shows correct count
     const counterText = page.locator(`text=${testMessage.length}/2000`);
@@ -370,7 +315,6 @@ test.describe('Inquiry Form Validation', () => {
     const longerMessage = 'This is a much longer test inquiry message with significantly more content to validate the character counter updates correctly.';
     await messageInput.clear();
     await messageInput.fill(longerMessage);
-    await page.waitForTimeout(200);
 
     // Check counter updated
     const updatedCounterText = page.locator(`text=${longerMessage.length}/2000`);
@@ -381,7 +325,6 @@ test.describe('Inquiry Form Validation', () => {
     // Fill name with 1 character
     await page.locator('#guest_name').fill('A');
     await page.locator('#guest_name').blur();
-    await page.waitForTimeout(300);
 
     // Check for name length error
     const nameError = page.locator('p.text-red-500:has-text("at least 2 characters")');
@@ -391,7 +334,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_name').clear();
     await page.locator('#guest_name').fill('AB');
     await page.locator('#guest_name').blur();
-    await page.waitForTimeout(300);
 
     // Error should clear
     await expect(nameError).not.toBeVisible();
@@ -405,9 +347,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_email').fill('test@example.com');
     await page.locator('#message').fill('Short');
 
-    // Wait for validation
-    await page.waitForTimeout(300);
-
     // Submit button should be disabled due to short message
     await expect(submitButton).toBeDisabled();
   });
@@ -419,9 +358,6 @@ test.describe('Inquiry Form Validation', () => {
     await page.locator('#guest_name').fill('John Doe');
     await page.locator('#guest_email').fill('test@example.com');
     await page.locator('#message').fill('This is a valid inquiry message with sufficient length for successful submission.');
-
-    // Wait for validation
-    await page.waitForTimeout(300);
 
     // Submit button should be enabled
     await expect(submitButton).toBeEnabled();

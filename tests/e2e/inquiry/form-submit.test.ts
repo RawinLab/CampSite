@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { loginAsUser, createSupabaseAdmin } from '../utils/auth';
+import { waitForApi, PUBLIC_API, assertNoErrors } from '../utils/api-helpers';
 
 /**
  * E2E Tests: Inquiry Form Submission Flow
@@ -30,7 +31,7 @@ test.describe('Inquiry Form Submission Flow', () => {
 
     // Navigate to campsite detail page
     await page.goto(`/campsites/${TEST_CAMPSITE_ID}`);
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
   });
 
   test.afterEach(async () => {
@@ -49,7 +50,7 @@ test.describe('Inquiry Form Submission Flow', () => {
     await inquiryButton.click();
 
     // Wait for form to be visible
-    await page.waitForTimeout(500);
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     // Fill in required fields
     const nameInput = page.locator('#guest_name').or(page.getByLabel(/your name/i));
@@ -67,22 +68,31 @@ test.describe('Inquiry Form Submission Flow', () => {
     const messageTextarea = page.locator('#message').or(page.getByLabel(/message/i));
     await messageTextarea.fill('I would like to know more about availability and pricing for next month.');
 
-    // Wait for form validation
-    await page.waitForTimeout(300);
+    // Intercept the API call
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.inquiry) &&
+             res.request().method() === 'POST' &&
+             res.status() === 200
+    );
 
     // Submit the form
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    // Wait for API call
-    await page.waitForTimeout(2000);
+    // Wait for and verify API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify success message is displayed
     const successMessage = page.locator('[data-testid="inquiry-success"]').or(
       page.getByText(/inquiry sent|message sent|successfully/i)
     );
-    await expect(successMessage).toBeVisible({ timeout: 5000 });
+    await expect(successMessage).toBeVisible();
+
+    // Verify no error states
+    await assertNoErrors(page);
   });
 
   test('T070.2: Successful submission with all fields including optional', async ({ page }) => {
@@ -91,7 +101,7 @@ test.describe('Inquiry Form Submission Flow', () => {
     await inquiryButton.click();
 
     // Wait for form
-    await page.waitForTimeout(500);
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     // Fill in all required fields
     const nameInput = page.locator('#guest_name').or(page.getByLabel(/your name/i));
@@ -119,7 +129,6 @@ test.describe('Inquiry Form Submission Flow', () => {
     const showDatesButton = page.getByText(/add.*date|show.*date/i);
     if (await showDatesButton.isVisible({ timeout: 1000 }).catch(() => false)) {
       await showDatesButton.click();
-      await page.waitForTimeout(200);
 
       const checkInInput = page.locator('#check_in_date').or(page.getByLabel(/check.*in/i));
       if (await checkInInput.isVisible({ timeout: 1000 }).catch(() => false)) {
@@ -136,22 +145,31 @@ test.describe('Inquiry Form Submission Flow', () => {
       }
     }
 
-    // Wait for validation
-    await page.waitForTimeout(300);
+    // Intercept the API call
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.inquiry) &&
+             res.request().method() === 'POST' &&
+             res.status() === 200
+    );
 
     // Submit the form
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
     await expect(submitButton).toBeEnabled();
     await submitButton.click();
 
-    // Wait for API call
-    await page.waitForTimeout(2000);
+    // Wait for and verify API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify success message
     const successMessage = page.locator('[data-testid="inquiry-success"]').or(
       page.getByText(/inquiry sent|message sent|successfully/i)
     );
-    await expect(successMessage).toBeVisible({ timeout: 5000 });
+    await expect(successMessage).toBeVisible();
+
+    // Verify no error states
+    await assertNoErrors(page);
   });
 
   test('T070.3: Form validation - required fields', async ({ page }) => {
@@ -160,7 +178,7 @@ test.describe('Inquiry Form Submission Flow', () => {
     await inquiryButton.click();
 
     // Wait for form
-    await page.waitForTimeout(500);
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     // Try to submit without filling required fields
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
@@ -171,7 +189,6 @@ test.describe('Inquiry Form Submission Flow', () => {
     // Fill only name
     const nameInput = page.locator('#guest_name').or(page.getByLabel(/your name/i));
     await nameInput.fill('John');
-    await page.waitForTimeout(100);
 
     // Still disabled (missing email and message)
     await expect(submitButton).toBeDisabled();
@@ -179,7 +196,6 @@ test.describe('Inquiry Form Submission Flow', () => {
     // Fill email
     const emailInput = page.locator('#guest_email').or(page.getByLabel(/email/i));
     await emailInput.fill('john@example.com');
-    await page.waitForTimeout(100);
 
     // Still disabled (missing message with minimum length)
     await expect(submitButton).toBeDisabled();
@@ -187,14 +203,12 @@ test.describe('Inquiry Form Submission Flow', () => {
     // Fill message with insufficient length
     const messageTextarea = page.locator('#message').or(page.getByLabel(/message/i));
     await messageTextarea.fill('Too short');
-    await page.waitForTimeout(300);
 
     // Should still be disabled due to message length requirement
     await expect(submitButton).toBeDisabled();
 
     // Fill message with sufficient length (minimum 20 characters)
     await messageTextarea.fill('I would like to know more about this campsite.');
-    await page.waitForTimeout(300);
 
     // Now should be enabled
     await expect(submitButton).toBeEnabled();
@@ -206,14 +220,13 @@ test.describe('Inquiry Form Submission Flow', () => {
     await inquiryButton.click();
 
     // Wait for form
-    await page.waitForTimeout(500);
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     const emailInput = page.locator('#guest_email').or(page.getByLabel(/email/i));
 
     // Enter invalid email
     await emailInput.fill('invalid-email');
     await emailInput.blur();
-    await page.waitForTimeout(200);
 
     // Check for validation error
     const emailError = page.locator('[data-testid="email-error"]').or(
@@ -234,15 +247,12 @@ test.describe('Inquiry Form Submission Flow', () => {
       const messageTextarea = page.locator('#message').or(page.getByLabel(/message/i));
       await messageTextarea.fill('I would like to know more about this campsite and its amenities.');
 
-      await page.waitForTimeout(300);
-
       // Submit should be disabled with invalid email
       await expect(submitButton).toBeDisabled();
     }
 
     // Enter valid email
     await emailInput.fill('valid.email@example.com');
-    await page.waitForTimeout(200);
 
     // Error should disappear
     if (isErrorVisible) {
@@ -256,14 +266,13 @@ test.describe('Inquiry Form Submission Flow', () => {
     await inquiryButton.click();
 
     // Wait for form
-    await page.waitForTimeout(500);
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     const messageTextarea = page.locator('#message').or(page.getByLabel(/message/i));
 
     // Enter message below minimum length (20 characters)
     const shortMessage = 'Too short';
     await messageTextarea.fill(shortMessage);
-    await page.waitForTimeout(300);
 
     // Submit should be disabled
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
@@ -275,14 +284,11 @@ test.describe('Inquiry Form Submission Flow', () => {
     const emailInput = page.locator('#guest_email').or(page.getByLabel(/email/i));
     await emailInput.fill('john@example.com');
 
-    await page.waitForTimeout(300);
-
     // Should be disabled due to message length
     await expect(submitButton).toBeDisabled();
 
     // Enter valid length message (minimum 20 characters)
     await messageTextarea.fill('This is a valid message with sufficient length for submission.');
-    await page.waitForTimeout(300);
 
     // Should now be enabled
     await expect(submitButton).toBeEnabled();
@@ -293,8 +299,8 @@ test.describe('Inquiry Form Submission Flow', () => {
     const inquiryButton = page.getByRole('button', { name: /contact|send inquiry|ask question/i });
     await inquiryButton.click();
 
-    // Fill form
-    await page.waitForTimeout(500);
+    // Wait for form
+    await expect(page.locator('#guest_name, [name="guest_name"]')).toBeVisible();
 
     const nameInput = page.locator('#guest_name').or(page.getByLabel(/your name/i));
     await nameInput.fill('Test User');
@@ -305,12 +311,27 @@ test.describe('Inquiry Form Submission Flow', () => {
     const messageTextarea = page.locator('#message').or(page.getByLabel(/message/i));
     await messageTextarea.fill('This is a test inquiry message with sufficient length.');
 
+    // Intercept the API call
+    const apiPromise = page.waitForResponse(
+      res => res.url().includes(PUBLIC_API.inquiry) &&
+             res.request().method() === 'POST' &&
+             res.status() === 200
+    );
+
     // Submit
     const submitButton = page.getByRole('button', { name: /send inquiry|submit/i });
     await submitButton.click();
 
-    // Wait for success
-    await page.waitForTimeout(2000);
+    // Wait for and verify API response
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
+
+    // Verify success message appears
+    const successMessage = page.locator('[data-testid="inquiry-success"]').or(
+      page.getByText(/inquiry sent|message sent|successfully/i)
+    );
+    await expect(successMessage).toBeVisible();
 
     // Form should be reset or closed
     const isFormVisible = await page.locator('[data-testid="inquiry-form"]').isVisible({ timeout: 2000 }).catch(() => false);
@@ -321,5 +342,8 @@ test.describe('Inquiry Form Submission Flow', () => {
       await expect(emailInput).toHaveValue('');
       await expect(messageTextarea).toHaveValue('');
     }
+
+    // Verify no error states
+    await assertNoErrors(page);
   });
 });

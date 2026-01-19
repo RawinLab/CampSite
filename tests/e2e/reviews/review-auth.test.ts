@@ -1,96 +1,75 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 
 test.describe('Review Submission Authentication Requirement', () => {
+  const TEST_CAMPSITE_ID = 'test-campsite-1';
+
   test.beforeEach(async ({ page }) => {
-    // Navigate to a campsite detail page where review form would be shown
-    // Using a mock campsite ID - in real scenario, this would be a valid campsite
-    await page.goto('/campsites/test-campsite-1');
-    await page.waitForLoadState('networkidle');
+    // Navigate to campsite detail page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.goto('/campsites/test-campsite-1')
+    ]);
+
+    // Verify API responses
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
+
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T052.1: Review form area shows login prompt when not logged in', async ({ page }) => {
     // Scroll to review section
-    const reviewSection = page.locator('[data-testid="review-section"]').or(
-      page.locator('section:has-text("รีวิว")').or(
-        page.locator('section:has-text("Review")')
-      )
-    );
+    const reviewSection = page.locator('[data-testid="review-section"]');
+    const isReviewSectionVisible = await reviewSection.isVisible().catch(() => false);
 
-    if (await reviewSection.isVisible()) {
+    if (isReviewSectionVisible) {
       await reviewSection.scrollIntoViewIfNeeded();
     }
 
     // Check for login prompt in review form area
-    const loginPrompt = page.getByText(/กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว/i).or(
-      page.getByText(/Please log in to write a review/i).or(
-        page.getByText(/เข้าสู่ระบบ/i)
-      )
-    );
-
-    await expect(loginPrompt).toBeVisible();
+    const loginPrompt = page.locator('[data-testid="review-login-prompt"]');
+    await expect(loginPrompt).toBeVisible({ timeout: 5000 });
   });
 
   test('T052.2: Login button/link is visible for unauthenticated users', async ({ page }) => {
     // Look for login button in review section
-    const loginButton = page.getByRole('link', { name: /เข้าสู่ระบบ/i }).or(
-      page.getByRole('link', { name: /log in/i }).or(
-        page.getByRole('button', { name: /เข้าสู่ระบบ/i }).or(
-          page.getByRole('button', { name: /log in/i })
-        )
-      )
-    );
-
-    // At least one login link/button should be visible
-    const count = await loginButton.count();
-    expect(count).toBeGreaterThan(0);
-
-    // First login element should be visible
-    await expect(loginButton.first()).toBeVisible();
+    const loginButton = page.locator('[data-testid="review-login-button"]');
+    await expect(loginButton).toBeVisible({ timeout: 5000 });
   });
 
   test('T052.3: Clicking login redirects to login page', async ({ page }) => {
     // Find and click login button in review section
-    const loginButton = page.getByRole('link', { name: /เข้าสู่ระบบ/i }).or(
-      page.getByRole('link', { name: /log in/i }).or(
-        page.getByRole('button', { name: /เข้าสู่ระบบ/i }).or(
-          page.getByRole('button', { name: /log in/i })
-        )
-      )
-    );
+    const loginButton = page.locator('[data-testid="review-login-button"]');
+    await loginButton.click();
 
-    // Click the first visible login element
-    await loginButton.first().click();
+    // Wait for navigation to login page
+    await page.waitForURL(/\/(login|auth\/login|signin)/, { timeout: 10000 });
 
-    // Wait for navigation
-    await page.waitForLoadState('networkidle');
+    // Verify we're on the login page
+    expect(page.url()).toMatch(/\/(login|auth\/login|signin)/);
 
-    // Should be redirected to login page
-    await expect(page).toHaveURL(/\/(login|auth\/login|signin)/);
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T052.4: Review form is not visible when not authenticated', async ({ page }) => {
     // Review form elements should not be accessible
-    const ratingInput = page.getByRole('slider').or(
-      page.locator('[data-testid="rating-input"]').or(
-        page.locator('input[type="range"]')
-      )
-    );
+    const reviewForm = page.locator('[data-testid="review-form"]');
+    await expect(reviewForm).not.toBeVisible();
 
-    const reviewTextarea = page.getByRole('textbox', { name: /รีวิว/i }).or(
-      page.getByRole('textbox', { name: /review/i }).or(
-        page.getByPlaceholder(/เขียนรีวิว/i).or(
-          page.getByPlaceholder(/write a review/i)
-        )
-      )
-    );
-
-    const submitButton = page.getByRole('button', { name: /ส่งรีวิว/i }).or(
-      page.getByRole('button', { name: /submit review/i })
-    );
-
-    // Form elements should not be visible
+    const ratingInput = page.locator('[data-testid="rating-input"]');
     await expect(ratingInput).not.toBeVisible();
+
+    const reviewTextarea = page.locator('[data-testid="review-content"]');
     await expect(reviewTextarea).not.toBeVisible();
+
+    const submitButton = page.locator('[data-testid="review-submit"]');
     await expect(submitButton).not.toBeVisible();
   });
 
@@ -126,107 +105,88 @@ test.describe('Review Submission Authentication Requirement', () => {
       expiry: (Date.now() + 3600000).toString(),
     });
 
-    // Reload page to apply authentication
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Reload page to apply authentication and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
-    // With authentication, review form elements should be visible or login prompt should not be shown
-    const loginPrompt = page.getByText(/กรุณาเข้าสู่ระบบเพื่อเขียนรีวิว/i).or(
-      page.getByText(/Please log in to write a review/i)
-    );
+    // Verify APIs
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
 
-    // Either the form is visible OR we need real auth (this test may need actual auth setup)
-    const ratingInput = page.getByRole('slider').or(
-      page.locator('[data-testid="rating-input"]')
-    );
+    // With authentication, login prompt should not be visible
+    const loginPrompt = page.locator('[data-testid="review-login-prompt"]');
+    await expect(loginPrompt).not.toBeVisible();
 
-    const reviewTextarea = page.getByRole('textbox', { name: /รีวิว/i }).or(
-      page.getByRole('textbox', { name: /review/i })
-    );
+    // Review form should be accessible (write review button or form itself)
+    const writeReviewButton = page.locator('[data-testid="write-review-button"]');
+    const isButtonVisible = await writeReviewButton.isVisible().catch(() => false);
+    expect(isButtonVisible).toBe(true);
 
-    // Check if login prompt is hidden or form is visible
-    const loginPromptVisible = await loginPrompt.isVisible().catch(() => false);
-    const formVisible = await ratingInput.isVisible().catch(() => false);
-
-    // Either login prompt should be hidden, or form should be visible
-    // (depends on whether mock auth cookie is sufficient)
-    expect(loginPromptVisible || formVisible).toBeTruthy();
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T052.6: Unauthenticated user cannot access review submission endpoint', async ({ page }) => {
     // Try to submit a review directly without auth
-    const response = await page.request.post('http://localhost:4000/api/reviews', {
+    const response = await page.request.post(`http://localhost:3091${PUBLIC_API.submitReview(TEST_CAMPSITE_ID)}`, {
       data: {
-        campsite_id: 'test-campsite-1',
+        campsite_id: TEST_CAMPSITE_ID,
         rating: 5,
         comment: 'Test review',
+        reviewer_type: 'solo',
       },
     });
 
     // Should return 401 Unauthorized
     expect(response.status()).toBe(401);
+
+    // Verify response body indicates unauthorized
+    const data = await response.json().catch(() => ({}));
+    expect(data.success).toBe(false);
   });
 
   test('T052.7: Login prompt includes helpful message', async ({ page }) => {
     // Check that the login prompt message is informative
-    const messageText = page.locator('text=/กรุณาเข้าสู่ระบบ.*รีวิว/i').or(
-      page.locator('text=/Please log in.*review/i').or(
-        page.locator('text=/Sign in.*review/i')
-      )
-    );
+    const loginPrompt = page.locator('[data-testid="review-login-prompt"]');
+    await expect(loginPrompt).toBeVisible({ timeout: 5000 });
 
-    const count = await messageText.count();
-
-    if (count > 0) {
-      await expect(messageText.first()).toBeVisible();
-
-      // Message should contain keywords about logging in and writing reviews
-      const text = await messageText.first().textContent();
-      expect(text?.toLowerCase()).toMatch(/(log|เข้าสู่ระบบ|sign)/);
-      expect(text?.toLowerCase()).toMatch(/(review|รีวิว)/);
-    }
+    // Message should contain keywords about logging in and writing reviews
+    const text = await loginPrompt.textContent();
+    expect(text?.toLowerCase()).toMatch(/(log|sign|login)/i);
+    expect(text?.toLowerCase()).toMatch(/review/i);
   });
 
   test('T052.8: Review section shows existing reviews regardless of auth state', async ({ page }) => {
     // Existing reviews should be visible even without authentication
-    // This ensures the page is useful for browsing reviews
+    const reviewsSection = page.locator('[data-testid="reviews-section"]');
+    await expect(reviewsSection).toBeVisible({ timeout: 5000 });
 
-    // Wait for page load
-    await page.waitForLoadState('networkidle');
+    // Reviews list should be accessible
+    const reviewsList = page.locator('[data-testid="reviews-list"]');
+    const isListVisible = await reviewsList.isVisible().catch(() => false);
 
-    // Check if review list exists (may be empty)
-    const reviewList = page.locator('[data-testid="reviews-list"]').or(
-      page.locator('section:has-text("รีวิว")').or(
-        page.locator('section:has-text("Review")')
-      )
-    );
-
-    // Review section should be visible
-    const isVisible = await reviewList.isVisible().catch(() => false);
-
-    // If reviews section exists, it should be viewable
-    if (isVisible) {
-      await expect(reviewList.first()).toBeVisible();
+    // If there are reviews, the list should be visible
+    // If no reviews, a "no reviews" message should be visible
+    if (!isListVisible) {
+      const noReviewsMessage = page.locator('[data-testid="no-reviews"]');
+      const isNoReviewsVisible = await noReviewsMessage.isVisible().catch(() => false);
+      expect(isNoReviewsVisible).toBe(true);
     }
   });
 
   test('T052.9: Page remains functional after failed auth check', async ({ page }) => {
     // Verify that the page doesn't break when checking auth status fails
-
     // Page should still be interactive
     await expect(page.locator('body')).toBeVisible();
 
-    // Main navigation should work
-    const homeLink = page.getByRole('link', { name: /home|หน้าแรก/i });
+    // Main campsite content should be visible
+    const campsiteDetail = page.locator('[data-testid="campsite-detail"]');
+    await expect(campsiteDetail).toBeVisible();
 
-    if (await homeLink.isVisible().catch(() => false)) {
-      await expect(homeLink.first()).toBeEnabled();
-    }
-
-    // Page should not show error messages
-    const errorMessage = page.getByText(/error|ข้อผิดพลาด/i);
-    const errorVisible = await errorMessage.isVisible().catch(() => false);
-
-    expect(errorVisible).toBeFalsy();
+    // No error messages should be shown
+    await assertNoErrors(page);
   });
 });

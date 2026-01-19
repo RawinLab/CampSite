@@ -24,9 +24,55 @@ import logger from '../utils/logger';
 
 const router: ReturnType<typeof Router> = Router();
 
+/**
+ * Helper function to get profile ID from auth_user_id
+ * Note: req.user.id is auth_user_id from Supabase Auth,
+ * but campsites.owner_id references profiles.id (different UUID)
+ */
+async function getProfileId(
+  supabase: ReturnType<typeof createSupabaseClient>,
+  authUserId: string
+): Promise<string | null> {
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .single();
+
+  if (error || !profile) {
+    logger.error('Error fetching profile for auth_user_id:', authUserId, error);
+    return null;
+  }
+
+  return profile.id;
+}
+
+// Extend AuthenticatedRequest to include profileId
+interface DashboardRequest extends AuthenticatedRequest {
+  profileId?: string;
+}
+
+// Middleware to attach profile ID to request
+async function attachProfileId(
+  req: DashboardRequest,
+  res: Response,
+  next: NextFunction
+) {
+  const supabase = req.supabase || createSupabaseClient();
+  const profileId = await getProfileId(supabase, req.user!.id);
+
+  if (!profileId) {
+    return res.status(404).json(errorResponse('Owner profile not found'));
+  }
+
+  req.profileId = profileId;
+  next();
+}
+
 // All dashboard routes require authentication and owner/admin role
 router.use(authMiddleware);
 router.use(requireOwner);
+router.use(attachProfileId as any);
 
 // ============================================
 // ANALYTICS ENDPOINTS
@@ -103,18 +149,19 @@ router.get(
       const supabase = req.supabase || createSupabaseClient();
       const offset = ((page || 1) - 1) * (limit || 20);
 
-      // Build query
+      // Build query using profileId (set by middleware)
+      // Note: Use LEFT JOIN (no !inner) to include campsites without photos
       let query = supabase
         .from('campsites')
         .select(
           `
-          id, name, status, average_rating, review_count,
+          id, name, status, rating_average, review_count,
           created_at, updated_at,
-          campsite_photos!inner(url, is_primary)
+          campsite_photos(url, is_primary)
         `,
           { count: 'exact' }
         )
-        .eq('owner_id', req.user!.id);
+        .eq('owner_id', (req as DashboardRequest).profileId!);
 
       // Apply status filter
       if (status && status !== 'all') {
@@ -168,7 +215,7 @@ router.get(
           name: campsite.name,
           status: campsite.status,
           thumbnail_url: primaryPhoto?.url || null,
-          average_rating: campsite.average_rating,
+          average_rating: campsite.rating_average,
           review_count: campsite.review_count,
           views_this_month: viewsThisMonth,
           inquiries_this_month: inquiriesThisMonth,
@@ -209,7 +256,7 @@ router.get('/campsites/:id', async (req: AuthenticatedRequest, res: Response) =>
       `
       )
       .eq('id', id)
-      .eq('owner_id', req.user!.id)
+      .eq('owner_id', (req as DashboardRequest).profileId!)
       .single();
 
     if (error || !campsite) {
@@ -240,7 +287,7 @@ router.post(
         .from('campsites')
         .insert({
           ...campsiteData,
-          owner_id: req.user!.id,
+          owner_id: (req as DashboardRequest).profileId!,
           status: 'pending',
         })
         .select()
@@ -289,7 +336,7 @@ router.patch(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -349,7 +396,7 @@ router.delete('/campsites/:id', async (req: AuthenticatedRequest, res: Response)
       .from('campsites')
       .select('id')
       .eq('id', id)
-      .eq('owner_id', req.user!.id)
+      .eq('owner_id', (req as DashboardRequest).profileId!)
       .single();
 
     if (!existing) {
@@ -397,7 +444,7 @@ router.post(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -530,7 +577,7 @@ router.post(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -570,7 +617,7 @@ router.patch(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -619,7 +666,7 @@ router.delete(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -689,7 +736,7 @@ router.put(
         .from('campsites')
         .select('id')
         .eq('id', id)
-        .eq('owner_id', req.user!.id)
+        .eq('owner_id', (req as DashboardRequest).profileId!)
         .single();
 
       if (!existing) {
@@ -744,7 +791,7 @@ router.get(
       const { data: ownerCampsites } = await supabase
         .from('campsites')
         .select('id')
-        .eq('owner_id', req.user!.id);
+        .eq('owner_id', (req as DashboardRequest).profileId!);
 
       const campsiteIds = ownerCampsites?.map((c) => c.id) || [];
 
@@ -833,7 +880,7 @@ router.get('/inquiries/:id', async (req: AuthenticatedRequest, res: Response) =>
     const { data: ownerCampsites } = await supabase
       .from('campsites')
       .select('id')
-      .eq('owner_id', req.user!.id);
+      .eq('owner_id', (req as DashboardRequest).profileId!);
 
     const campsiteIds = ownerCampsites?.map((c) => c.id) || [];
 
@@ -886,7 +933,7 @@ router.post(
       const { data: ownerCampsites } = await supabase
         .from('campsites')
         .select('id')
-        .eq('owner_id', req.user!.id);
+        .eq('owner_id', (req as DashboardRequest).profileId!);
 
       const campsiteIds = ownerCampsites?.map((c) => c.id) || [];
 
@@ -960,7 +1007,7 @@ router.patch(
       const { data: ownerCampsites } = await supabase
         .from('campsites')
         .select('id')
-        .eq('owner_id', req.user!.id);
+        .eq('owner_id', (req as DashboardRequest).profileId!);
 
       const campsiteIds = ownerCampsites?.map((c) => c.id) || [];
 

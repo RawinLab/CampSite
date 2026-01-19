@@ -1,11 +1,26 @@
 import { test, expect } from '@playwright/test';
+import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 
 test.describe('Review Auto-Approval Functionality (Q11)', () => {
+  const TEST_CAMPSITE_ID = '1';
+
   test.beforeEach(async ({ page }) => {
-    // Navigate to a campsite detail page
-    // Assuming campsite ID 1 exists for testing
-    await page.goto('/campsites/1');
-    await page.waitForLoadState('networkidle');
+    // Navigate to campsite detail page and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.goto('/campsites/1')
+    ]);
+
+    // Verify API responses
+    const campsiteData = await campsiteResponse.json();
+    expect(campsiteData.success).toBe(true);
+
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
+
+    // Verify no errors
+    await assertNoErrors(page);
 
     // Wait for campsite detail page to load
     await page.waitForSelector('[data-testid="campsite-detail"]', { timeout: 10000 });
@@ -17,9 +32,16 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    // Reload to apply auth state
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    // Reload to apply auth state and wait for APIs
+    const [campsiteResponse, reviewsResponse] = await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
+
+    // Verify APIs
+    const reviewsData = await reviewsResponse.json();
+    expect(reviewsData.success).toBe(true);
 
     // Get initial review count
     const initialReviewCards = await page.locator('[data-testid="review-card"]').all();
@@ -35,23 +57,38 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     await expect(reviewForm).toBeVisible();
 
     // Fill out review form
-    const ratingInput = page.locator('[data-testid="rating-input"]');
-    await ratingInput.click(); // Select rating (e.g., 4 stars)
-
-    // Click on 4th star
     const fourthStar = page.locator('[data-testid="star-4"]');
     await fourthStar.click();
 
     const commentTextarea = page.locator('[data-testid="review-comment"]');
     await commentTextarea.fill('This is a test review that should appear immediately after submission.');
 
+    // Wait for review submission API
+    const submitApiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
+    // Wait for reviews list refresh API
+    const refreshApiPromise = waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), {
+      method: 'GET',
+      status: 200
+    });
+
     // Submit review
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    // Wait for submission to complete
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Wait for both APIs
+    const [submitResponse, refreshResponse] = await Promise.all([submitApiPromise, refreshApiPromise]);
+
+    // Verify submission success
+    const submitData = await submitResponse.json();
+    expect(submitData.success).toBe(true);
+
+    // Verify updated reviews list
+    const refreshData = await refreshResponse.json();
+    expect(refreshData.success).toBe(true);
 
     // Verify review appears immediately in the list
     const updatedReviewCards = await page.locator('[data-testid="review-card"]').all();
@@ -63,6 +100,9 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     // Verify the new review contains the submitted comment
     const lastReview = page.locator('[data-testid="review-card"]').first(); // Assuming newest first
     await expect(lastReview).toContainText('This is a test review that should appear immediately');
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T054.2: No "pending" or "under review" message appears', async ({ page }) => {
@@ -71,8 +111,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Open and submit a review
     const writeReviewButton = page.locator('[data-testid="write-review-button"]');
@@ -88,11 +131,19 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const commentTextarea = page.locator('[data-testid="review-comment"]');
     await commentTextarea.fill('Testing auto-approval flow');
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify no pending/under review messages exist
     const pendingMessage = page.getByText(/pending|under review|awaiting approval/i);
@@ -101,6 +152,9 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     // Verify no status badge showing "pending"
     const pendingBadge = page.locator('[data-testid="review-status-pending"]');
     await expect(pendingBadge).not.toBeVisible();
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T054.3: Review count updates immediately after submission', async ({ page }) => {
@@ -109,8 +163,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Get initial review count from summary
     const reviewCountElement = page.locator('[data-testid="total-reviews-count"]');
@@ -129,17 +186,25 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const commentTextarea = page.locator('[data-testid="review-comment"]');
     await commentTextarea.fill('Testing review count update');
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify review count increased by 1
-    const updatedCountText = await reviewCountElement.textContent();
-    const updatedCount = parseInt(updatedCountText?.match(/\d+/)?.[0] || '0', 10);
+    await expect(reviewCountElement).toContainText(String(initialCount + 1), { timeout: 5000 });
 
-    expect(updatedCount).toBe(initialCount + 1);
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T054.4: Average rating updates immediately after submission', async ({ page }) => {
@@ -148,8 +213,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Get initial average rating
     const avgRatingElement = page.locator('[data-testid="average-rating"]');
@@ -168,11 +236,19 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const commentTextarea = page.locator('[data-testid="review-comment"]');
     await commentTextarea.fill('Five star review to test rating update');
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify average rating has changed
     const updatedRatingText = await avgRatingElement.textContent();
@@ -182,6 +258,9 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     // Note: Exact value depends on existing reviews, so we just verify it changed or is valid
     expect(updatedRating).toBeGreaterThan(0);
     expect(updatedRating).toBeLessThanOrEqual(5);
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T054.5: Review visible to other users immediately', async ({ page, context }) => {
@@ -190,8 +269,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-1-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Submit review as User 1
     const writeReviewButton = page.locator('[data-testid="write-review-button"]');
@@ -204,11 +286,19 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const uniqueComment = `Unique test review ${Date.now()}`;
     await commentTextarea.fill(uniqueComment);
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify User 1 sees the review
     const user1Review = page.locator('[data-testid="review-card"]').filter({ hasText: uniqueComment });
@@ -222,13 +312,21 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-2-token');
     });
 
-    await page2.goto('/campsites/1');
-    await page2.waitForLoadState('networkidle');
+    // Navigate and wait for APIs
+    await Promise.all([
+      waitForApi(page2, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page2, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page2.goto('/campsites/1')
+    ]);
+
     await page2.waitForSelector('[data-testid="reviews-section"]', { timeout: 10000 });
 
     // Verify User 2 can see the same review immediately
     const user2Review = page2.locator('[data-testid="review-card"]').filter({ hasText: uniqueComment });
     await expect(user2Review).toBeVisible();
+
+    // Verify no errors
+    await assertNoErrors(page2);
 
     await page2.close();
   });
@@ -240,12 +338,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('user_role', 'admin');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
-
     // Navigate to admin/reviews section if it exists
     await page.goto('/admin/reviews');
-    await page.waitForLoadState('networkidle');
+
+    // Wait a moment for page to load (but don't expect specific APIs if page doesn't exist)
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify no "pending reviews" section exists
     const pendingReviewsSection = page.locator('[data-testid="pending-reviews-section"]');
@@ -258,7 +355,8 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
 
     // Verify no status filter for "pending"
     const statusFilter = page.locator('[data-testid="review-status-filter"]');
-    if (await statusFilter.isVisible()) {
+    const isStatusFilterVisible = await statusFilter.isVisible().catch(() => false);
+    if (isStatusFilterVisible) {
       const pendingOption = statusFilter.locator('option[value="pending"]');
       await expect(pendingOption).not.toBeVisible();
     }
@@ -270,8 +368,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Submit a review
     const writeReviewButton = page.locator('[data-testid="write-review-button"]');
@@ -283,20 +384,31 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const commentTextarea = page.locator('[data-testid="review-comment"]');
     await commentTextarea.fill('Testing success message');
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    // Wait for success message
-    await page.waitForTimeout(500);
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify success message indicates immediate publication
     const successMessage = page.locator('[data-testid="review-success-message"]');
-    await expect(successMessage).toBeVisible();
+    await expect(successMessage).toBeVisible({ timeout: 5000 });
 
     // Message should indicate review is published, not pending
     const messageText = await successMessage.textContent();
     expect(messageText?.toLowerCase()).toMatch(/published|submitted successfully|added/);
     expect(messageText?.toLowerCase()).not.toMatch(/pending|waiting|approval/);
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 
   test('T054.8: Review form closes and shows new review immediately', async ({ page }) => {
@@ -305,8 +417,11 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
       localStorage.setItem('auth_token', 'mock-user-token');
     });
 
-    await page.reload();
-    await page.waitForLoadState('networkidle');
+    await Promise.all([
+      waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
+      waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
+      page.reload()
+    ]);
 
     // Open review form
     const writeReviewButton = page.locator('[data-testid="write-review-button"]');
@@ -323,17 +438,28 @@ test.describe('Review Auto-Approval Functionality (Q11)', () => {
     const testComment = 'Review form should close after submission';
     await commentTextarea.fill(testComment);
 
+    // Wait for submission API
+    const apiPromise = waitForApi(page, PUBLIC_API.submitReview(TEST_CAMPSITE_ID), {
+      method: 'POST',
+      status: 200
+    });
+
     const submitButton = page.locator('[data-testid="submit-review-button"]');
     await submitButton.click();
 
-    await page.waitForTimeout(1000);
-    await page.waitForLoadState('networkidle');
+    // Verify API success
+    const response = await apiPromise;
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify form is closed/hidden
-    await expect(reviewForm).not.toBeVisible();
+    await expect(reviewForm).not.toBeVisible({ timeout: 5000 });
 
     // Verify new review is visible in the list
     const newReview = page.locator('[data-testid="review-card"]').filter({ hasText: testComment });
     await expect(newReview).toBeVisible();
+
+    // Verify no errors
+    await assertNoErrors(page);
   });
 });

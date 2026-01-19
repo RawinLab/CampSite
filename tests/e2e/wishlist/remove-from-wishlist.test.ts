@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsUser, createSupabaseAdmin } from '../utils';
+import { loginAsUser, createSupabaseAdmin, waitForApi, assertNoErrors } from '../utils';
 
 test.describe('Remove from Wishlist Functionality', () => {
   test.setTimeout(60000);
@@ -40,8 +40,10 @@ test.describe('Remove from Wishlist Functionality', () => {
 
   test('T-WISHLIST-06: User can remove campsite from wishlist via heart button', async ({ page }) => {
     // Navigate to the test campsite (already in wishlist from beforeEach)
+    const detailApiPromise = waitForApi(page, '/api/campsites/e2e-test-campsite-approved-1', { status: 200 });
     await page.goto('/campsites/e2e-test-campsite-approved-1');
-    await page.waitForTimeout(2000);
+    await detailApiPromise;
+    await assertNoErrors(page);
 
     // Verify campsite is in wishlist
     const supabase = createSupabaseAdmin();
@@ -54,11 +56,20 @@ test.describe('Remove from Wishlist Functionality', () => {
 
     expect(before).toBeTruthy();
 
-    // Find and click heart button to remove
-    const wishlistButton = page.locator('[data-testid="wishlist-button"], button:has(svg[class*="heart"])').first();
+    // Find and click heart button to remove with API verification
+    const wishlistButton = page.locator('[data-testid="wishlist-button"]');
     await expect(wishlistButton).toBeVisible({ timeout: 10000 });
+
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await wishlistButton.click();
-    await page.waitForTimeout(1000);
+    const response = await removeApiPromise;
+
+    // Verify API response
+    const data = await response.json();
+    expect(data.success).toBe(true);
+
+    // Verify UI updated to show inactive state
+    await expect(wishlistButton).toHaveAttribute('data-active', 'false');
 
     // Verify it's removed from database
     const { data: after } = await supabase
@@ -72,41 +83,60 @@ test.describe('Remove from Wishlist Functionality', () => {
   });
 
   test('T-WISHLIST-07: Removed campsite disappears from wishlist page', async ({ page }) => {
-    // Navigate to wishlist page
+    // Navigate to wishlist page with API verification
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForTimeout(2000);
+    await wishlistApiPromise;
+    await assertNoErrors(page);
 
     // Verify item is there (added in beforeEach)
     const wishlistContent = await page.textContent('body');
     expect(wishlistContent).toContain('E2E Test Campsite - Approved');
 
-    // Find and remove from wishlist
-    const wishlistButton = page.locator('[data-testid="wishlist-button"], [data-testid="remove-wishlist-button"], button:has(svg[class*="heart"])').first();
+    // Find and remove from wishlist with API verification
+    const wishlistButton = page.locator('[data-testid="wishlist-button"]').first();
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await wishlistButton.click();
-    await page.waitForTimeout(1000);
+    const response = await removeApiPromise;
+
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Reload page and verify item is removed
+    const reloadApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.reload();
-    await page.waitForTimeout(2000);
+    const reloadResponse = await reloadApiPromise;
+    await assertNoErrors(page);
+
+    // Verify API returns empty or no matching items
+    const reloadData = await reloadResponse.json();
+    expect(reloadData.success).toBe(true);
 
     // Verify wishlist is empty or item not present
     const supabase = createSupabaseAdmin();
-    const { data } = await supabase
+    const { data: dbData } = await supabase
       .from('wishlists')
       .select('*')
       .eq('user_id', userId)
       .eq('campsite_id', 'e2e-test-campsite-approved-1')
       .maybeSingle();
 
-    expect(data).toBeNull();
+    expect(dbData).toBeNull();
   });
 
   test('T-WISHLIST-08: Wishlist page reflects database state', async ({ page }) => {
-    // Navigate to wishlist page
+    // Navigate to wishlist page with API verification
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForTimeout(2000);
+    const wishlistResponse = await wishlistApiPromise;
+    await assertNoErrors(page);
 
-    // Verify the pre-added item is visible
+    // Verify the pre-added item is in API response
+    const wishlistData = await wishlistResponse.json();
+    expect(wishlistData.success).toBe(true);
+    expect(wishlistData.data).toBeDefined();
+
+    // Verify the pre-added item is visible in UI
     const wishlistContent = await page.textContent('body');
     expect(wishlistContent).toContain('E2E Test Campsite - Approved');
 
@@ -121,10 +151,14 @@ test.describe('Remove from Wishlist Functionality', () => {
 
     expect(data).toBeTruthy();
 
-    // Click remove button
-    const removeButton = page.locator('[data-testid="wishlist-button"], [data-testid="remove-wishlist-button"], button:has(svg[class*="heart"])').first();
+    // Click remove button with API verification
+    const removeButton = page.locator('[data-testid="wishlist-button"]').first();
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await removeButton.click();
-    await page.waitForTimeout(1000);
+    const removeResponse = await removeApiPromise;
+
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
 
     // Verify database no longer has the item
     const { data: afterRemoval } = await supabase
@@ -139,19 +173,31 @@ test.describe('Remove from Wishlist Functionality', () => {
 
   test('T-WISHLIST-09: Removing item shows empty state when no items remain', async ({ page }) => {
     // Navigate to wishlist page (has one item from beforeEach)
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForTimeout(2000);
+    await wishlistApiPromise;
+    await assertNoErrors(page);
 
-    // Remove the item
-    const removeButton = page.locator('[data-testid="wishlist-button"], [data-testid="remove-wishlist-button"], button:has(svg[class*="heart"])').first();
+    // Remove the item with API verification
+    const removeButton = page.locator('[data-testid="wishlist-button"]').first();
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await removeButton.click();
-    await page.waitForTimeout(1000);
+    const removeResponse = await removeApiPromise;
 
-    // Reload to see empty state
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
+
+    // Reload to see empty state with API verification
+    const reloadApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.reload();
-    await page.waitForTimeout(2000);
+    const reloadResponse = await reloadApiPromise;
+    await assertNoErrors(page);
 
-    // Verify empty state appears or no items present
+    // Verify API returns empty data
+    const reloadData = await reloadResponse.json();
+    expect(reloadData.success).toBe(true);
+
+    // Verify empty state in database
     const supabase = createSupabaseAdmin();
     const { data } = await supabase
       .from('wishlists')
@@ -167,9 +213,11 @@ test.describe('Remove from Wishlist Functionality', () => {
   });
 
   test('T-WISHLIST-10: Can toggle wishlist on and off multiple times', async ({ page }) => {
-    // Navigate to the test campsite
+    // Navigate to the test campsite with API verification
+    const detailApiPromise = waitForApi(page, '/api/campsites/e2e-test-campsite-approved-1', { status: 200 });
     await page.goto('/campsites/e2e-test-campsite-approved-1');
-    await page.waitForTimeout(2000);
+    await detailApiPromise;
+    await assertNoErrors(page);
 
     const supabase = createSupabaseAdmin();
 
@@ -182,10 +230,14 @@ test.describe('Remove from Wishlist Functionality', () => {
       .maybeSingle();
     expect(initial).toBeTruthy();
 
-    // Remove from wishlist
-    const wishlistButton = page.locator('[data-testid="wishlist-button"], button:has(svg[class*="heart"])').first();
+    // Remove from wishlist with API verification
+    const wishlistButton = page.locator('[data-testid="wishlist-button"]');
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await wishlistButton.click();
-    await page.waitForTimeout(1000);
+    const removeResponse = await removeApiPromise;
+
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
 
     // Verify removed
     const { data: afterRemove } = await supabase
@@ -196,9 +248,13 @@ test.describe('Remove from Wishlist Functionality', () => {
       .maybeSingle();
     expect(afterRemove).toBeNull();
 
-    // Add back to wishlist
+    // Add back to wishlist with API verification
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await wishlistButton.click();
-    await page.waitForTimeout(1000);
+    const addResponse = await addApiPromise;
+
+    const addData = await addResponse.json();
+    expect(addData.success).toBe(true);
 
     // Verify added again
     const { data: afterAdd } = await supabase

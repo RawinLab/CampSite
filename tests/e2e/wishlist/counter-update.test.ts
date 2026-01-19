@@ -1,64 +1,75 @@
 import { test, expect } from '@playwright/test';
+import { loginAsUser, waitForApi, assertNoErrors } from '../utils';
 
 test.describe('Wishlist Counter Update Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Login before each test
-    await page.goto('/login');
-    await page.fill('input[type="email"]', 'test@example.com');
-    await page.fill('input[type="password"]', 'password123');
-    await page.click('button[type="submit"]');
-    await page.waitForLoadState('networkidle');
+    await loginAsUser(page);
   });
 
   test('T-WISHLIST-11: Wishlist counter increments when adding item', async ({ page }) => {
-    // Navigate to search page
+    // Navigate to search page with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     // Get initial counter value
     const wishlistCounter = page.locator('[data-testid="wishlist-counter"]');
     const initialCountText = await wishlistCounter.textContent();
     const initialCount = parseInt(initialCountText || '0', 10);
 
-    // Add campsite to wishlist
+    // Add campsite to wishlist with API verification
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
+
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const response = await addApiPromise;
+
+    const data = await response.json();
+    expect(data.success).toBe(true);
 
     // Verify counter incremented
-    const newCountText = await wishlistCounter.textContent();
-    const newCount = parseInt(newCountText || '0', 10);
-    expect(newCount).toBe(initialCount + 1);
+    await expect(wishlistCounter).toContainText((initialCount + 1).toString());
   });
 
   test('T-WISHLIST-12: Wishlist counter decrements when removing item', async ({ page }) => {
-    // Navigate to search page and add item first
+    // Navigate to search page and add item first with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
+
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Get counter value after adding
     const wishlistCounter = page.locator('[data-testid="wishlist-counter"]');
     const countAfterAdd = parseInt(await wishlistCounter.textContent() || '0', 10);
 
-    // Remove item
+    // Remove item with API verification
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const removeResponse = await removeApiPromise;
+
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
 
     // Verify counter decremented
-    const countAfterRemove = parseInt(await wishlistCounter.textContent() || '0', 10);
-    expect(countAfterRemove).toBe(countAfterAdd - 1);
+    await expect(wishlistCounter).toContainText((countAfterAdd - 1).toString());
   });
 
   test('T-WISHLIST-13: Wishlist counter updates correctly with multiple additions', async ({ page }) => {
-    // Navigate to search page
+    // Navigate to search page with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     // Get initial counter value
     const wishlistCounter = page.locator('[data-testid="wishlist-counter"]');
@@ -71,24 +82,28 @@ test.describe('Wishlist Counter Update Functionality', () => {
 
     for (let i = 0; i < itemsToAdd; i++) {
       const heartButton = campsiteCards.nth(i).locator('[data-testid="wishlist-button"]');
+      const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
       await heartButton.click();
-      await page.waitForTimeout(500);
+      await addApiPromise;
     }
 
-    // Verify counter increased by 3
-    const finalCount = parseInt(await wishlistCounter.textContent() || '0', 10);
-    expect(finalCount).toBe(initialCount + itemsToAdd);
+    // Verify counter increased by itemsToAdd
+    await expect(wishlistCounter).toContainText((initialCount + itemsToAdd).toString());
   });
 
   test('T-WISHLIST-14: Wishlist counter persists across page navigation', async ({ page }) => {
-    // Navigate to search page and add item
+    // Navigate to search page and add item with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
+
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    await addApiPromise;
 
     // Get counter value
     const wishlistCounter = page.locator('[data-testid="wishlist-counter"]');
@@ -96,15 +111,17 @@ test.describe('Wishlist Counter Update Functionality', () => {
 
     // Navigate to home page
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await assertNoErrors(page);
 
     // Verify counter has same value
     const countOnHomePage = await wishlistCounter.textContent();
     expect(countOnHomePage).toBe(countOnSearchPage);
 
-    // Navigate to wishlist page
+    // Navigate to wishlist page with API verification
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForLoadState('networkidle');
+    await wishlistApiPromise;
+    await assertNoErrors(page);
 
     // Verify counter still has same value
     const countOnWishlistPage = await wishlistCounter.textContent();
@@ -112,9 +129,11 @@ test.describe('Wishlist Counter Update Functionality', () => {
   });
 
   test('T-WISHLIST-15: Wishlist counter shows zero when empty', async ({ page }) => {
-    // Navigate to wishlist page
+    // Navigate to wishlist page with API verification
+    const wishlistApiPromise = waitForApi(page, '/api/wishlist', { method: 'GET', status: 200 });
     await page.goto('/wishlist');
-    await page.waitForLoadState('networkidle');
+    await wishlistApiPromise;
+    await assertNoErrors(page);
 
     // Remove all items from wishlist
     const wishlistItems = page.locator('[data-testid="wishlist-item"]');
@@ -122,36 +141,47 @@ test.describe('Wishlist Counter Update Functionality', () => {
 
     for (let i = 0; i < itemCount; i++) {
       const removeButton = wishlistItems.first().locator('[data-testid="remove-wishlist-button"]');
+      const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
       await removeButton.click();
-      await page.waitForTimeout(500);
+      await removeApiPromise;
     }
 
     // Verify counter shows 0
     const wishlistCounter = page.locator('[data-testid="wishlist-counter"]');
-    const counterText = await wishlistCounter.textContent();
-    expect(counterText).toBe('0');
+    await expect(wishlistCounter).toContainText('0');
   });
 
   test('T-WISHLIST-16: Wishlist counter badge is visible when count is greater than zero', async ({ page }) => {
-    // Navigate to search page
+    // Navigate to search page with API verification
+    const searchApiPromise = waitForApi(page, '/api/campsites', { status: 200 });
     await page.goto('/search');
-    await page.waitForLoadState('networkidle');
+    await searchApiPromise;
+    await assertNoErrors(page);
 
     // Check if badge exists
     const wishlistBadge = page.locator('[data-testid="wishlist-badge"]');
 
-    // Add item to wishlist
+    // Add item to wishlist with API verification
     const firstCampsiteCard = page.locator('[data-testid="campsite-card"]').first();
     const heartButton = firstCampsiteCard.locator('[data-testid="wishlist-button"]');
+
+    const addApiPromise = waitForApi(page, '/api/wishlist', { method: 'POST', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const addResponse = await addApiPromise;
+
+    const addData = await addResponse.json();
+    expect(addData.success).toBe(true);
 
     // Verify badge is visible
     await expect(wishlistBadge).toBeVisible();
 
-    // Remove item
+    // Remove item with API verification
+    const removeApiPromise = waitForApi(page, '/api/wishlist', { method: 'DELETE', status: 200 });
     await heartButton.click();
-    await page.waitForTimeout(500);
+    const removeResponse = await removeApiPromise;
+
+    const removeData = await removeResponse.json();
+    expect(removeData.success).toBe(true);
 
     // Badge should be hidden when count is 0
     await expect(wishlistBadge).not.toBeVisible();
