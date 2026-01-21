@@ -149,6 +149,7 @@ router.get('/campsites/pending', async (req: AuthenticatedRequest, res: Response
     // Map to response format
     const pendingCampsites = (campsites || []).map((c: any) => ({
       id: c.id,
+      slug: c.slug,
       name: c.name,
       description: c.description,
       campsite_type: c.campsite_type,
@@ -581,7 +582,7 @@ router.get('/reviews/reported', async (req: AuthenticatedRequest, res: Response)
       .select(`
         *,
         reviewer:profiles!reviews_user_id_fkey(id, full_name, avatar_url),
-        campsite:campsites(id, name),
+        campsite:campsites(id, name, slug),
         photos:review_photos(*)
       `)
       .eq('is_reported', true)
@@ -633,6 +634,7 @@ router.get('/reviews/reported', async (req: AuthenticatedRequest, res: Response)
     const reportedReviews = (reviews || []).map((r: any) => ({
       id: r.id,
       campsite_id: r.campsite_id,
+      campsite_slug: r.campsite?.slug || null,
       campsite_name: r.campsite?.name || 'Unknown',
       user_id: r.user_id,
       rating_overall: r.rating_overall,

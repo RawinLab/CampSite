@@ -2,6 +2,7 @@
 export * from './HeroSection';
 export * from './DescriptionSection';
 export * from './AmenitiesSection';
+export * from './LocationSection';
 export * from './ContactSection';
 export * from './BookingSidebar';
 export * from './ShareButtons';

@@ -19,6 +19,7 @@ const createSupabaseAdmin = _createSupabaseAdmin;
 
 export interface TestCampsite {
   id: string;
+  slug: string;
   name: string;
   status: 'pending' | 'approved' | 'rejected';
   owner_id?: string;
@@ -453,4 +454,62 @@ export async function getCampsitesByOwner(
   }
 
   return data as TestCampsite[];
+}
+
+/**
+ * Get first approved campsite with slug for E2E tests
+ * This is useful for tests that need a valid campsite URL
+ */
+export async function getApprovedCampsiteSlug(
+  supabase: SupabaseClient
+): Promise<{ id: string; slug: string; name: string } | null> {
+  const { data, error } = await supabase
+    .from('campsites')
+    .select('id, slug, name')
+    .eq('status', 'approved')
+    .eq('is_active', true)
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Get multiple approved campsites with slugs for E2E tests
+ */
+export async function getApprovedCampsiteSlugs(
+  supabase: SupabaseClient,
+  limit = 5
+): Promise<Array<{ id: string; slug: string; name: string }>> {
+  const { data, error } = await supabase
+    .from('campsites')
+    .select('id, slug, name')
+    .eq('status', 'approved')
+    .eq('is_active', true)
+    .limit(limit);
+
+  if (error || !data) {
+    return [];
+  }
+
+  return data;
+}
+
+/**
+ * Create an approved test campsite and return its slug
+ * Useful for tests that need a fresh approved campsite
+ */
+export async function createApprovedTestCampsite(
+  supabase: SupabaseClient,
+  name?: string
+): Promise<TestCampsite> {
+  const campsite = await createTestCampsite(supabase, {
+    name: name || `E2E Test Campsite ${Date.now()}`,
+    status: 'approved',
+  });
+  return campsite;
 }

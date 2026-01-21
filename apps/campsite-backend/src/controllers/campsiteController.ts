@@ -8,16 +8,17 @@ import type { ReportReason } from '@campsite/shared';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Get campsite detail by ID
+ * Get campsite detail by ID or slug
  * GET /api/campsites/:id
+ * Supports both UUID (e.g., 123e4567-e89b-12d3-a456-426614174000) and slug (e.g., camping-khao-yai-12345678)
  */
 export async function getCampsiteDetail(req: AuthenticatedRequest, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params; // Can be UUID or slug
   const userId = req.user?.id;
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
+  // Validate: must be either valid UUID or valid slug format (alphanumeric with hyphens)
+  const isValidSlug = /^[a-z0-9\u0E00-\u0E7F-]+$/i.test(id) && id.length >= 1 && id.length <= 255;
+  if (!isValidSlug) {
     sendNotFound(res, 'Campsite not found');
     return;
   }
@@ -45,24 +46,35 @@ export async function getCampsiteDetail(req: AuthenticatedRequest, res: Response
  * GET /api/campsites/:id/reviews
  */
 export async function getCampsiteReviews(req: Request, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params; // Can be UUID or slug
   const page = parseInt(req.query.page as string) || 1;
   const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
   const sortBy = (req.query.sort as 'newest' | 'highest' | 'lowest' | 'helpful') || 'newest';
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
+  // Validate: must be either valid UUID or valid slug format
+  const isValidSlug = /^[a-z0-9\u0E00-\u0E7F-]+$/i.test(id) && id.length >= 1 && id.length <= 255;
+  if (!isValidSlug) {
     sendNotFound(res, 'Campsite not found');
     return;
   }
 
   try {
-    // Check if campsite exists
+    // Check if campsite exists (supports both UUID and slug)
     const exists = await campsiteService.campsiteExists(id);
     if (!exists) {
       sendNotFound(res, 'Campsite not found');
       return;
+    }
+
+    // Get campsite ID if slug was provided
+    let campsiteId = id;
+    if (!UUID_REGEX.test(id)) {
+      const resolvedId = await campsiteService.getCampsiteIdFromSlug(id);
+      if (!resolvedId) {
+        sendNotFound(res, 'Campsite not found');
+        return;
+      }
+      campsiteId = resolvedId;
     }
 
     // Map sortBy to the expected format
@@ -73,7 +85,7 @@ export async function getCampsiteReviews(req: Request, res: Response): Promise<v
       helpful: 'helpful',
     };
 
-    const { reviews, total } = await getReviews(id, {
+    const { reviews, total } = await getReviews(campsiteId, {
       page,
       limit,
       sortBy: sortByMap[sortBy] || 'newest',
@@ -169,17 +181,28 @@ export async function submitReviewReport(req: AuthenticatedRequest, res: Respons
  * GET /api/campsites/:id/photos
  */
 export async function getCampsitePhotos(req: Request, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params; // Can be UUID or slug
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
+  // Validate slug format
+  const isValidSlug = /^[a-z0-9\u0E00-\u0E7F-]+$/i.test(id) && id.length >= 1 && id.length <= 255;
+  if (!isValidSlug) {
     sendNotFound(res, 'Campsite not found');
     return;
   }
 
   try {
-    const photos = await campsiteService.getCampsitePhotos(id);
+    // Resolve to UUID if slug was provided
+    let campsiteId = id;
+    if (!UUID_REGEX.test(id)) {
+      const resolvedId = await campsiteService.getCampsiteIdFromSlug(id);
+      if (!resolvedId) {
+        sendNotFound(res, 'Campsite not found');
+        return;
+      }
+      campsiteId = resolvedId;
+    }
+
+    const photos = await campsiteService.getCampsitePhotos(campsiteId);
     sendSuccess(res, photos);
   } catch (error) {
     console.error('Error fetching campsite photos:', error);
@@ -192,17 +215,28 @@ export async function getCampsitePhotos(req: Request, res: Response): Promise<vo
  * GET /api/campsites/:id/accommodations
  */
 export async function getCampsiteAccommodations(req: Request, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params; // Can be UUID or slug
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
+  // Validate slug format
+  const isValidSlug = /^[a-z0-9\u0E00-\u0E7F-]+$/i.test(id) && id.length >= 1 && id.length <= 255;
+  if (!isValidSlug) {
     sendNotFound(res, 'Campsite not found');
     return;
   }
 
   try {
-    const accommodations = await campsiteService.getAccommodationTypes(id);
+    // Resolve to UUID if slug was provided
+    let campsiteId = id;
+    if (!UUID_REGEX.test(id)) {
+      const resolvedId = await campsiteService.getCampsiteIdFromSlug(id);
+      if (!resolvedId) {
+        sendNotFound(res, 'Campsite not found');
+        return;
+      }
+      campsiteId = resolvedId;
+    }
+
+    const accommodations = await campsiteService.getAccommodationTypes(campsiteId);
     sendSuccess(res, accommodations);
   } catch (error) {
     console.error('Error fetching accommodations:', error);
@@ -215,17 +249,28 @@ export async function getCampsiteAccommodations(req: Request, res: Response): Pr
  * GET /api/campsites/:id/attractions
  */
 export async function getCampsiteAttractions(req: Request, res: Response): Promise<void> {
-  const { id } = req.params;
+  const { id } = req.params; // Can be UUID or slug
 
-  // Validate UUID format
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(id)) {
+  // Validate slug format
+  const isValidSlug = /^[a-z0-9\u0E00-\u0E7F-]+$/i.test(id) && id.length >= 1 && id.length <= 255;
+  if (!isValidSlug) {
     sendNotFound(res, 'Campsite not found');
     return;
   }
 
   try {
-    const attractions = await campsiteService.getNearbyAttractions(id);
+    // Resolve to UUID if slug was provided
+    let campsiteId = id;
+    if (!UUID_REGEX.test(id)) {
+      const resolvedId = await campsiteService.getCampsiteIdFromSlug(id);
+      if (!resolvedId) {
+        sendNotFound(res, 'Campsite not found');
+        return;
+      }
+      campsiteId = resolvedId;
+    }
+
+    const attractions = await campsiteService.getNearbyAttractions(campsiteId);
     sendSuccess(res, attractions);
   } catch (error) {
     console.error('Error fetching attractions:', error);

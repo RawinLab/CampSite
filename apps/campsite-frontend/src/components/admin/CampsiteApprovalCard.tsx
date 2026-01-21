@@ -14,12 +14,15 @@ import {
   Check,
   X,
   Image as ImageIcon,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import type { CampsiteType } from '@campsite/shared';
 
 interface PendingCampsite {
   id: string;
+  slug: string;
   name: string;
   description: string;
   campsite_type: CampsiteType;
@@ -94,9 +97,19 @@ export function CampsiteApprovalCard({
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {campsite.name}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {campsite.name}
+                </h3>
+                <Link
+                  href={`/campsites/${campsite.slug}`}
+                  target="_blank"
+                  className="text-gray-400 hover:text-primary"
+                  title="View campsite"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </div>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <MapPin className="h-4 w-4" />
                 <span>{campsite.province_name}</span>

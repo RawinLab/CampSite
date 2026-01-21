@@ -38,6 +38,7 @@ export class SearchService {
         `
         id,
         name,
+        slug,
         description,
         price_min,
         price_max,
@@ -139,7 +140,7 @@ export class SearchService {
       id: campsite.id,
       name: campsite.name,
       description: campsite.description?.substring(0, 150) + '...' || '',
-      slug: campsite.campsite_types?.slug || campsite.id,
+      slug: campsite.slug || campsite.id, // Use campsite's own slug
       campsite_type: campsite.campsite_types?.slug || '',
       province: {
         id: campsite.provinces.id,
@@ -200,6 +201,7 @@ export class SearchService {
         `
         id,
         name,
+        slug,
         description,
         price_min,
         price_max,
@@ -243,7 +245,7 @@ export class SearchService {
       id: campsite.id,
       name: campsite.name,
       description: campsite.description?.substring(0, 150) + '...' || '',
-      slug: campsite.campsite_types?.slug || campsite.id,
+      slug: campsite.slug || campsite.id, // Use campsite's own slug
       campsite_type: campsite.campsite_types?.slug || '',
       province: {
         id: campsite.provinces.id,

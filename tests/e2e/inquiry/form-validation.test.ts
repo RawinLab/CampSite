@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Inquiry Form Validation', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to campsite detail page with inquiry form
     // Assuming campsite ID 1 exists for testing
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
 
     // Scroll to inquiry section and click "Send Inquiry" button

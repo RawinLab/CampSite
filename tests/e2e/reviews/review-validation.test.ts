@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { waitForApi, assertNoErrors, PUBLIC_API } from '../utils/api-helpers';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Review Form Validation', () => {
   const TEST_CAMPSITE_ID = '1';
 
@@ -9,7 +12,7 @@ test.describe('Review Form Validation', () => {
     const [campsiteResponse, reviewsResponse] = await Promise.all([
       waitForApi(page, PUBLIC_API.campsiteDetail(TEST_CAMPSITE_ID), { status: 200 }),
       waitForApi(page, PUBLIC_API.reviews(TEST_CAMPSITE_ID), { status: 200 }),
-      page.goto('/campsites/1')
+      page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`)
     ]);
 
     // Verify API responses

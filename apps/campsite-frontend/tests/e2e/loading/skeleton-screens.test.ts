@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Skeleton Loading Screens', () => {
   test('search page shows skeleton during initial load', async ({ page }) => {
     // Use slow network to ensure skeleton is visible
@@ -55,14 +58,14 @@ test.describe('Skeleton Loading Screens', () => {
 
   test('campsite detail page shows skeleton during load', async ({ page }) => {
     // Navigate to a campsite detail page
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Check for skeleton elements
     await page.waitForTimeout(100);
   });
 
   test('campsite detail skeleton shows image grid skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Look for hero image skeleton
     // Grid layout: md:grid-cols-4 md:grid-rows-2
@@ -72,7 +75,7 @@ test.describe('Skeleton Loading Screens', () => {
   });
 
   test('campsite detail skeleton shows title skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Look for title skeleton
     const titleSkeleton = page.locator('.h-10.w-80');
@@ -81,14 +84,14 @@ test.describe('Skeleton Loading Screens', () => {
   });
 
   test('campsite detail skeleton shows description card skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Description section should have skeleton
     await page.waitForTimeout(100);
   });
 
   test('campsite detail skeleton shows amenities grid skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Amenities grid: grid-cols-2 md:grid-cols-3 lg:grid-cols-4
     const amenitiesSkeleton = page.locator('.grid.grid-cols-2.md\\:grid-cols-3.lg\\:grid-cols-4');
@@ -97,7 +100,7 @@ test.describe('Skeleton Loading Screens', () => {
   });
 
   test('campsite detail skeleton shows accommodation cards skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Accommodation grid skeleton
     await page.waitForTimeout(100);
@@ -105,7 +108,7 @@ test.describe('Skeleton Loading Screens', () => {
 
   test('campsite detail skeleton shows sidebar skeleton on desktop', async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Desktop sidebar should show booking card skeleton
     const sidebar = page.locator('.hidden.lg\\:block');
@@ -115,7 +118,7 @@ test.describe('Skeleton Loading Screens', () => {
 
   test('campsite detail skeleton shows mobile booking bar skeleton', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Mobile booking bar at bottom
     const mobileBar = page.locator('.fixed.bottom-0.left-0.right-0.lg\\:hidden');
@@ -155,7 +158,7 @@ test.describe('Skeleton Loading Screens', () => {
   });
 
   test('campsite detail hero skeleton maintains aspect ratio', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Hero section has specific height
     const heroSkeleton = page.locator('.h-\\[300px\\].md\\:h-\\[400px\\].lg\\:h-\\[500px\\]');
@@ -202,7 +205,7 @@ test.describe('Skeleton Loading Screens', () => {
   });
 
   test('campsite detail skeleton shows gallery thumbnails skeleton', async ({ page }) => {
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Gallery thumbnail skeletons (5 thumbnails)
     await page.waitForTimeout(100);
@@ -272,7 +275,7 @@ test.describe('Skeleton Loading Screens', () => {
     const page2 = await context.newPage();
 
     await page.goto('/search', { waitUntil: 'domcontentloaded' });
-    await page2.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page2.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Both should show their respective skeletons
     await page.waitForTimeout(100);
@@ -286,7 +289,7 @@ test.describe('Skeleton Loading Screens', () => {
     await page.goto('/search', { waitUntil: 'domcontentloaded' });
 
     // Quickly navigate to detail
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
 
     // Navigate back to search
     await page.goto('/search', { waitUntil: 'domcontentloaded' });

@@ -12,21 +12,32 @@ import type {
 } from '@campsite/shared';
 import { getReviewSummary, getRecentReviews } from './reviewService';
 
+// UUID regex pattern
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export class CampsiteService {
   /**
-   * Get campsite detail by ID
+   * Get campsite detail by ID or slug
    * Only returns approved campsites for public access
    */
-  async getCampsiteById(id: string, includeNonApproved = false): Promise<CampsiteDetail | null> {
-    // Build query for campsite
+  async getCampsiteById(idOrSlug: string, includeNonApproved = false): Promise<CampsiteDetail | null> {
+    const isUUID = UUID_REGEX.test(idOrSlug);
+
+    // Build query for campsite - lookup by ID or slug
     let query = supabaseAdmin
       .from('campsites')
       .select(`
         *,
         province:provinces(*),
         owner:profiles!campsites_owner_id_fkey(id, full_name, avatar_url, created_at)
-      `)
-      .eq('id', id);
+      `);
+
+    // Match by ID or slug
+    if (isUUID) {
+      query = query.eq('id', idOrSlug);
+    } else {
+      query = query.eq('slug', idOrSlug);
+    }
 
     // For public access, only show approved and active campsites
     if (!includeNonApproved) {
@@ -39,14 +50,17 @@ export class CampsiteService {
       return null;
     }
 
+    // Use the actual campsite ID for related data queries
+    const campsiteId = campsite.id;
+
     // Fetch related data in parallel
     const [photos, amenities, accommodations, attractions, reviewSummary, recentReviews] = await Promise.all([
-      this.getCampsitePhotos(id),
-      this.getCampsiteAmenities(id),
-      this.getAccommodationTypes(id),
-      this.getNearbyAttractions(id),
-      getReviewSummary(id),
-      getRecentReviews(id, 5),
+      this.getCampsitePhotos(campsiteId),
+      this.getCampsiteAmenities(campsiteId),
+      this.getAccommodationTypes(campsiteId),
+      this.getNearbyAttractions(campsiteId),
+      getReviewSummary(campsiteId),
+      getRecentReviews(campsiteId, 5),
     ]);
 
     // Build response
@@ -168,17 +182,41 @@ export class CampsiteService {
 
   /**
    * Check if campsite exists and is accessible
+   * Supports both UUID and slug lookup
    */
-  async campsiteExists(id: string): Promise<boolean> {
+  async campsiteExists(idOrSlug: string): Promise<boolean> {
+    const isUUID = UUID_REGEX.test(idOrSlug);
+
+    let query = supabaseAdmin
+      .from('campsites')
+      .select('id')
+      .eq('status', 'approved')
+      .eq('is_active', true);
+
+    if (isUUID) {
+      query = query.eq('id', idOrSlug);
+    } else {
+      query = query.eq('slug', idOrSlug);
+    }
+
+    const { data, error } = await query.single();
+    return !error && !!data;
+  }
+
+  /**
+   * Get campsite ID from slug (for when you need the UUID)
+   */
+  async getCampsiteIdFromSlug(slug: string): Promise<string | null> {
     const { data, error } = await supabaseAdmin
       .from('campsites')
       .select('id')
-      .eq('id', id)
-      .eq('status', 'approved')
-      .eq('is_active', true)
+      .eq('slug', slug)
       .single();
 
-    return !error && !!data;
+    if (error || !data) {
+      return null;
+    }
+    return data.id;
   }
 
   /**

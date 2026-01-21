@@ -20,6 +20,7 @@ interface ReviewReport {
 interface ReportedReview {
   id: string;
   campsite_id: string;
+  campsite_slug: string | null;
   campsite_name: string;
   user_id: string;
   rating_overall: number;

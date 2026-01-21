@@ -5,6 +5,7 @@ import type { CampsiteDetail } from '@campsite/shared';
 import { HeroSection } from '@/components/campsite/HeroSection';
 import { DescriptionSection } from '@/components/campsite/DescriptionSection';
 import { AmenitiesSection } from '@/components/campsite/AmenitiesSection';
+import { LocationSection } from '@/components/campsite/LocationSection';
 import { ContactSection } from '@/components/campsite/ContactSection';
 import { BookingSidebar } from '@/components/campsite/BookingSidebar';
 import { CampsiteGallery } from '@/components/campsite/CampsiteGallery';
@@ -14,6 +15,7 @@ import { AttractionsSection } from '@/components/campsite/AttractionsSection';
 import { MobileBookingBar } from '@/components/campsite/MobileBookingBar';
 import { InlineShareButtons } from '@/components/campsite/ShareButtons';
 import { InquiryDialog } from '@/components/inquiry';
+import { ReviewsSection } from '@/components/reviews';
 
 interface CampsiteDetailContentProps {
   campsite: CampsiteDetail;
@@ -71,6 +73,9 @@ export function CampsiteDetailContent({ campsite }: CampsiteDetailContentProps) 
             {/* Amenities Section */}
             <AmenitiesSection amenities={campsite.amenities} />
 
+            {/* Location Section */}
+            <LocationSection campsite={campsite} />
+
             {/* Accommodation Section */}
             <AccommodationSection
               accommodations={campsite.accommodation_types}
@@ -88,6 +93,14 @@ export function CampsiteDetailContent({ campsite }: CampsiteDetailContentProps) 
 
             {/* Contact Section */}
             <ContactSection campsite={campsite} />
+
+            {/* Reviews Section */}
+            <ReviewsSection
+              campsiteId={campsite.id}
+              summary={campsite.review_summary}
+              initialReviews={campsite.recent_reviews}
+              totalReviews={campsite.review_count}
+            />
 
             {/* Share Section */}
             <section className="py-4 border-t">

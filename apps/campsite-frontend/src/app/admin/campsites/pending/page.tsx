@@ -13,6 +13,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
 
 interface PendingCampsite {
   id: string;
+  slug: string;
   name: string;
   description: string;
   campsite_type: CampsiteType;

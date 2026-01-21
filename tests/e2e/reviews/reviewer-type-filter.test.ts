@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Reviewer Type Filter E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with reviews
     // Adjust URL as needed based on your routing structure
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
   });
 

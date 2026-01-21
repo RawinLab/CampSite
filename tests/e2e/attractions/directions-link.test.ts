@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Attraction Directions Link - Google Maps Integration', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with attractions
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
   });
 

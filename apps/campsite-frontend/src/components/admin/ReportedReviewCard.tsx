@@ -16,7 +16,9 @@ import {
   Trash2,
   XCircle,
   AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import type { ReportReason } from '@campsite/shared';
 
@@ -32,6 +34,7 @@ interface ReviewReport {
 interface ReportedReview {
   id: string;
   campsite_id: string;
+  campsite_slug: string | null;
   campsite_name: string;
   user_id: string;
   rating_overall: number;
@@ -154,7 +157,18 @@ export function ReportedReviewCard({
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <Tent className="h-4 w-4" />
             <span>Review for: </span>
-            <span className="font-medium text-gray-900">{review.campsite_name}</span>
+            {review.campsite_slug ? (
+              <Link
+                href={`/campsites/${review.campsite_slug}`}
+                target="_blank"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                {review.campsite_name}
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+            ) : (
+              <span className="font-medium text-gray-900">{review.campsite_name}</span>
+            )}
           </div>
 
           {/* Review Content */}

@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Campsite Accommodation Cards', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with accommodations
     // Assuming there's a test campsite with ID 1 that has accommodations
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
   });
 

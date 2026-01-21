@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Smoke Test: SEO Tags Present', () => {
   test('homepage has title tag with content', async ({ page }) => {
     await page.goto('/');
@@ -76,7 +79,7 @@ test.describe('Smoke Test: SEO Tags Present', () => {
   });
 
   test('campsite detail page has SEO tags', async ({ page }) => {
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('domcontentloaded');
 
     const status = await page.evaluate(() => {
@@ -286,7 +289,7 @@ test.describe('Smoke Test: SEO Tags Present', () => {
   });
 
   test('campsite detail page has dynamic title and description', async ({ page }) => {
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('domcontentloaded');
 
     const title = await page.title();

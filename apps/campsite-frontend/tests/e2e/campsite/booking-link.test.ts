@@ -1,11 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Campsite Booking Link', () => {
   test.describe('with booking URL', () => {
     test.beforeEach(async ({ page }) => {
       // Navigate to a campsite detail page that has a booking URL
       // Assuming there's a test campsite with ID 1 that has a booking URL
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
     });
 
@@ -103,7 +106,7 @@ test.describe('Campsite Booking Link', () => {
     test.beforeEach(async ({ page }) => {
       // Navigate to a campsite detail page without a booking URL
       // Assuming there's a test campsite with ID 2 that has no booking URL
-      await page.goto('/campsites/2');
+      await page.goto(`/campsites/mountain-view-campsite-50155b16`);
       await page.waitForLoadState('networkidle');
     });
 
@@ -187,7 +190,7 @@ test.describe('Campsite Booking Link', () => {
 
   test.describe('accessibility', () => {
     test('booking button is keyboard accessible', async ({ page }) => {
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
 
       // Tab to the booking button
@@ -204,7 +207,7 @@ test.describe('Campsite Booking Link', () => {
     });
 
     test('booking button has proper ARIA attributes', async ({ page }) => {
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
 
       const bookingButton = page.locator('[data-testid="booking-button"]');
@@ -223,7 +226,7 @@ test.describe('Campsite Booking Link', () => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
 
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
 
       // Verify booking button is visible on mobile
@@ -235,7 +238,7 @@ test.describe('Campsite Booking Link', () => {
       // Set tablet viewport
       await page.setViewportSize({ width: 768, height: 1024 });
 
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
 
       // Verify booking button is visible on tablet
@@ -247,7 +250,7 @@ test.describe('Campsite Booking Link', () => {
       // Set desktop viewport
       await page.setViewportSize({ width: 1920, height: 1080 });
 
-      await page.goto('/campsites/1');
+      await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
       await page.waitForLoadState('networkidle');
 
       // Verify booking button is visible on desktop

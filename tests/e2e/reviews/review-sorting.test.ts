@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Review Sorting Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with reviews
     // Assuming campsite ID 1 exists with reviews for testing
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
 
     // Wait for reviews section to load

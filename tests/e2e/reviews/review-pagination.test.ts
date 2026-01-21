@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Review Pagination Functionality', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with many reviews (>5)
     // Note: This assumes we have a campsite with enough reviews for pagination
-    await page.goto('/campsites/1'); // Update with actual campsite ID that has many reviews
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`); // Update with actual campsite ID that has many reviews
     await page.waitForLoadState('networkidle');
   });
 

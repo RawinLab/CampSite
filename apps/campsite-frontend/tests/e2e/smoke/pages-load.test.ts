@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Smoke Test: Pages Load Successfully', () => {
   test('homepage loads without errors', async ({ page }) => {
     const consoleErrors: string[] = [];
@@ -166,7 +169,7 @@ test.describe('Smoke Test: Pages Load Successfully', () => {
 
     const startTime = Date.now();
     // Use a known campsite ID or slug from test data
-    const response = await page.goto('/campsites/1');
+    const response = await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     const loadTime = Date.now() - startTime;
 
     // Verify HTTP status (200 or 404 are both acceptable for smoke test)

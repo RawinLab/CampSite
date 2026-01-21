@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Loading State Performance', () => {
   test('search page loading state appears within 200ms', async ({ page }) => {
     const startTime = Date.now();
@@ -20,7 +23,7 @@ test.describe('Loading State Performance', () => {
   test('campsite detail loading state appears quickly', async ({ page }) => {
     const startTime = Date.now();
 
-    await page.goto('/campsites/1', { waitUntil: 'commit' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'commit' });
     await page.waitForLoadState('domcontentloaded');
 
     const loadTime = Date.now() - startTime;
@@ -59,7 +62,7 @@ test.describe('Loading State Performance', () => {
   });
 
   test('campsite detail content replaces loading state correctly', async ({ page }) => {
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
 
     // Verify actual campsite content loaded
@@ -111,7 +114,7 @@ test.describe('Loading State Performance', () => {
   });
 
   test('multiple pages maintain consistent loading behavior', async ({ page }) => {
-    const pages = ['/search', '/campsites/1', '/dashboard'];
+    const pages = ['/search', `/campsites/${TEST_CAMPSITE_SLUG}`, '/dashboard'];
     const loadTimes: number[] = [];
 
     for (const url of pages) {
@@ -229,13 +232,13 @@ test.describe('Loading State Performance', () => {
 
   test('navigation to same page type uses consistent loading pattern', async ({ page }) => {
     // Navigate to one campsite
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
     const time1 = Date.now();
     await page.waitForLoadState('networkidle');
     const load1 = Date.now() - time1;
 
     // Navigate to another campsite
-    await page.goto('/campsites/2', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/mountain-view-campsite-50155b16`, { waitUntil: 'domcontentloaded' });
     const time2 = Date.now();
     await page.waitForLoadState('networkidle');
     const load2 = Date.now() - time2;
@@ -362,7 +365,7 @@ test.describe('Loading State Performance', () => {
     // Navigate both pages simultaneously
     await Promise.all([
       page.goto('/search', { waitUntil: 'domcontentloaded' }),
-      page2.goto('/campsites/1', { waitUntil: 'domcontentloaded' }),
+      page2.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' }),
     ]);
 
     // Both should complete successfully
@@ -407,7 +410,7 @@ test.describe('Loading State Performance', () => {
     await page.goto('/search');
     await page.waitForLoadState('networkidle');
 
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
 
     // Go back

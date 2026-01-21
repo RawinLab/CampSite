@@ -1,16 +1,19 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Campsite Page Performance', () => {
   test.beforeEach(async ({ page }) => {
     // Enable performance metrics collection
-    await page.goto('/campsites/1', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`, { waitUntil: 'domcontentloaded' });
   });
 
   test('page load time is under 1.5 seconds', async ({ page }) => {
     const startTime = Date.now();
 
     // Navigate to campsite detail page
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('load');
 
     const endTime = Date.now();
@@ -59,7 +62,7 @@ test.describe('Campsite Page Performance', () => {
     });
 
     // Navigate and wait for network idle
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('networkidle');
 
     // Verify no console errors occurred
@@ -100,7 +103,7 @@ test.describe('Campsite Page Performance', () => {
     });
 
     // Navigate and wait for network idle
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('networkidle');
 
     // Log all API calls for visibility
@@ -138,7 +141,7 @@ test.describe('Campsite Page Performance', () => {
     const failedImages: string[] = [];
 
     // Navigate to page
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('networkidle');
 
     // Wait for images to load
@@ -201,7 +204,7 @@ test.describe('Campsite Page Performance', () => {
 
   test('lighthouse performance considerations', async ({ page }) => {
     // Navigate to page
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('networkidle');
 
     // Check Largest Contentful Paint (LCP)
@@ -319,7 +322,7 @@ test.describe('Campsite Page Performance', () => {
   test('performance metrics remain consistent on subsequent visits', async ({ page }) => {
     // First visit
     const firstVisit = Date.now();
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('load');
     const firstLoadTime = Date.now() - firstVisit;
 
@@ -339,7 +342,7 @@ test.describe('Campsite Page Performance', () => {
 
     // Second visit (should be faster with cache)
     const secondVisit = Date.now();
-    await page.goto('/campsites/1');
+    await page.goto('/campsites/${TEST_CAMPSITE_SLUG}');
     await page.waitForLoadState('load');
     const secondLoadTime = Date.now() - secondVisit;
 

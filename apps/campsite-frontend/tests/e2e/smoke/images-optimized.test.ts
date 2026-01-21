@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Smoke Test: Images Optimized', () => {
   test('homepage images use Next.js Image optimization', async ({ page }) => {
     await page.goto('/');
@@ -128,7 +131,7 @@ test.describe('Smoke Test: Images Optimized', () => {
   });
 
   test('campsite detail page uses optimized images', async ({ page }) => {
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for images to start loading
@@ -258,7 +261,7 @@ test.describe('Smoke Test: Images Optimized', () => {
   });
 
   test('campsite gallery images are optimized', async ({ page }) => {
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('domcontentloaded');
 
     // Wait for gallery to load

@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+// Use a valid test campsite slug
+const TEST_CAMPSITE_SLUG = 'test-campsite-details-b7a9886a';
+
 test.describe('Campsite Gallery Lightbox', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to a campsite detail page with gallery images
     // Assuming there's a test campsite with ID 1 that has multiple images
-    await page.goto('/campsites/1');
+    await page.goto(`/campsites/${TEST_CAMPSITE_SLUG}`);
     await page.waitForLoadState('networkidle');
   });
 

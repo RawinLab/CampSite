@@ -55,11 +55,12 @@ router.get(
           name,
           latitude,
           longitude,
-          campsite_type,
-          average_rating,
+          type_id,
+          rating_average,
           review_count,
-          min_price,
-          max_price,
+          price_min,
+          price_max,
+          campsite_types!inner (id, slug, name_en),
           provinces!inner (name_en),
           campsite_photos (url)
         `
@@ -81,11 +82,11 @@ router.get(
           .lte('longitude', east);
       }
 
-      // Filter by campsite types
+      // Filter by campsite types (by slug)
       if (campsite_types) {
         const types = campsite_types.split(',').filter(Boolean);
         if (types.length > 0) {
-          query = query.in('campsite_type', types);
+          query = query.in('campsite_types.slug', types);
         }
       }
 
@@ -96,15 +97,15 @@ router.get(
 
       // Filter by price range
       if (min_price !== undefined) {
-        query = query.gte('max_price', min_price);
+        query = query.gte('price_max', min_price);
       }
       if (max_price !== undefined) {
-        query = query.lte('min_price', max_price);
+        query = query.lte('price_min', max_price);
       }
 
       // Filter by minimum rating
       if (min_rating !== undefined) {
-        query = query.gte('average_rating', min_rating);
+        query = query.gte('rating_average', min_rating);
       }
 
       // Filter by amenities (requires join)
@@ -163,11 +164,11 @@ router.get(
         name: campsite.name,
         latitude: campsite.latitude,
         longitude: campsite.longitude,
-        campsite_type: campsite.campsite_type,
-        average_rating: campsite.average_rating || 0,
+        campsite_type: campsite.campsite_types?.slug || '',
+        average_rating: campsite.rating_average || 0,
         review_count: campsite.review_count || 0,
-        min_price: campsite.min_price,
-        max_price: campsite.max_price,
+        min_price: campsite.price_min,
+        max_price: campsite.price_max,
         province_name_en: campsite.provinces?.name_en || '',
         primary_photo_url: campsite.campsite_photos?.[0]?.url || null,
       }));
@@ -201,11 +202,12 @@ router.get('/campsites/:id', async (req: Request, res: Response) => {
         name,
         latitude,
         longitude,
-        campsite_type,
-        average_rating,
+        type_id,
+        rating_average,
         review_count,
-        min_price,
-        max_price,
+        price_min,
+        price_max,
+        campsite_types!inner (id, slug, name_en),
         provinces!inner (name_en),
         campsite_photos (url)
       `
@@ -224,11 +226,11 @@ router.get('/campsites/:id', async (req: Request, res: Response) => {
       name: campsite.name,
       latitude: campsite.latitude,
       longitude: campsite.longitude,
-      campsite_type: campsite.campsite_type,
-      average_rating: campsite.average_rating || 0,
+      campsite_type: (campsite.campsite_types as any)?.slug || '',
+      average_rating: campsite.rating_average || 0,
       review_count: campsite.review_count || 0,
-      min_price: campsite.min_price,
-      max_price: campsite.max_price,
+      min_price: campsite.price_min,
+      max_price: campsite.price_max,
       province_name_en: (campsite.provinces as any)?.name_en || '',
       primary_photo_url: (campsite.campsite_photos as any[])?.[0]?.url || null,
     };
