@@ -69,11 +69,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       const response = await fetchWishlist(1, 50, 'newest');
-      const items = response.data || [];
+      // Backend wraps response: { success: true, data: { data: [...], count: N } }
+      const responseData = (response as any).data || response;
+      const items = responseData.data || [];
 
       setWishlist(items);
-      setWishlistIds(new Set(items.map((item) => item.campsite_id)));
-      setCount(response.count || items.length);
+      setWishlistIds(new Set(items.map((item: any) => item.campsite_id)));
+      setCount(responseData.count || items.length);
       lastLoadedUserIdRef.current = userId;
     } catch (err) {
       console.error('Failed to load wishlist:', err);
