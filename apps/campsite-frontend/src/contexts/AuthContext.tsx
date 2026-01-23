@@ -69,11 +69,13 @@ function authUserToUser(authUser: AuthUser): User {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthContextProvider({ children }: { children: ReactNode }) {
+  // Start with loading: false to avoid SSR hydration issues
+  // Will transition to true only when actively checking auth
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
     role: 'user',
-    loading: true,
+    loading: false,
     error: null,
   });
 
@@ -91,6 +93,13 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
     let isMounted = true;
 
     const initializeAuth = async () => {
+      // Only show loading if we might have valid tokens to check
+      const mightHaveTokens = typeof window !== 'undefined' && getAccessToken();
+
+      if (mightHaveTokens) {
+        setState(prev => ({ ...prev, loading: true }));
+      }
+
       try {
         // Check if we have valid tokens
         if (!hasValidTokens()) {
@@ -110,7 +119,8 @@ export function AuthContextProvider({ children }: { children: ReactNode }) {
               }
               return;
             }
-          } else if (!accessToken) {
+          } else {
+            // No valid tokens - set loading to false and return
             if (isMounted) {
               setState({
                 user: null,

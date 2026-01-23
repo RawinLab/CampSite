@@ -18,7 +18,10 @@ interface UserMenuProps {
   user: {
     id: string;
     email: string;
-    display_name?: string;
+    user_metadata?: {
+      full_name?: string;
+      phone?: string;
+    };
   };
   role: UserRole;
   wishlistCount: number;
@@ -26,7 +29,7 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user, role, wishlistCount, onSignOut }: UserMenuProps) {
-  const displayName = user.display_name || user.email.split('@')[0];
+  const displayName = user.user_metadata?.full_name || user.email.split('@')[0];
   const initial = displayName.charAt(0).toUpperCase();
 
   const handleSignOut = async () => {

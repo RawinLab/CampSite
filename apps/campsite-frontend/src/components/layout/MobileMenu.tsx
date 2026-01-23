@@ -12,7 +12,10 @@ interface MobileMenuProps {
   user: {
     id: string;
     email: string;
-    display_name?: string;
+    user_metadata?: {
+      full_name?: string;
+      phone?: string;
+    };
   } | null;
   role: UserRole;
   wishlistCount: number;
@@ -20,7 +23,7 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ isOpen, onClose, user, role, wishlistCount, onSignOut }: MobileMenuProps) {
-  const displayName = user?.display_name || user?.email.split('@')[0];
+  const displayName = user?.user_metadata?.full_name || user?.email.split('@')[0];
 
   const handleSignOut = async () => {
     const { error } = await onSignOut();
