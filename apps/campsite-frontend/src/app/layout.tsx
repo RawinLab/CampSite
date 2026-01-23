@@ -5,6 +5,7 @@ import { generateBaseMetadata, SITE_CONFIG } from '@/lib/seo/utils';
 import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import { WebVitals } from '@/components/analytics/WebVitals';
 import { Providers } from '@/components/providers/Providers';
+import { Navbar } from '@/components/layout/Navbar';
 
 // Configure Noto Sans Thai font with next/font for optimal loading
 const notoSansThai = Noto_Sans_Thai({
@@ -66,6 +67,7 @@ export default function RootLayout({
         <WebVitals />
 
         <Providers>
+          <Navbar />
           {children}
         </Providers>
       </body>
