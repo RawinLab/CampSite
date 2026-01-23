@@ -34,6 +34,12 @@ supabase/
 - `plans/{N}-{module}-plan.md` - Module design docs
 - `plans/{N}-{module}-todolist.md` - Actionable tasks with tests
 
+## Architecture Rules
+- **Frontend communicates through API only** - No direct Supabase/database calls from frontend
+- All auth (login, register, logout, refresh) goes through Backend API
+- All data queries go through Backend API
+- Frontend only uses Supabase Storage URLs for images (CDN, no API calls)
+
 ## Key Decisions (from CLARIFICATIONS.md)
 - Q1: 3 roles via `user_role` enum in profiles table
 - Q5: Supabase migrations (not Prisma)
