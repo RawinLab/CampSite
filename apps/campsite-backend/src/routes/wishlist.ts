@@ -23,7 +23,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { page, limit, sort } = req.query as any;
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
 
       const { items, total } = await wishlistService.getWishlist(userId, {
         page: Number(page) || 1,
@@ -50,7 +50,7 @@ router.get(
 
 /**
  * @route POST /api/wishlist
- * @desc Add campsite to wishlist
+ * @desc Toggle campsite in wishlist (add if not exists, remove if exists)
  * @access Private
  */
 router.post(
@@ -60,20 +60,34 @@ router.post(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { campsite_id, notes } = req.body;
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
 
-      const item = await wishlistService.addToWishlist(userId, campsite_id, notes);
+      // Check if already in wishlist
+      const { is_wishlisted } = await wishlistService.isInWishlist(userId, campsite_id);
 
-      return sendCreated(res, { data: item });
+      if (is_wishlisted) {
+        // Remove from wishlist
+        await wishlistService.removeFromWishlist(userId, campsite_id);
+        return sendSuccess(res, {
+          action: 'removed',
+          isInWishlist: false,
+          message: 'Removed from wishlist'
+        });
+      } else {
+        // Add to wishlist
+        const item = await wishlistService.addToWishlist(userId, campsite_id, notes);
+        return sendCreated(res, {
+          action: 'added',
+          isInWishlist: true,
+          data: item
+        });
+      }
     } catch (error: any) {
-      console.error('Error adding to wishlist:', error);
+      console.error('Error toggling wishlist:', error);
       if (error.message === 'Campsite not found or not available') {
         return sendNotFound(res, error.message);
       }
-      if (error.message === 'Campsite already in wishlist') {
-        return sendConflict(res, error.message);
-      }
-      return sendError(res, 'Failed to add to wishlist', 500);
+      return sendError(res, 'Failed to toggle wishlist', 500);
     }
   }
 );
@@ -89,7 +103,7 @@ router.delete(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { campsiteId } = req.params;
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
 
       await wishlistService.removeFromWishlist(userId, campsiteId);
 
@@ -112,7 +126,7 @@ router.get(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { campsiteId } = req.params;
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
 
       const result = await wishlistService.isInWishlist(userId, campsiteId);
 
@@ -136,7 +150,7 @@ router.post(
   async (req: AuthenticatedRequest, res: Response) => {
     try {
       const { campsite_ids } = req.body;
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
 
       const result = await wishlistService.batchCheckWishlist(userId, campsite_ids);
 
@@ -158,7 +172,7 @@ router.get(
   authMiddleware,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user!.profileId;
       const count = await wishlistService.getWishlistCount(userId);
 
       return sendSuccess(res, { count });
