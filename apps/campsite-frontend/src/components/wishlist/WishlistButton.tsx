@@ -83,6 +83,8 @@ export function WishlistButton({
           size={size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'default'}
           onClick={handleClick}
           disabled={isLoading || authLoading}
+          data-testid="wishlist-button"
+          data-active={isWishlisted}
           className={cn('gap-2', className)}
           aria-label={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
         >
@@ -109,6 +111,8 @@ export function WishlistButton({
       <button
         onClick={handleClick}
         disabled={isLoading || authLoading}
+        data-testid="wishlist-button"
+        data-active={isWishlisted}
         className={cn(
           'rounded-full flex items-center justify-center transition-all duration-200',
           'focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2',
@@ -142,7 +146,7 @@ export function WishlistButton({
 
 function LoginPrompt({ onClose }: { onClose: () => void }) {
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg bg-white p-4 shadow-lg ring-1 ring-black/5">
+    <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-lg bg-white p-4 shadow-lg ring-1 ring-black/5" data-testid="wishlist-login-prompt">
       <p className="mb-3 text-sm text-gray-700">
         Please log in to save campsites to your wishlist.
       </p>

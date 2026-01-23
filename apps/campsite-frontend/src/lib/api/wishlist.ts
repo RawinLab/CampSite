@@ -38,12 +38,12 @@ export async function fetchWishlist(
 }
 
 /**
- * Add campsite to wishlist
+ * Toggle campsite in wishlist (add if not exists, remove if exists)
  */
-export async function addToWishlist(
+export async function toggleWishlist(
   campsiteId: string,
   notes?: string
-): Promise<AddToWishlistResponse> {
+): Promise<{ action: 'added' | 'removed'; isInWishlist: boolean; data?: any }> {
   const headers = await getAuthHeaders();
 
   const response = await fetch(`${API_BASE_URL}/api/wishlist`, {
@@ -56,11 +56,24 @@ export async function addToWishlist(
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Failed to add to wishlist' }));
-    throw new Error(error.error || 'Failed to add to wishlist');
+    const error = await response.json().catch(() => ({ error: 'Failed to toggle wishlist' }));
+    throw new Error(error.error || 'Failed to toggle wishlist');
   }
 
-  return response.json();
+  // Unwrap the response - backend returns { success: true, data: { action, isInWishlist, ... } }
+  const result = await response.json();
+  return result.data;
+}
+
+/**
+ * Add campsite to wishlist (uses toggle API internally)
+ * @deprecated Use toggleWishlist instead
+ */
+export async function addToWishlist(
+  campsiteId: string,
+  notes?: string
+): Promise<AddToWishlistResponse> {
+  return toggleWishlist(campsiteId, notes) as unknown as Promise<AddToWishlistResponse>;
 }
 
 /**

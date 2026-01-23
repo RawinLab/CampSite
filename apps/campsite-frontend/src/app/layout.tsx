@@ -4,6 +4,7 @@ import './globals.css';
 import { generateBaseMetadata, SITE_CONFIG } from '@/lib/seo/utils';
 import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import { WebVitals } from '@/components/analytics/WebVitals';
+import { Providers } from '@/components/providers/Providers';
 
 // Configure Noto Sans Thai font with next/font for optimal loading
 const notoSansThai = Noto_Sans_Thai({
@@ -64,7 +65,9 @@ export default function RootLayout({
         {/* Core Web Vitals tracking */}
         <WebVitals />
 
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
