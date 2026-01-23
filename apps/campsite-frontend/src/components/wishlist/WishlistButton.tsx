@@ -38,8 +38,7 @@ export function WishlistButton({
       e.preventDefault();
       e.stopPropagation();
 
-      if (authLoading) return;
-
+      // Allow click even when auth is loading - just show login prompt if no user
       if (!user) {
         setShowLoginPrompt(true);
         // Auto-hide prompt after 3 seconds
@@ -47,7 +46,7 @@ export function WishlistButton({
         return;
       }
 
-      if (isLoading) return;
+      if (isLoading || authLoading) return;
 
       setIsLoading(true);
 
@@ -82,7 +81,7 @@ export function WishlistButton({
           variant={isWishlisted ? 'secondary' : 'outline'}
           size={size === 'lg' ? 'lg' : size === 'sm' ? 'sm' : 'default'}
           onClick={handleClick}
-          disabled={isLoading || authLoading}
+          disabled={isLoading}
           data-testid="wishlist-button"
           data-active={isWishlisted}
           className={cn('gap-2', className)}
@@ -110,7 +109,7 @@ export function WishlistButton({
     <div className="relative">
       <button
         onClick={handleClick}
-        disabled={isLoading || authLoading}
+        disabled={isLoading}
         data-testid="wishlist-button"
         data-active={isWishlisted}
         className={cn(
