@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { loginAsUser, createSupabaseAdmin, waitForApi, assertNoErrors } from '../utils';
+import { loginAsUser, createSupabaseAdmin, waitForApi, assertNoErrors, loginViaAPI, TEST_USERS } from '../utils';
 
 test.describe('Remove from Wishlist Functionality', () => {
   test.setTimeout(60000);
@@ -7,14 +7,15 @@ test.describe('Remove from Wishlist Functionality', () => {
   let userId: string;
 
   test.beforeAll(async () => {
-    // Get user ID for data manipulation
-    const supabase = createSupabaseAdmin();
-    const { data } = await supabase
-      .from('profiles')
-      .select('auth_user_id')
-      .eq('email', 'user@campsite.local')
-      .single();
-    userId = data?.auth_user_id;
+    // Get profile ID by logging in via API (wishlists.user_id references profiles.id)
+    const loginData = await loginViaAPI(TEST_USERS.user.email, TEST_USERS.user.password);
+    userId = loginData.profile?.id;
+
+    if (!userId) {
+      throw new Error('Failed to get profile ID for test user');
+    }
+
+    console.log('Test user profile ID:', userId);
   });
 
   test.beforeEach(async ({ page }) => {

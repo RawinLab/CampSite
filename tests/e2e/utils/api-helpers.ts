@@ -447,3 +447,15 @@ export const PUBLIC_API = {
   campsiteTypes: '/api/campsite-types',
   inquiry: '/api/inquiries',
 } as const;
+
+/**
+ * Wishlist API endpoints for reference
+ */
+export const WISHLIST_API = {
+  list: '/api/wishlist',
+  add: '/api/wishlist',
+  remove: (campsiteId: string) => `/api/wishlist/${campsiteId}`,
+  check: (campsiteId: string) => `/api/wishlist/check/${campsiteId}`,
+  checkBatch: '/api/wishlist/check-batch',
+  count: '/api/wishlist/count',
+} as const;
