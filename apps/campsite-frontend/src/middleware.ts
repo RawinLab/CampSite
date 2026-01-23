@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { updateSession } from '@/lib/supabase/middleware';
 
 // Routes that require authentication
 const protectedRoutes = [
@@ -35,8 +34,8 @@ const authRoutes = [
 ];
 
 export async function middleware(request: NextRequest) {
-  // Update session and get response
-  const response = await updateSession(request);
+  // Simple pass-through response - no direct Supabase calls
+  const response = NextResponse.next();
 
   const { pathname } = request.nextUrl;
 
