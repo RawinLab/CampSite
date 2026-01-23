@@ -140,7 +140,8 @@ supabase start
 # 5. Run migrations
 pnpm db:migrate
 
-# 6. Seed database (optional)
+# 6. Seed test data (optional, see docs/SEEDING-GUIDE.md)
+node scripts/seed-test-users.js
 pnpm db:seed
 
 # 7. Start development servers
@@ -191,6 +192,11 @@ pnpm format           # Format with Prettier
 ---
 
 ## 📖 Documentation
+
+### Guides
+| Document | Description |
+|----------|-------------|
+| [Seeding Guide](./docs/SEEDING-GUIDE.md) | Test Data & E2E Setup |
 
 ### Requirements
 | Document | Description |
