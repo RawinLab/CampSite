@@ -2,6 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { AuthProvider } from '@/components/auth/AuthProvider';
+import { AuthContextProvider } from '@/contexts/AuthContext';
 import { WishlistProvider } from '@/contexts/WishlistContext';
 
 interface ProvidersProps {
@@ -10,10 +11,12 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <AuthProvider>
-      <WishlistProvider>
-        {children}
-      </WishlistProvider>
-    </AuthProvider>
+    <AuthContextProvider>
+      <AuthProvider>
+        <WishlistProvider>
+          {children}
+        </WishlistProvider>
+      </AuthProvider>
+    </AuthContextProvider>
   );
 }

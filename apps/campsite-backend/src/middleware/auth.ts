@@ -36,17 +36,22 @@ export async function authMiddleware(
     }
 
     // Get user profile with role and profile ID
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('id, role')
       .eq('auth_user_id', user.id)
       .single();
 
+    if (profileError || !profile) {
+      console.error('Profile not found for auth user:', user.id);
+      return res.status(401).json({ error: 'User profile not found' });
+    }
+
     req.user = {
       id: user.id,
-      profileId: profile?.id || user.id,  // Profile ID for table references
+      profileId: profile.id,  // Profile ID for table references
       email: user.email!,
-      role: profile?.role || 'user',
+      role: profile.role || 'user',
     };
     req.supabase = supabase;
 
@@ -80,13 +85,16 @@ export async function optionalAuthMiddleware(
           .eq('auth_user_id', user.id)
           .single();
 
-        req.user = {
-          id: user.id,
-          profileId: profile?.id || user.id,
-          email: user.email!,
-          role: profile?.role || 'user',
-        };
-        req.supabase = supabase;
+        // Only set user if profile exists
+        if (profile) {
+          req.user = {
+            id: user.id,
+            profileId: profile.id,
+            email: user.email!,
+            role: profile.role || 'user',
+          };
+          req.supabase = supabase;
+        }
       }
     }
 
