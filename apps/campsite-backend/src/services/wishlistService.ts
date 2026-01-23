@@ -31,13 +31,18 @@ export async function getWishlist(
         name,
         description,
         slug,
-        campsite_type,
         min_price,
         max_price,
         average_rating,
         review_count,
         is_featured,
         province_id,
+        campsite_types!inner (
+          id,
+          slug,
+          name_th,
+          name_en
+        ),
         provinces!inner (
           id,
           name_th,
@@ -97,7 +102,7 @@ export async function getWishlist(
         name: campsite.name,
         description: campsite.description,
         slug: campsite.slug,
-        campsite_type: campsite.campsite_type,
+        campsite_type: campsite.campsite_types?.slug || '',
         province: {
           id: campsite.provinces.id,
           name_th: campsite.provinces.name_th,

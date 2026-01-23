@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   fetchWishlist,
@@ -36,17 +36,35 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
   const [count, setCount] = useState(0);
 
-  // Load wishlist when user changes
-  const loadWishlist = useCallback(async () => {
-    if (!user) {
+  // Track the last loaded user ID to prevent redundant fetches
+  const lastLoadedUserIdRef = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
+
+  // Load wishlist - stable function that uses refs
+  const loadWishlist = useCallback(async (forceRefresh = false) => {
+    const userId = user?.id || null;
+
+    // Skip if already loading
+    if (isLoadingRef.current && !forceRefresh) {
+      return;
+    }
+
+    // Skip if we already loaded for this user (unless force refresh)
+    if (!forceRefresh && userId === lastLoadedUserIdRef.current) {
+      return;
+    }
+
+    if (!userId) {
       setWishlist([]);
       setWishlistIds(new Set());
       setCount(0);
       setIsLoading(false);
+      lastLoadedUserIdRef.current = null;
       return;
     }
 
     try {
+      isLoadingRef.current = true;
       setIsLoading(true);
       setError(null);
 
@@ -56,20 +74,22 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       setWishlist(items);
       setWishlistIds(new Set(items.map((item) => item.campsite_id)));
       setCount(response.count || items.length);
+      lastLoadedUserIdRef.current = userId;
     } catch (err) {
       console.error('Failed to load wishlist:', err);
       setError(err as Error);
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Load wishlist on mount and when user changes
   useEffect(() => {
     if (!authLoading) {
       loadWishlist();
     }
-  }, [authLoading, loadWishlist]);
+  }, [authLoading, user?.id, loadWishlist]);
 
   // Check if a campsite is in the wishlist
   const isInWishlist = useCallback(
@@ -93,7 +113,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       try {
         await addToWishlistApi(campsiteId);
         // Refresh to get full data
-        await loadWishlist();
+        await loadWishlist(true);
       } catch (err) {
         // Revert on error
         setWishlistIds((prev) => {
@@ -182,7 +202,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         }
 
         // Refresh to get accurate count and data
-        await loadWishlist();
+        await loadWishlist(true);
 
         return result.isInWishlist;
       } catch (err) {
@@ -224,7 +244,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   // Refresh wishlist from server
   const refreshWishlist = useCallback(async () => {
-    await loadWishlist();
+    await loadWishlist(true); // Force refresh
   }, [loadWishlist]);
 
   return (
