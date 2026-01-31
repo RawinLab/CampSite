@@ -194,21 +194,21 @@ export function ReviewsSection({
     <section className={cn('space-y-6', className)}>
       {/* Header with write review button */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Reviews ({total})
+        <h2 className="text-2xl font-bold text-brand-text">
+          รีวิว ({total})
         </h2>
         {isAuthenticated && !hasReviewed && !showWriteForm && (
-          <Button onClick={() => setShowWriteForm(true)}>
-            Write a Review
+          <Button className="bg-brand-green hover:bg-forest-700 rounded-xl transition-all duration-300" onClick={() => setShowWriteForm(true)}>
+            เขียนรีวิว
           </Button>
         )}
       </div>
 
       {/* Write Review Form */}
       {showWriteForm && (
-        <Card>
+        <Card className="rounded-2xl">
           <CardHeader>
-            <CardTitle>Write Your Review</CardTitle>
+            <CardTitle className="text-brand-text">เขียนรีวิวของคุณ</CardTitle>
           </CardHeader>
           <CardContent>
             <WriteReviewForm
@@ -223,7 +223,7 @@ export function ReviewsSection({
 
       {/* Summary and Breakdown */}
       {total > 0 && (
-        <Card>
+        <Card className="rounded-2xl">
           <CardContent className="pt-6">
             <ReviewSummary summary={summary} />
             <div className="mt-6 pt-6 border-t">

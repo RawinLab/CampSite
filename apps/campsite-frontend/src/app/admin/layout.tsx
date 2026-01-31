@@ -7,7 +7,7 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getAccessToken } from '@/lib/auth/token';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface AdminStats {
   pending_campsites: number;

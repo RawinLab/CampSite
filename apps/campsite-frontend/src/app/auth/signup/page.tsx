@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { Card } from '@/components/ui/card';
+import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SignupForm } from '@/components/auth/SignupForm';
 
 // Force dynamic rendering to avoid SSG with Supabase client
@@ -12,14 +12,11 @@ export const metadata: Metadata = {
 
 export default function SignupPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
-      <Card className="w-full max-w-md p-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-green-600">Camping Thailand</h1>
-          <p className="mt-2 text-gray-600">สร้างบัญชีใหม่</p>
-        </div>
-        <SignupForm />
-      </Card>
-    </div>
+    <AuthLayout
+      title="สมัครสมาชิก"
+      subtitle="สร้างบัญชีเพื่อเริ่มต้นค้นหาแคมป์ไซต์ทั่วไทย"
+    >
+      <SignupForm />
+    </AuthLayout>
   );
 }

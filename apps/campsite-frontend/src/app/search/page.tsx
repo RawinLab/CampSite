@@ -21,7 +21,7 @@ const CampsiteMap = nextDynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[600px] items-center justify-center rounded-xl bg-gray-100">
+      <div className="flex h-[600px] items-center justify-center rounded-2xl bg-brand-bg">
         <div className="map-loading__spinner" />
       </div>
     ),
@@ -125,13 +125,13 @@ function SearchPageContent() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto bg-background-warm px-4 py-8">
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+        <h1 className="text-2xl font-bold text-brand-text sm:text-3xl">
           ค้นหาแคมป์ปิ้ง
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-muted-foreground">
           ค้นหาและเปรียบเทียบที่พักแคมป์ปิ้งทั่วประเทศไทย
         </p>
       </div>
@@ -169,7 +169,7 @@ function SearchPageContent() {
               {/* Mobile Filter Button */}
               <Button
                 variant="outline"
-                className="lg:hidden"
+                className="rounded-xl lg:hidden"
                 onClick={() => setIsMobileFilterOpen(true)}
               >
                 <svg
@@ -186,7 +186,7 @@ function SearchPageContent() {
                 </svg>
                 ตัวกรอง
                 {activeFilterCount > 0 && (
-                  <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                  <span className="ml-2 rounded-full bg-brand-green/10 px-2 py-0.5 text-xs text-brand-green">
                     {activeFilterCount}
                   </span>
                 )}
@@ -194,9 +194,9 @@ function SearchPageContent() {
 
               {/* Results Count */}
               {!isLoading && results && (
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                   พบ{' '}
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-brand-text">
                     {results.pagination.total}
                   </span>{' '}
                   แห่ง
@@ -221,7 +221,7 @@ function SearchPageContent() {
 
           {/* Error State */}
           {(error || mapError) && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-red-700">
               <p className="font-medium">เกิดข้อผิดพลาด</p>
               <p className="text-sm">{error || mapError}</p>
             </div>
@@ -251,7 +251,7 @@ function SearchPageContent() {
 
           {/* Map View */}
           {viewMode === 'map' && (
-            <div className="h-[600px] w-full overflow-hidden rounded-xl lg:h-[700px]">
+            <div className="h-[600px] w-full overflow-hidden rounded-2xl lg:h-[700px]">
               <CampsiteMap
                 campsites={mapCampsites}
                 onBoundsChange={setMapBounds}
@@ -286,7 +286,7 @@ function SearchPageContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-8">กำลังโหลด...</div>}>
+    <Suspense fallback={<div className="container mx-auto bg-background-warm px-4 py-8">กำลังโหลด...</div>}>
       <SearchPageContent />
     </Suspense>
   );

@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { MapCampsite, MapBounds, MapFilters } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface UseMapSyncOptions {
   initialFilters?: MapFilters;

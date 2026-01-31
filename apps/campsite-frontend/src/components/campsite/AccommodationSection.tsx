@@ -16,11 +16,11 @@ export function AccommodationSection({ accommodations, bookingUrl }: Accommodati
   }
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bed className="w-5 h-5" />
-          Accommodation Options
+        <CardTitle className="flex items-center gap-2 text-brand-text">
+          <Bed className="w-5 h-5 text-brand-green" />
+          ที่พัก
         </CardTitle>
       </CardHeader>
       <CardContent>

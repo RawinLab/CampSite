@@ -41,7 +41,7 @@ export function AccommodationCard({ accommodation, bookingUrl }: AccommodationCa
   };
 
   return (
-    <Card className="flex flex-col h-full">
+    <Card className="flex flex-col h-full rounded-2xl">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg">{accommodation.name}</CardTitle>
         {accommodation.description && (
@@ -61,7 +61,7 @@ export function AccommodationCard({ accommodation, bookingUrl }: AccommodationCa
         {/* Pricing */}
         <div className="space-y-1">
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-primary">
+            <span className="text-2xl font-bold text-brand-green">
               {formatPrice(accommodation.price_per_night)}
             </span>
             <span className="text-sm text-muted-foreground">/ night</span>
@@ -81,7 +81,7 @@ export function AccommodationCard({ accommodation, bookingUrl }: AccommodationCa
               {accommodation.amenities_included.slice(0, 5).map((amenity) => (
                 <span
                   key={amenity}
-                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-green-100 text-green-700"
+                  className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-brand-green/10 text-brand-green"
                 >
                   <Check className="w-3 h-3" />
                   {getAmenityLabel(amenity)}
@@ -99,18 +99,21 @@ export function AccommodationCard({ accommodation, bookingUrl }: AccommodationCa
 
       <CardFooter className="pt-4">
         <Button
-          className="w-full"
+          className={cn(
+            'w-full rounded-xl transition-all duration-300',
+            bookingUrl ? 'bg-brand-green hover:bg-forest-700' : ''
+          )}
           onClick={handleBookClick}
           disabled={!bookingUrl}
           variant={bookingUrl ? 'default' : 'outline'}
         >
           {bookingUrl ? (
             <>
-              Book Now
+              จองเลย
               <ExternalLink className="w-4 h-4 ml-2" />
             </>
           ) : (
-            'Contact for Booking'
+            'ติดต่อเพื่อจอง'
           )}
         </Button>
       </CardFooter>

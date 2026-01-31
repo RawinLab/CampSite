@@ -15,7 +15,7 @@ import {
 } from '@/lib/seo/utils';
 import { getCampsiteCanonicalUrl } from '@/lib/seo/canonical';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface Props {
   params: { id: string };

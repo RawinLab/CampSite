@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import type { CampsiteDetail } from '@campsite/shared';
 import { formatPriceRange, formatRating, getRatingText } from '@/lib/utils/format';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface BookingSidebarProps {
   campsite: CampsiteDetail;
@@ -50,18 +50,18 @@ export function BookingSidebar({ campsite, onInquiry }: BookingSidebarProps) {
   };
 
   return (
-    <Card className="sticky top-4">
+    <Card className="sticky top-24 rounded-2xl shadow-lg">
       <CardHeader className="pb-2">
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="text-sm text-muted-foreground">Price per night</p>
-            <p className="text-2xl font-bold">
+            <p className="text-sm text-muted-foreground">ราคาต่อคืน</p>
+            <p className="text-2xl font-bold text-brand-green">
               {formatPriceRange(campsite.min_price, campsite.max_price)}
             </p>
           </div>
           {campsite.review_count > 0 && (
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               <span className="font-semibold">{formatRating(campsite.average_rating)}</span>
             </div>
           )}
@@ -104,43 +104,43 @@ export function BookingSidebar({ campsite, onInquiry }: BookingSidebarProps) {
       <CardFooter className="flex flex-col gap-2">
         {hasBookingUrl ? (
           <Button
-            className="w-full"
+            className="w-full bg-brand-coral hover:bg-[#c96a52] rounded-xl h-12 text-base font-semibold transition-all duration-300"
             size="lg"
             onClick={handleBookingClick}
           >
-            Book Now
+            จองเลย
             <ExternalLink className="w-4 h-4 ml-2" />
           </Button>
         ) : hasPhone ? (
           <Button
-            className="w-full"
+            className="w-full bg-brand-coral hover:bg-[#c96a52] rounded-xl h-12 text-base font-semibold transition-all duration-300"
             size="lg"
             asChild
             onClick={handlePhoneClick}
           >
             <a href={`tel:${campsite.phone}`}>
               <Phone className="w-4 h-4 mr-2" />
-              Call to Book
+              โทรจอง
             </a>
           </Button>
         ) : (
           <Button
-            className="w-full"
+            className="w-full rounded-xl h-12"
             size="lg"
             variant="outline"
             disabled
           >
-            No Booking Available
+            ไม่สามารถจองได้
           </Button>
         )}
 
         <Button
           variant="outline"
-          className="w-full"
+          className="w-full border-brand-green text-brand-green hover:bg-brand-green/10 rounded-xl h-12 transition-all duration-300"
           onClick={onInquiry}
         >
           <MessageSquare className="w-4 h-4 mr-2" />
-          Send Inquiry
+          ส่งข้อความสอบถาม
         </Button>
       </CardFooter>
     </Card>

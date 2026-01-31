@@ -47,10 +47,10 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 function getRatingColor(rating: number): string {
-  if (rating >= 4.5) return 'bg-green-500';
-  if (rating >= 4) return 'bg-green-400';
-  if (rating >= 3.5) return 'bg-yellow-400';
-  if (rating >= 3) return 'bg-yellow-500';
+  if (rating >= 4.5) return 'bg-brand-green';
+  if (rating >= 4) return 'bg-brand-green/80';
+  if (rating >= 3.5) return 'bg-brand-coral';
+  if (rating >= 3) return 'bg-brand-coral/80';
   if (rating >= 2) return 'bg-orange-400';
   return 'bg-red-400';
 }
@@ -66,7 +66,7 @@ export function RatingBreakdown({ categoryAverages, className }: RatingBreakdown
 
   return (
     <div className={cn('space-y-3', className)}>
-      <h4 className="text-sm font-medium text-gray-700">Rating by Category</h4>
+      <h4 className="text-sm font-medium text-brand-text">คะแนนตามหมวดหมู่</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {categories.map(([key, value]) => {
           const rating = value as number;
@@ -74,7 +74,7 @@ export function RatingBreakdown({ categoryAverages, className }: RatingBreakdown
 
           return (
             <div key={key} className="flex items-center gap-2">
-              <div className="text-gray-500">
+              <div className="text-brand-green">
                 {categoryIcons[key]}
               </div>
               <div className="flex-1">

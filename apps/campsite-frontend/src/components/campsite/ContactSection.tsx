@@ -36,11 +36,11 @@ export function ContactSection({ campsite }: ContactSectionProps) {
   };
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Phone className="w-5 h-5" />
-          Contact Information
+        <CardTitle className="flex items-center gap-2 text-brand-text">
+          <Phone className="w-5 h-5 text-brand-green" />
+          ข้อมูลติดต่อ
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -49,10 +49,10 @@ export function ContactSection({ campsite }: ContactSectionProps) {
           {campsite.phone && (
             <a
               href={`tel:${campsite.phone}`}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-all duration-300 group"
             >
-              <div className="p-2 rounded-full bg-green-100 group-hover:bg-green-200 transition-colors">
-                <Phone className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-full bg-brand-green/10 group-hover:bg-brand-green/20 transition-all duration-300">
+                <Phone className="w-4 h-4 text-brand-green" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Phone</p>
@@ -64,10 +64,10 @@ export function ContactSection({ campsite }: ContactSectionProps) {
           {campsite.email && (
             <a
               href={`mailto:${campsite.email}`}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-all duration-300 group"
             >
-              <div className="p-2 rounded-full bg-blue-100 group-hover:bg-blue-200 transition-colors">
-                <Mail className="w-4 h-4 text-blue-600" />
+              <div className="p-2 rounded-full bg-brand-green/10 group-hover:bg-brand-green/20 transition-all duration-300">
+                <Mail className="w-4 h-4 text-brand-green" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Email</p>
@@ -81,10 +81,10 @@ export function ContactSection({ campsite }: ContactSectionProps) {
               href={campsite.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group"
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted transition-all duration-300 group"
             >
-              <div className="p-2 rounded-full bg-purple-100 group-hover:bg-purple-200 transition-colors">
-                <Globe className="w-4 h-4 text-purple-600" />
+              <div className="p-2 rounded-full bg-brand-green/10 group-hover:bg-brand-green/20 transition-all duration-300">
+                <Globe className="w-4 h-4 text-brand-green" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Website</p>
@@ -105,6 +105,7 @@ export function ContactSection({ campsite }: ContactSectionProps) {
                 <Button
                   variant="outline"
                   size="icon"
+                  className="rounded-xl transition-all duration-300"
                   asChild
                 >
                   <a
@@ -121,6 +122,7 @@ export function ContactSection({ campsite }: ContactSectionProps) {
                 <Button
                   variant="outline"
                   size="icon"
+                  className="rounded-xl transition-all duration-300"
                   asChild
                 >
                   <a
@@ -155,7 +157,7 @@ export function ContactSection({ campsite }: ContactSectionProps) {
           <div className="flex gap-2 pt-2">
             <Button
               variant="outline"
-              className="flex-1"
+              className="flex-1 rounded-xl border-brand-green text-brand-green hover:bg-brand-green/10 transition-all duration-300"
               asChild
             >
               <a
@@ -164,12 +166,12 @@ export function ContactSection({ campsite }: ContactSectionProps) {
                 rel="noopener noreferrer"
               >
                 <MapPin className="w-4 h-4 mr-2" />
-                View on Map
+                ดูบนแผนที่
               </a>
             </Button>
             <Button
               variant="default"
-              className="flex-1"
+              className="flex-1 bg-brand-green hover:bg-forest-700 rounded-xl transition-all duration-300"
               asChild
             >
               <a
@@ -178,7 +180,7 @@ export function ContactSection({ campsite }: ContactSectionProps) {
                 rel="noopener noreferrer"
               >
                 <Navigation className="w-4 h-4 mr-2" />
-                Get Directions
+                นำทาง
               </a>
             </Button>
           </div>

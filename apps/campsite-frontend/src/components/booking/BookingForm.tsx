@@ -16,7 +16,7 @@ interface BookingFormProps {
   basePrice: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL as API_URL } from '@/lib/api/config';
 
 export function BookingForm({ campsiteId, campsiteName, basePrice }: BookingFormProps) {
   const router = useRouter();

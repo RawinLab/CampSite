@@ -81,13 +81,13 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
   return (
     <div className="space-y-6">
       {successMessage && (
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           {successMessage}
         </div>
       )}
 
       {errorMessage && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {errorMessage}
         </div>
       )}
@@ -99,6 +99,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             id="full_name"
             type="text"
             placeholder="สมชาย ใจดี"
+            className="h-12"
             {...register('full_name')}
             disabled={isLoading}
           />
@@ -113,6 +114,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             id="email"
             type="email"
             placeholder="email@example.com"
+            className="h-12"
             {...register('email')}
             disabled={isLoading}
           />
@@ -127,6 +129,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             id="password"
             type="password"
             placeholder="รหัสผ่านอย่างน้อย 8 ตัวอักษร"
+            className="h-12"
             {...register('password')}
             disabled={isLoading}
           />
@@ -142,6 +145,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
             id="phone"
             type="tel"
             placeholder="0812345678"
+            className="h-12"
             {...register('phone')}
             disabled={isLoading}
           />
@@ -150,7 +154,11 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-xl bg-brand-green font-semibold text-white hover:bg-brand-green/90"
+          disabled={isLoading}
+        >
           {isLoading ? 'กำลังลงทะเบียน...' : 'สมัครสมาชิก'}
         </Button>
       </form>
@@ -160,7 +168,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
+          <span className="bg-white px-4 text-gray-400 lg:bg-white">
             หรือ
           </span>
         </div>
@@ -169,7 +177,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="h-12 w-full rounded-xl border-2 border-gray-200 hover:bg-gray-50"
         onClick={handleGoogleSignup}
         disabled={isLoading}
       >
@@ -196,7 +204,7 @@ export function SignupForm({ onSuccess }: SignupFormProps) {
 
       <p className="text-center text-sm text-muted-foreground">
         มีบัญชีอยู่แล้ว?{' '}
-        <Link href="/auth/login" className="text-primary hover:underline">
+        <Link href="/auth/login" className="text-brand-green font-medium hover:underline">
           เข้าสู่ระบบ
         </Link>
       </p>

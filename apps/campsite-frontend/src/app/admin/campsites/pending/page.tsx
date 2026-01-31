@@ -9,7 +9,7 @@ import { Tent, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CampsiteType } from '@campsite/shared';
 import { getAccessToken } from '@/lib/auth/token';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface PendingCampsite {
   id: string;

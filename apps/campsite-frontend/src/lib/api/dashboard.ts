@@ -1,6 +1,6 @@
 import type { CampsitePhotoResponse } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from './config';
 
 export interface PhotoUploadResult {
   success: boolean;

@@ -37,7 +37,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
   return (
     <div className="flex items-center gap-1">
       <svg
-        className="h-4 w-4 text-yellow-400"
+        className="h-4 w-4 fill-amber-500 text-amber-500"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="currentColor"
@@ -63,7 +63,7 @@ export function CampsiteCard({ campsite, className }: CampsiteCardProps) {
   return (
     <div className="relative" data-testid="campsite-card" data-campsite-id={campsite.id}>
       {/* Wishlist button - outside Link to ensure clickability */}
-      <div className="absolute right-2 top-2 z-20">
+      <div className="absolute right-2 top-2 z-20 rounded-full bg-white/80 p-2 backdrop-blur-sm">
         <WishlistButton
           campsiteId={campsite.id}
           size="sm"
@@ -74,12 +74,12 @@ export function CampsiteCard({ campsite, className }: CampsiteCardProps) {
       <Link href={`/campsites/${campsite.slug || campsite.id}`}>
         <Card
           className={cn(
-            'group overflow-hidden transition-all hover:shadow-lg',
+            'group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl',
             className
           )}
         >
           {/* Image */}
-          <div className="relative aspect-[4/3] overflow-hidden">
+          <div className="relative aspect-[4/3] overflow-hidden rounded-t-2xl">
             {campsite.thumbnail_url ? (
               <Image
                 src={campsite.thumbnail_url}
@@ -126,7 +126,7 @@ export function CampsiteCard({ campsite, className }: CampsiteCardProps) {
 
           <CardContent className="p-4">
             {/* Name & Location */}
-            <h3 className="line-clamp-1 font-semibold text-gray-900 group-hover:text-green-600">
+            <h3 className="line-clamp-1 font-semibold text-brand-text group-hover:text-brand-green">
               {campsite.name}
             </h3>
             <p className="mt-1 flex items-center gap-1 text-sm text-gray-500">
@@ -159,7 +159,7 @@ export function CampsiteCard({ campsite, className }: CampsiteCardProps) {
               />
               <div className="text-right">
                 <span className="text-sm text-gray-500">เริ่มต้น</span>
-                <p className="font-semibold text-green-600">{priceDisplay}</p>
+                <p className="font-bold text-brand-green">{priceDisplay}</p>
               </div>
             </div>
           </CardContent>

@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import type { UserRole } from '@campsite/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL as API_URL } from '@/lib/api/config';
 
 export interface ServerAuthUser {
   id: string;

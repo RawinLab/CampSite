@@ -6,7 +6,7 @@ import { AttractionCard } from './AttractionCard';
 import { CATEGORY_LABELS } from '@/lib/constants/attractionIcons';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface AttractionsSectionProps {
   campsiteId: string;
@@ -80,10 +80,10 @@ export function AttractionsSection({
   return (
     <section className={`${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900">Nearby Attractions</h2>
+        <h2 className="text-xl font-bold text-brand-text">สถานที่ใกล้เคียง</h2>
         {!isLoading && attractions.length > 0 && (
-          <span className="text-sm text-gray-500">
-            Within {maxDistanceKm} km
+          <span className="text-sm text-muted-foreground">
+            ภายในรัศมี {maxDistanceKm} กม.
           </span>
         )}
       </div>
@@ -93,13 +93,13 @@ export function AttractionsSection({
         <div className="flex flex-wrap gap-2 mb-4">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+            className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-300 ${
               selectedCategory === 'all'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                ? 'bg-brand-green text-white'
+                : 'bg-brand-green/10 text-brand-green hover:bg-brand-green/20'
             }`}
           >
-            All ({attractions.length})
+            ทั้งหมด ({attractions.length})
           </button>
           {categories.map((category) => {
             const count = attractions.filter((a) => a.category === category).length;
@@ -107,10 +107,10 @@ export function AttractionsSection({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-all duration-300 ${
                   selectedCategory === category
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-brand-green text-white'
+                    : 'bg-brand-green/10 text-brand-green hover:bg-brand-green/20'
                 }`}
               >
                 {CATEGORY_LABELS[category]} ({count})
@@ -131,7 +131,7 @@ export function AttractionsSection({
 
       {/* Error State */}
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700">
           {error}
         </div>
       )}
@@ -151,7 +151,7 @@ export function AttractionsSection({
 
       {/* Empty State for Filter */}
       {!isLoading && !error && filteredAttractions.length === 0 && attractions.length > 0 && (
-        <div className="p-6 text-center text-gray-500 bg-gray-50 rounded-lg">
+        <div className="p-6 text-center text-muted-foreground bg-muted/50 rounded-2xl">
           No {CATEGORY_LABELS[selectedCategory as AttractionCategory]} attractions found nearby.
         </div>
       )}
@@ -164,7 +164,7 @@ export function AttractionsSection({
  */
 function AttractionCardSkeleton() {
   return (
-    <div className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg">
+    <div className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-2xl">
       <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <Skeleton className="h-5 w-1/2" />

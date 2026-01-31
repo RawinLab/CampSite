@@ -40,7 +40,7 @@ export function CampsiteDetailContent({ campsite }: CampsiteDetailContentProps) 
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background-warm">
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6 lg:py-8">
         {/* Hero Section with Gallery Preview */}
@@ -62,7 +62,7 @@ export function CampsiteDetailContent({ campsite }: CampsiteDetailContentProps) 
             {/* Photo Gallery (full view) */}
             {campsite.photos.length > 0 && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">Photos</h2>
+                <h2 className="text-xl font-semibold mb-4 text-brand-text">รูปภาพ</h2>
                 <CampsiteGallery
                   photos={campsite.photos}
                   campsiteName={campsite.name}

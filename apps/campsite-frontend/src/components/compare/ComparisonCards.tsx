@@ -35,10 +35,10 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
             key={campsite.id}
             onClick={() => setActiveIndex(index)}
             className={cn(
-              'flex-shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors',
-              'focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2',
+              'flex-shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300',
+              'focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2',
               index === activeIndex
-                ? 'bg-green-600 text-white'
+                ? 'bg-brand-green text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             )}
           >
@@ -50,7 +50,7 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
       </div>
 
       {/* Active campsite card */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden rounded-2xl border-gray-100">
         {/* Image */}
         <div className="relative aspect-video w-full">
           {activeCampsite.photos?.[0]?.url ? (
@@ -63,14 +63,14 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gray-200">
-              <span className="text-gray-400">No image</span>
+              <span className="text-gray-400">ไม่มีรูปภาพ</span>
             </div>
           )}
         </div>
 
         <div className="p-6">
           {/* Name */}
-          <h2 className="mb-4 text-xl font-bold text-gray-900">
+          <h2 className="mb-4 text-xl font-bold text-brand-text">
             {activeCampsite.name}
           </h2>
 
@@ -81,8 +81,8 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
                 key={key}
                 className="flex items-center justify-between border-b border-gray-100 pb-2"
               >
-                <dt className="text-gray-500">{label}</dt>
-                <dd className="font-medium text-gray-900">
+                <dt className="text-brand-text/60">{label}</dt>
+                <dd className="font-medium text-brand-text">
                   {render(activeCampsite)}
                 </dd>
               </div>
@@ -91,7 +91,7 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
 
           {/* Amenities */}
           <div className="mt-6">
-            <h3 className="mb-3 font-semibold text-gray-900">Amenities</h3>
+            <h3 className="mb-3 font-semibold text-brand-text">สิ่งอำนวยความสะดวก</h3>
             <div className="grid grid-cols-2 gap-2">
               {COMPARISON_AMENITIES.map(({ slug, name }) => {
                 const has = hasAmenity(activeCampsite, slug);
@@ -99,8 +99,8 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
                   <div
                     key={slug}
                     className={cn(
-                      'flex items-center gap-2 rounded-md px-3 py-2 text-sm',
-                      has ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-400'
+                      'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-all duration-300',
+                      has ? 'bg-brand-green/10 text-brand-green' : 'bg-gray-50 text-gray-400'
                     )}
                   >
                     {has ? (
@@ -116,9 +116,9 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
           </div>
 
           {/* View details button */}
-          <Button asChild className="mt-6 w-full">
+          <Button asChild className="mt-6 w-full bg-brand-green text-white rounded-xl hover:bg-forest-700 transition-all duration-300">
             <Link href={`/campsites/${activeCampsite.id}`}>
-              View Details
+              ดูรายละเอียด
             </Link>
           </Button>
         </div>
@@ -131,8 +131,8 @@ export function ComparisonCards({ campsites }: ComparisonCardsProps) {
             key={index}
             onClick={() => setActiveIndex(index)}
             className={cn(
-              'h-2 w-2 rounded-full transition-colors',
-              index === activeIndex ? 'bg-green-600' : 'bg-gray-300'
+              'h-2 w-2 rounded-full transition-all duration-300',
+              index === activeIndex ? 'bg-brand-green' : 'bg-gray-300'
             )}
             aria-label={`View campsite ${index + 1}`}
           />

@@ -10,7 +10,7 @@ import { InquiryCard } from '@/components/dashboard/InquiryCard';
 import { Plus } from 'lucide-react';
 import type { DashboardStats, InquiryWithCampsite } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from '@/lib/api/config';
 
 async function getDashboardData(token: string) {
   try {

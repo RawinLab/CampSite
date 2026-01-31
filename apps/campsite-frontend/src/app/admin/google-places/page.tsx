@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { RefreshCw, Play, Settings, Users, Calendar, Database, ArrowRight } from 'lucide-react';
 import { getAccessToken } from '@/lib/auth/token';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface GooglePlacesStats {
   total_raw_places: number;

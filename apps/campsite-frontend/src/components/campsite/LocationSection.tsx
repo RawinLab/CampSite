@@ -36,16 +36,16 @@ export function LocationSection({ campsite }: LocationSectionProps) {
   };
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="w-5 h-5 text-red-500" />
-          Location
+        <CardTitle className="flex items-center gap-2 text-brand-text">
+          <MapPin className="w-5 h-5 text-brand-coral" />
+          ตำแหน่งที่ตั้ง
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Map Embed */}
-        <div className="relative w-full h-[300px] md:h-[400px] rounded-lg overflow-hidden border bg-muted">
+        <div className="relative w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden border bg-muted">
           <iframe
             src={getOSMEmbedUrl()}
             width="100%"
@@ -64,8 +64,8 @@ export function LocationSection({ campsite }: LocationSectionProps) {
           {/* Address */}
           {campsite.address && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-              <div className="p-2 rounded-full bg-red-100 flex-shrink-0">
-                <MapPin className="w-4 h-4 text-red-600" />
+              <div className="p-2 rounded-full bg-brand-coral/10 flex-shrink-0">
+                <MapPin className="w-4 h-4 text-brand-coral" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Address</p>
@@ -77,8 +77,8 @@ export function LocationSection({ campsite }: LocationSectionProps) {
           {/* Province */}
           {campsite.province && (
             <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-              <div className="p-2 rounded-full bg-blue-100 flex-shrink-0">
-                <Globe2 className="w-4 h-4 text-blue-600" />
+              <div className="p-2 rounded-full bg-brand-green/10 flex-shrink-0">
+                <Globe2 className="w-4 h-4 text-brand-green" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">Province</p>
@@ -101,8 +101,8 @@ export function LocationSection({ campsite }: LocationSectionProps) {
 
           {/* Coordinates */}
           <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-            <div className="p-2 rounded-full bg-green-100 flex-shrink-0">
-              <Map className="w-4 h-4 text-green-600" />
+            <div className="p-2 rounded-full bg-brand-green/10 flex-shrink-0">
+              <Map className="w-4 h-4 text-brand-green" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-muted-foreground">GPS Coordinates</p>
@@ -117,7 +117,7 @@ export function LocationSection({ campsite }: LocationSectionProps) {
         <div className="flex gap-2 pt-2">
           <Button
             variant="outline"
-            className="flex-1"
+            className="flex-1 rounded-xl border-brand-green text-brand-green hover:bg-brand-green/10 transition-all duration-300"
             asChild
           >
             <a
@@ -126,12 +126,12 @@ export function LocationSection({ campsite }: LocationSectionProps) {
               rel="noopener noreferrer"
             >
               <MapPin className="w-4 h-4 mr-2" />
-              View on Map
+              ดูบนแผนที่
             </a>
           </Button>
           <Button
             variant="default"
-            className="flex-1"
+            className="flex-1 bg-brand-green hover:bg-forest-700 rounded-xl transition-all duration-300"
             asChild
           >
             <a
@@ -140,7 +140,7 @@ export function LocationSection({ campsite }: LocationSectionProps) {
               rel="noopener noreferrer"
             >
               <Navigation className="w-4 h-4 mr-2" />
-              Get Directions
+              นำทาง
             </a>
           </Button>
         </div>

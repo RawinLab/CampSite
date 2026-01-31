@@ -35,42 +35,44 @@ export function FilterSidebar({
 }: FilterSidebarProps) {
   return (
     <aside className={cn('space-y-6', className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">ตัวกรอง</h2>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearAll}
-            className="text-green-600 hover:text-green-700"
-          >
-            ล้างทั้งหมด
-          </Button>
-        )}
+      <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-brand-text">ตัวกรอง</h2>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearAll}
+              className="text-brand-coral hover:text-brand-coral/80"
+            >
+              ล้างทั้งหมด
+            </Button>
+          )}
+        </div>
+
+        {/* Type Filter */}
+        <TypeFilter selectedTypes={selectedTypes} onChange={onTypesChange} />
+
+        {/* Divider */}
+        <hr className="border-gray-100" />
+
+        {/* Price Filter */}
+        <PriceFilter
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          onChange={onPriceChange}
+        />
+
+        {/* Divider */}
+        <hr className="border-gray-100" />
+
+        {/* Amenities Filter */}
+        <AmenitiesFilter
+          selectedAmenities={selectedAmenities}
+          onChange={onAmenitiesChange}
+        />
       </div>
-
-      {/* Type Filter */}
-      <TypeFilter selectedTypes={selectedTypes} onChange={onTypesChange} />
-
-      {/* Divider */}
-      <hr className="border-gray-200" />
-
-      {/* Price Filter */}
-      <PriceFilter
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        onChange={onPriceChange}
-      />
-
-      {/* Divider */}
-      <hr className="border-gray-200" />
-
-      {/* Amenities Filter */}
-      <AmenitiesFilter
-        selectedAmenities={selectedAmenities}
-        onChange={onAmenitiesChange}
-      />
     </aside>
   );
 }
@@ -94,16 +96,16 @@ export function MobileFilterModal({
     <div className="fixed inset-0 z-50 lg:hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Panel */}
-      <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white shadow-xl">
+      <div className="fixed inset-y-0 right-0 w-full max-w-sm rounded-l-3xl bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <h2 className="text-lg font-semibold">ตัวกรอง</h2>
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+          <h2 className="text-lg font-semibold text-brand-text">ตัวกรอง</h2>
           <button
             type="button"
             onClick={onClose}
@@ -143,7 +145,7 @@ export function MobileFilterModal({
               ล้างทั้งหมด
             </Button>
             <Button
-              className="flex-1 bg-green-600 hover:bg-green-700"
+              className="flex-1 rounded-xl bg-brand-green hover:bg-forest-700"
               onClick={onClose}
             >
               ดูผลลัพธ์

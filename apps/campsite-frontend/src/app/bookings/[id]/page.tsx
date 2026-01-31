@@ -21,7 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import type { Booking, BookingStatus } from '@campsite/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL as API_URL } from '@/lib/api/config';
 
 const statusLabels: Record<BookingStatus, { label: string; color: string; icon: any }> = {
   pending: { label: 'รอการยืนยัน', color: 'bg-amber-100 text-amber-700', icon: Clock },

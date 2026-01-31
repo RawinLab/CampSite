@@ -6,7 +6,7 @@
 import type { MetadataRoute } from 'next';
 import { SITE_CONFIG } from '@/lib/seo/utils';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import { API_BASE_URL } from '@/lib/api/config';
 
 // Types for API responses
 interface CampsiteSitemapItem {

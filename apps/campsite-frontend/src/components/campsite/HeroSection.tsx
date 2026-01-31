@@ -32,7 +32,7 @@ export function HeroSection({
   return (
     <section className="relative">
       {/* Main Hero Image Grid */}
-      <div className="relative grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-2 h-[300px] md:h-[400px] lg:h-[500px] rounded-xl overflow-hidden">
+      <div className="relative grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-2 h-[300px] md:h-[400px] lg:h-[500px] rounded-2xl overflow-hidden">
         {/* Main large image */}
         <div
           className="relative col-span-1 md:col-span-2 md:row-span-2 cursor-pointer"
@@ -79,9 +79,9 @@ export function HeroSection({
         {campsite.photos.length > 1 && (
           <button
             onClick={onOpenGallery}
-            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg text-sm font-medium shadow-md hover:bg-white transition-colors"
+            className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl text-sm font-medium shadow-md hover:bg-white transition-all duration-300"
           >
-            View all {campsite.photos.length} photos
+            ดูรูปภาพทั้งหมด {campsite.photos.length} รูป
           </button>
         )}
       </div>
@@ -91,7 +91,7 @@ export function HeroSection({
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="space-y-2">
             {/* Campsite Name */}
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">{campsite.name}</h1>
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-brand-text">{campsite.name}</h1>
 
             {/* Location */}
             <div className="flex items-center text-muted-foreground">
@@ -105,7 +105,7 @@ export function HeroSection({
             {campsite.review_count > 0 && (
               <div className="flex items-center gap-2">
                 <div className="flex items-center">
-                  <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
                   <span className="ml-1 font-semibold">{formatRating(campsite.average_rating)}</span>
                 </div>
                 <span className="text-muted-foreground">
@@ -122,6 +122,7 @@ export function HeroSection({
               size="icon"
               onClick={onShare}
               aria-label="Share"
+              className="rounded-full hover:bg-brand-green/10 transition-all duration-300"
             >
               <Share2 className="w-4 h-4" />
             </Button>
@@ -130,7 +131,7 @@ export function HeroSection({
               size="icon"
               onClick={onWishlist}
               aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-              className={cn(isWishlisted && 'text-red-500 border-red-500')}
+              className={cn('rounded-full hover:bg-brand-green/10 transition-all duration-300', isWishlisted && 'text-red-500 border-red-500')}
             >
               <Heart className={cn('w-4 h-4', isWishlisted && 'fill-red-500')} />
             </Button>

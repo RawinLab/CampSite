@@ -75,7 +75,7 @@ export function Pagination({
         size="sm"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-2"
+        className="rounded-xl px-2 hover:bg-brand-green/10"
         aria-label="หน้าก่อนหน้า"
       >
         <svg
@@ -109,8 +109,10 @@ export function Pagination({
             size="sm"
             onClick={() => onPageChange(page)}
             className={cn(
-              'min-w-[36px]',
-              page === currentPage && 'bg-green-600 hover:bg-green-700'
+              'min-w-[36px] rounded-xl',
+              page === currentPage
+                ? 'bg-brand-green text-white hover:bg-forest-700'
+                : 'hover:bg-brand-green/10'
             )}
             aria-label={`หน้า ${page}`}
             aria-current={page === currentPage ? 'page' : undefined}
@@ -126,7 +128,7 @@ export function Pagination({
         size="sm"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-2"
+        className="rounded-xl px-2 hover:bg-brand-green/10"
         aria-label="หน้าถัดไป"
       >
         <svg

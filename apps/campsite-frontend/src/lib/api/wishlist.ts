@@ -7,7 +7,7 @@ import type {
   BatchWishlistStatusResponse,
 } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from './config';
 
 /**
  * Fetch user's wishlist

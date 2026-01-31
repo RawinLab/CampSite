@@ -72,7 +72,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
   return (
     <div className="space-y-6">
       {errorMessage && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {errorMessage}
         </div>
       )}
@@ -84,6 +84,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             id="email"
             type="email"
             placeholder="email@example.com"
+            className="h-12"
             {...register('email')}
             disabled={isLoading}
           />
@@ -97,7 +98,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             <Label htmlFor="password">รหัสผ่าน</Label>
             <Link
               href="/auth/forgot-password"
-              className="text-sm text-primary hover:underline"
+              className="text-sm text-brand-green hover:underline"
             >
               ลืมรหัสผ่าน?
             </Link>
@@ -106,6 +107,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
             id="password"
             type="password"
             placeholder="รหัสผ่านของคุณ"
+            className="h-12"
             {...register('password')}
             disabled={isLoading}
           />
@@ -114,7 +116,11 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-xl bg-brand-green font-semibold text-white hover:bg-brand-green/90"
+          disabled={isLoading}
+        >
           {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
         </Button>
       </form>
@@ -124,7 +130,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
+          <span className="bg-white px-4 text-gray-400 lg:bg-white">
             หรือ
           </span>
         </div>
@@ -133,7 +139,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="h-12 w-full rounded-xl border-2 border-gray-200 hover:bg-gray-50"
         onClick={handleGoogleLogin}
         disabled={isLoading}
       >
@@ -160,7 +166,7 @@ export function LoginForm({ redirectTo = '/' }: LoginFormProps) {
 
       <p className="text-center text-sm text-muted-foreground">
         ยังไม่มีบัญชี?{' '}
-        <Link href="/auth/signup" className="text-primary hover:underline">
+        <Link href="/auth/signup" className="text-brand-green font-medium hover:underline">
           สมัครสมาชิก
         </Link>
       </p>

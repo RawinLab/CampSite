@@ -55,13 +55,13 @@ export function ForgotPasswordForm() {
   return (
     <div className="space-y-6">
       {successMessage && (
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           {successMessage}
         </div>
       )}
 
       {errorMessage && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {errorMessage}
         </div>
       )}
@@ -73,6 +73,7 @@ export function ForgotPasswordForm() {
             id="email"
             type="email"
             placeholder="email@example.com"
+            className="h-12"
             {...register('email')}
             disabled={isLoading}
           />
@@ -81,14 +82,18 @@ export function ForgotPasswordForm() {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-xl bg-brand-green font-semibold text-white hover:bg-brand-green/90"
+          disabled={isLoading}
+        >
           {isLoading ? 'กำลังส่ง...' : 'ส่งลิงก์รีเซ็ตรหัสผ่าน'}
         </Button>
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
         จำรหัสผ่านได้แล้ว?{' '}
-        <Link href="/auth/login" className="text-primary hover:underline">
+        <Link href="/auth/login" className="text-brand-green font-medium hover:underline">
           เข้าสู่ระบบ
         </Link>
       </p>

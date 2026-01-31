@@ -73,13 +73,13 @@ export function ResetPasswordForm() {
   return (
     <div className="space-y-6">
       {successMessage && (
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           {successMessage}
         </div>
       )}
 
       {errorMessage && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {errorMessage}
         </div>
       )}
@@ -91,6 +91,7 @@ export function ResetPasswordForm() {
             id="password"
             type="password"
             placeholder="รหัสผ่านอย่างน้อย 8 ตัวอักษร"
+            className="h-12"
             {...register('password')}
             disabled={isLoading}
           />
@@ -106,6 +107,7 @@ export function ResetPasswordForm() {
             id="confirmPassword"
             type="password"
             placeholder="ยืนยันรหัสผ่าน"
+            className="h-12"
             {...register('confirmPassword')}
             disabled={isLoading}
           />
@@ -116,7 +118,11 @@ export function ResetPasswordForm() {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button
+          type="submit"
+          className="h-12 w-full rounded-xl bg-brand-green font-semibold text-white hover:bg-brand-green/90"
+          disabled={isLoading}
+        >
           {isLoading ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'เปลี่ยนรหัสผ่าน'}
         </Button>
       </form>

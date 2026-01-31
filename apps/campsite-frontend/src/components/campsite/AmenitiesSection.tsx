@@ -64,11 +64,11 @@ export function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
   const hasMore = amenities.length > INITIAL_DISPLAY_COUNT;
 
   return (
-    <Card>
+    <Card className="rounded-2xl">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Check className="w-5 h-5 text-green-600" />
-          Facilities & Amenities
+        <CardTitle className="flex items-center gap-2 text-brand-text">
+          <Check className="w-5 h-5 text-brand-green" />
+          สิ่งอำนวยความสะดวก
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -79,10 +79,10 @@ export function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
             return (
               <div
                 key={amenity.id}
-                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300"
               >
-                <div className="p-2 rounded-full bg-primary/10">
-                  <IconComponent className="w-4 h-4 text-primary" />
+                <div className="p-2 rounded-full bg-brand-green/10">
+                  <IconComponent className="w-4 h-4 text-brand-green" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">{amenity.name_th}</p>
@@ -97,16 +97,16 @@ export function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
         {hasMore && (
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full rounded-xl transition-all duration-300"
             onClick={() => setShowAll(!showAll)}
           >
             {showAll ? (
               <>
-                Show less <ChevronUp className="w-4 h-4 ml-2" />
+                แสดงน้อยลง <ChevronUp className="w-4 h-4 ml-2" />
               </>
             ) : (
               <>
-                Show all {amenities.length} amenities <ChevronDown className="w-4 h-4 ml-2" />
+                ดูทั้งหมด {amenities.length} รายการ <ChevronDown className="w-4 h-4 ml-2" />
               </>
             )}
           </Button>

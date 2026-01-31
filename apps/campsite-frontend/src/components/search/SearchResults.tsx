@@ -13,7 +13,7 @@ interface SearchResultsProps {
 
 function CampsiteCardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-lg border">
+    <div className="overflow-hidden rounded-2xl bg-brand-bg">
       <Skeleton className="aspect-[4/3] w-full" />
       <div className="p-4 space-y-3">
         <Skeleton className="h-5 w-3/4" />
@@ -35,7 +35,7 @@ function EmptyResults() {
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
       <svg
-        className="h-16 w-16 text-gray-300"
+        className="h-16 w-16 text-muted-foreground/40"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
@@ -48,13 +48,13 @@ function EmptyResults() {
         <line x1="21" y1="21" x2="16.65" y2="16.65" />
         <line x1="8" y1="11" x2="14" y2="11" />
       </svg>
-      <h3 className="mt-4 text-lg font-medium text-gray-900">
+      <h3 className="mt-4 text-lg font-medium text-brand-text">
         ไม่พบแคมป์ปิ้งที่ตรงกับการค้นหา
       </h3>
-      <p className="mt-2 text-sm text-gray-500">
+      <p className="mt-2 text-sm text-muted-foreground">
         ลองปรับเปลี่ยนตัวกรองหรือค้นหาด้วยคำอื่น
       </p>
-      <ul className="mt-4 text-sm text-gray-500">
+      <ul className="mt-4 text-sm text-muted-foreground">
         <li>- ลองลดจำนวนตัวกรองที่เลือก</li>
         <li>- ขยายช่วงราคา</li>
         <li>- ค้นหาในจังหวัดอื่น</li>

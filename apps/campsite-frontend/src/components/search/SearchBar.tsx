@@ -56,12 +56,12 @@ export function SearchBar({
   const hasValue = localQuery || province;
 
   return (
-    <div className={cn('flex flex-col gap-3 sm:flex-row sm:gap-2', className)}>
+    <div className={cn('flex flex-col gap-3 rounded-2xl bg-white p-2 shadow-sm transition-shadow duration-200 focus-within:shadow-md sm:flex-row sm:gap-2', className)}>
       {/* Text Search */}
       <div className="relative flex-1">
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
           <svg
-            className="h-5 w-5 text-gray-400"
+            className="h-5 w-5 text-brand-green"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             fill="none"
@@ -98,7 +98,7 @@ export function SearchBar({
       <Button
         type="button"
         onClick={handleSearch}
-        className="bg-green-600 hover:bg-green-700"
+        className="rounded-xl bg-brand-green hover:bg-forest-700"
       >
         <svg
           className="mr-2 h-4 w-4"

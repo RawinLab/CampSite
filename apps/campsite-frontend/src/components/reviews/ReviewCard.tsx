@@ -44,7 +44,7 @@ export function ReviewCard({
   const isOwnReview = currentUserId === review.user_id;
 
   return (
-    <div className={cn('border-b border-gray-200 pb-6', className)}>
+    <div className={cn('border-b border-gray-200 pb-6 rounded-2xl', className)}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
@@ -121,7 +121,7 @@ export function ReviewCard({
 
       {/* Owner Response */}
       {review.owner_response && (
-        <div className="mt-4 bg-gray-50 rounded-lg p-4">
+        <div className="mt-4 bg-brand-bg rounded-2xl p-4">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
             <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />

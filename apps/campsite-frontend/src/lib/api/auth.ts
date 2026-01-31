@@ -12,7 +12,9 @@ import {
 } from '@/lib/auth/token';
 import type { UserRole, OwnerRequestInput } from '@campsite/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from './config';
+
+const API_URL = API_BASE_URL;
 
 // Types for API responses
 export interface AuthUser {

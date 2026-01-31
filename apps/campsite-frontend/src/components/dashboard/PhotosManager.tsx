@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import type { CampsitePhotoResponse } from '@campsite/shared';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3091';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface PhotosManagerProps {
   campsiteId: string;

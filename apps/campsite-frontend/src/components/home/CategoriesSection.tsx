@@ -2,6 +2,7 @@
 
 import { Tent, Hotel, Home, TreePine } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const categories = [
   {
@@ -42,7 +43,7 @@ export function CategoriesSection() {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-4 text-[#2B2D42]">
+        <h2 className="text-3xl font-bold text-center mb-4 text-brand-text">
           ประเภทที่พัก
         </h2>
         <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">
@@ -58,16 +59,18 @@ export function CategoriesSection() {
                 href={`/search?type=${category.id}`}
                 className="group"
               >
-                <div className="relative overflow-hidden rounded-2xl aspect-[4/5]">
+                <div className="relative overflow-hidden rounded-3xl aspect-[4/5] hover:shadow-xl transition-all duration-300">
                   {/* Background Image */}
-                  <img
+                  <Image
                     src={category.image}
                     alt={category.name}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    sizes="(max-width: 768px) 50vw, 25vw"
                   />
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                  
+
                   {/* Content */}
                   <div className="absolute inset-0 flex flex-col justify-end p-6">
                     <div className={`w-12 h-12 rounded-xl ${category.color} flex items-center justify-center mb-3`}>

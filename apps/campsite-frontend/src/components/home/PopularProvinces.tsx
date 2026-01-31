@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 const provinces = [
   {
@@ -43,9 +44,9 @@ const provinces = [
 
 export function PopularProvinces() {
   return (
-    <section className="py-16 bg-[#F7F5F0]">
+    <section className="py-16 bg-background-warm">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-4 text-[#2B2D42]">
+        <h2 className="text-3xl font-bold text-center mb-4 text-brand-text">
           จังหวัดยอดนิยม
         </h2>
         <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">
@@ -57,12 +58,14 @@ export function PopularProvinces() {
             <Link
               key={province.id}
               href={`/search?province=${province.id}`}
-              className="group relative overflow-hidden rounded-2xl aspect-[16/9]"
+              className="group relative overflow-hidden rounded-3xl aspect-[16/9] hover:shadow-xl transition-all duration-300"
             >
-              <img
+              <Image
                 src={province.image}
                 alt={province.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                fill
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute inset-0 flex flex-col justify-end p-6">

@@ -47,7 +47,7 @@ export function MobileBookingBar({ campsite, onInquiry }: MobileBookingBarProps)
     <div
       className={cn(
         'fixed bottom-0 left-0 right-0 z-40 lg:hidden',
-        'bg-background border-t shadow-lg',
+        'bg-white rounded-t-3xl shadow-2xl border-t',
         'transform transition-transform duration-300 ease-in-out',
         isVisible ? 'translate-y-0' : 'translate-y-full'
       )}
@@ -57,7 +57,7 @@ export function MobileBookingBar({ campsite, onInquiry }: MobileBookingBarProps)
           {/* Price */}
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground truncate">Price per night</p>
-            <p className="font-bold text-lg truncate">
+            <p className="font-bold text-lg truncate text-brand-green">
               {formatPriceRange(campsite.min_price, campsite.max_price)}
             </p>
           </div>
@@ -74,13 +74,13 @@ export function MobileBookingBar({ campsite, onInquiry }: MobileBookingBarProps)
             </Button>
 
             {hasBookingUrl ? (
-              <Button onClick={handleBookingClick}>
-                Book Now
+              <Button className="bg-brand-coral hover:bg-[#c96a52] rounded-xl transition-all duration-300" onClick={handleBookingClick}>
+                จองเลย
                 <ExternalLink className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button variant="secondary" onClick={onInquiry}>
-                Contact
+              <Button variant="secondary" className="rounded-xl transition-all duration-300" onClick={onInquiry}>
+                ติดต่อ
               </Button>
             )}
           </div>

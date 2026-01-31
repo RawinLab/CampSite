@@ -37,16 +37,16 @@ export function DescriptionSection({ campsite }: DescriptionSectionProps) {
   return (
     <section className="space-y-6">
       {/* About Section */}
-      <Card>
+      <Card className="rounded-2xl shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Tent className="w-5 h-5" />
-            About {campsite.name}
+          <CardTitle className="flex items-center gap-2 text-brand-text font-bold">
+            <Tent className="w-5 h-5 text-brand-green" />
+            เกี่ยวกับ {campsite.name}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Campsite Type Badge */}
-          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary/10 text-primary">
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brand-green/10 text-brand-green">
             {getCampsiteTypeLabel(campsite.campsite_type)}
           </div>
 
@@ -64,11 +64,11 @@ export function DescriptionSection({ campsite }: DescriptionSectionProps) {
                 >
                   {isExpanded ? (
                     <>
-                      Show less <ChevronUp className="w-4 h-4 ml-1" />
+                      แสดงน้อยลง <ChevronUp className="w-4 h-4 ml-1" />
                     </>
                   ) : (
                     <>
-                      Show more <ChevronDown className="w-4 h-4 ml-1" />
+                      อ่านเพิ่มเติม <ChevronDown className="w-4 h-4 ml-1" />
                     </>
                   )}
                 </Button>
@@ -81,11 +81,11 @@ export function DescriptionSection({ campsite }: DescriptionSectionProps) {
       {/* Quick Info Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Check-in/Check-out */}
-        <Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Clock className="w-5 h-5 text-primary" />
+              <div className="p-2 rounded-full bg-brand-green/10">
+                <Clock className="w-5 h-5 text-brand-green" />
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Check-in / Check-out</p>
@@ -98,11 +98,11 @@ export function DescriptionSection({ campsite }: DescriptionSectionProps) {
         </Card>
 
         {/* Price Range */}
-        <Card>
+        <Card className="rounded-2xl shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100">
-                <span className="text-green-600 font-bold">฿</span>
+              <div className="p-2 rounded-full bg-brand-green/10">
+                <span className="text-brand-green font-bold">฿</span>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Price per Night</p>
@@ -116,11 +116,11 @@ export function DescriptionSection({ campsite }: DescriptionSectionProps) {
 
         {/* Stay Duration */}
         {(campsite as any).min_stay_nights || (campsite as any).max_stay_nights ? (
-          <Card>
+          <Card className="rounded-2xl shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-100">
-                  <CalendarDays className="w-5 h-5 text-blue-600" />
+                <div className="p-2 rounded-full bg-brand-green/10">
+                  <CalendarDays className="w-5 h-5 text-brand-green" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Stay Duration</p>

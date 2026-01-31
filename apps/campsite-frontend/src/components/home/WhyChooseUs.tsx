@@ -27,9 +27,9 @@ const features = [
 
 export function WhyChooseUs() {
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-background-warm">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-4 text-[#2B2D42]">
+        <h2 className="text-3xl font-bold text-center mb-4 text-brand-text">
           ทำไมต้อง Camping Thailand?
         </h2>
         <p className="text-gray-500 text-center mb-12 max-w-xl mx-auto">
@@ -40,11 +40,11 @@ export function WhyChooseUs() {
           {features.map((feature) => {
             const Icon = feature.icon;
             return (
-              <div key={feature.title} className="text-center group">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-[#2D5A3D]/10 flex items-center justify-center group-hover:bg-[#2D5A3D] transition-colors duration-300">
-                  <Icon className="h-8 w-8 text-[#2D5A3D] group-hover:text-white transition-colors duration-300" />
+              <div key={feature.title} className="text-center group p-8 rounded-2xl border border-gray-100 bg-white hover:shadow-lg transition-all duration-300">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-brand-green/10 flex items-center justify-center group-hover:bg-brand-green transition-colors duration-300">
+                  <Icon className="h-8 w-8 text-brand-green group-hover:text-white transition-colors duration-300" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2 text-[#2B2D42]">{feature.title}</h3>
+                <h3 className="text-lg font-semibold mb-2 text-brand-text">{feature.title}</h3>
                 <p className="text-gray-500 text-sm">{feature.description}</p>
               </div>
             );

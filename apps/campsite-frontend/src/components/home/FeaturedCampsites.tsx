@@ -5,7 +5,10 @@ import { Star, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import Image from 'next/image';
+import { API_BASE_URL } from '@/lib/api/config';
 
 interface Campsite {
   id: string;
@@ -29,7 +32,7 @@ export function FeaturedCampsites() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3091/api/search?page=1&limit=4')
+    fetch(`${API_BASE_URL}/api/search?page=1&limit=4`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -50,14 +53,18 @@ export function FeaturedCampsites() {
   if (loading) {
     return (
       <section className="py-16 container mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center mb-8 text-[#2B2D42]">แคมป์ไซต์แนะนำ</h2>
+        <h2 className="text-3xl font-bold text-center mb-8 text-brand-text">แคมป์ไซต์แนะนำ</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <div className="h-48 bg-gray-200 rounded-t-lg" />
+            <Card key={i} className="overflow-hidden rounded-2xl">
+              <Skeleton className="h-48 w-full rounded-none" />
               <CardContent className="p-4 space-y-3">
-                <div className="h-5 bg-gray-200 rounded" />
-                <div className="h-4 bg-gray-200 rounded w-2/3" />
+                <Skeleton className="h-5 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -69,9 +76,9 @@ export function FeaturedCampsites() {
   return (
     <section className="py-16 container mx-auto px-4">
       <div className="flex items-center justify-between mb-8">
-        <h2 className="text-3xl font-bold text-[#2B2D42]">แคมป์ไซต์แนะนำ</h2>
+        <h2 className="text-3xl font-bold text-brand-text">แคมป์ไซต์แนะนำ</h2>
         <Link href="/search">
-          <Button variant="outline" className="border-[#2D5A3D] text-[#2D5A3D] hover:bg-[#2D5A3D] hover:text-white">
+          <Button variant="outline" className="border-brand-green text-brand-green hover:bg-brand-green hover:text-white transition-all duration-300">
             ดูทั้งหมด
           </Button>
         </Link>
@@ -80,19 +87,21 @@ export function FeaturedCampsites() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {campsites.map((campsite) => (
           <Link key={campsite.id} href={`/campsites/${campsite.slug}`}>
-            <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full">
-              <div className="relative h-48 overflow-hidden">
-                <img
+            <Card className="overflow-hidden rounded-2xl hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
+              <div className="relative h-48 rounded-2xl overflow-hidden">
+                <Image
                   src={campsite.thumbnail_url || 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=600'}
                   alt={campsite.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  fill
+                  className="object-cover hover:scale-105 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 />
-                <Badge className="absolute top-3 left-3 bg-[#E07A5F] text-white">
+                <Badge className="absolute top-3 left-3 bg-brand-coral text-white">
                   {typeLabels[campsite.campsite_type] || campsite.campsite_type}
                 </Badge>
               </div>
               <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-2 text-[#2B2D42] line-clamp-1">{campsite.name}</h3>
+                <h3 className="font-semibold text-lg mb-2 text-brand-text line-clamp-1">{campsite.name}</h3>
                 <div className="flex items-center text-gray-500 text-sm mb-2">
                   <MapPin className="h-4 w-4 mr-1" />
                   {campsite.province.name_th}
@@ -103,7 +112,7 @@ export function FeaturedCampsites() {
                     <span className="text-sm font-medium">{campsite.average_rating}</span>
                     <span className="text-gray-400 text-sm ml-1">({campsite.review_count})</span>
                   </div>
-                  <div className="text-[#2D5A3D] font-bold">
+                  <div className="text-brand-green font-bold">
                     ฿{campsite.min_price.toLocaleString()}
                     <span className="text-gray-400 text-sm font-normal">/คืน</span>
                   </div>

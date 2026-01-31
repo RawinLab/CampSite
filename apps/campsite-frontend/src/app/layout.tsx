@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from 'next';
-import { Noto_Sans_Thai } from 'next/font/google';
+import { Noto_Sans_Thai, Outfit } from 'next/font/google';
 import './globals.css';
 import { generateBaseMetadata, SITE_CONFIG } from '@/lib/seo/utils';
 import { OrganizationSchema } from '@/components/seo/OrganizationSchema';
 import { WebVitals } from '@/components/analytics/WebVitals';
 import { Providers } from '@/components/providers/Providers';
 import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
 
 // Configure Noto Sans Thai font with next/font for optimal loading
 const notoSansThai = Noto_Sans_Thai({
@@ -14,6 +15,14 @@ const notoSansThai = Noto_Sans_Thai({
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-noto-sans-thai',
   preload: true,
+});
+
+// Outfit font for English headings
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-outfit',
 });
 
 // Generate base metadata for all pages
@@ -50,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="th" className={notoSansThai.variable}>
+    <html lang="th" className={`${notoSansThai.variable} ${outfit.variable}`}>
       <head>
         {/* Preconnect to important third-party origins */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -69,6 +78,7 @@ export default function RootLayout({
         <Providers>
           <Navbar />
           {children}
+          <Footer />
         </Providers>
       </body>
     </html>

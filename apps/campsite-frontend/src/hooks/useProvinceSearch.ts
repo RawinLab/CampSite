@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { ProvinceSuggestion } from '@campsite/shared';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { API_BASE_URL as API_URL } from '@/lib/api/config';
 
 interface UseProvinceSearchOptions {
   debounceMs?: number;
