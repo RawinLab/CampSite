@@ -1,12 +1,30 @@
+import { HeroSection } from '@/components/home/HeroSection';
+import { FeaturedCampsites } from '@/components/home/FeaturedCampsites';
+import { CategoriesSection } from '@/components/home/CategoriesSection';
+import { PopularProvinces } from '@/components/home/PopularProvinces';
+import { WhyChooseUs } from '@/components/home/WhyChooseUs';
+import { NewsletterSection } from '@/components/home/NewsletterSection';
+
 export default function Home() {
   return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-4xl font-bold text-green-600">
-        Camping Thailand
-      </h1>
-      <p className="mt-4 text-gray-600">
-        ค้นหาและจองแคมป์ไซต์ทั่วประเทศไทย
-      </p>
+    <main className="min-h-screen bg-[#F7F5F0]">
+      {/* Hero Section - Full width with search */}
+      <HeroSection />
+      
+      {/* Featured Campsites */}
+      <FeaturedCampsites />
+      
+      {/* Categories */}
+      <CategoriesSection />
+      
+      {/* Popular Provinces */}
+      <PopularProvinces />
+      
+      {/* Why Choose Us */}
+      <WhyChooseUs />
+      
+      {/* Newsletter CTA */}
+      <NewsletterSection />
     </main>
   );
 }

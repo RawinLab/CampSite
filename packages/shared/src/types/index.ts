@@ -36,3 +36,6 @@ export * from './inquiry';
 
 // Google Places types
 export * from './google-places';
+
+// Booking types
+export * from './booking';

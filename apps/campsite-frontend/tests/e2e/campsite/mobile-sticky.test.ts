@@ -137,14 +137,15 @@ test.describe('Mobile Sticky Booking Bar', () => {
 
     // Sticky bar should be hidden or have hidden class
     const isHidden = await stickyBar.evaluate((el) => {
-      const styles = window.getComputedStyle(el);
+      const htmlEl = el as HTMLElement;
+      const styles = window.getComputedStyle(htmlEl);
       return (
-        el.classList.contains('translate-y-full') ||
-        el.classList.contains('opacity-0') ||
-        el.classList.contains('hidden') ||
+        htmlEl.classList.contains('translate-y-full') ||
+        htmlEl.classList.contains('opacity-0') ||
+        htmlEl.classList.contains('hidden') ||
         styles.display === 'none' ||
         styles.opacity === '0' ||
-        !el.offsetParent
+        !htmlEl.offsetParent
       );
     }).catch(() => true);
 

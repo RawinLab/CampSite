@@ -206,12 +206,14 @@ test.describe('Loading State Performance', () => {
   test('loading state memory usage is reasonable', async ({ page }) => {
     await page.goto('/search', { waitUntil: 'domcontentloaded' });
 
-    // Get memory metrics (if available in browser)
-    const metrics = await page.metrics();
+    // Get memory metrics via CDP session
+    const client = await page.context().newCDPSession(page);
+    const metrics = await client.send('Performance.getMetrics');
+    const jsHeapSize = metrics.metrics.find((m: { name: string; value: number }) => m.name === 'JSHeapUsedSize')?.value;
 
-    // Check that heap size is reasonable (< 50MB for loading state)
-    if (metrics.JSHeapUsedSize) {
-      const heapMB = metrics.JSHeapUsedSize / (1024 * 1024);
+    // Check that heap size is reasonable (< 100MB for loading state)
+    if (jsHeapSize) {
+      const heapMB = jsHeapSize / (1024 * 1024);
       expect(heapMB).toBeLessThan(100); // Should be well under 100MB
     }
   });

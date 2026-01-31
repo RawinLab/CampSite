@@ -16,6 +16,7 @@ import wishlistRouter from './routes/wishlist';
 import adminRouter from './routes/admin';
 import dashboardRouter from './routes/dashboard';
 import inquiriesRouter from './routes/inquiries';
+import bookingsRouter from './routes/bookings';
 
 const app: Express = express();
 
@@ -56,6 +57,7 @@ app.use('/api/wishlist', wishlistRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/inquiries', inquiriesRouter);
+app.use('/api/bookings', bookingsRouter);
 
 // 404 handler - must be after all routes
 app.use(notFoundHandler);

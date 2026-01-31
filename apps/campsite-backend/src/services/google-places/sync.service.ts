@@ -4,14 +4,15 @@
  */
 
 import axios from 'axios';
-import cron from 'node-cron';
+import * as cron from 'node-cron';
+import type { ScheduledTask } from 'node-cron';
 import { supabaseAdmin } from '../../lib/supabase';
 import logger from '../../utils/logger';
 import { sendSuccess, sendError } from '../../utils/response';
 import type {
   SyncLog,
   SyncConfig,
-  SyncStatus,
+  SyncStatusDetails,
 } from '@campsite/shared';
 import { GooglePlacesError } from './types';
 
@@ -28,10 +29,10 @@ if (!API_KEY) {
 
 // Sync configuration
 const SYNC_SCHEDULE = process.env.GOOGLE_PLACES_SYNC_SCHEDULE || '0 2 * * 0'; // Weekly: Sunday 2 AM
-const MAX_PLACES_PER_SYNC = parseInt(process.env.GOOGLE_PLACES_MAX_PLACES_PER_SYNC || '5000', 10);
-const MAX_REQUESTS_PER_SYNC = parseInt(process.env.GOOGLE_PLACES_MAX_REQUESTS_PER_SYNC || '10000', 10);
-const MAX_COST_PER_SYNC = parseFloat(process.env.GOOGLE_PLACES_MAX_COST_PER_SYNC || '80', 10);
-const ALERT_COST = parseFloat(process.env.GOOGLE_PLACES_ALERT_COST || '50', 10);
+const MAX_PLACES_PER_SYNC = Number(process.env.GOOGLE_PLACES_MAX_PLACES_PER_SYNC || 5000);
+const MAX_REQUESTS_PER_SYNC = Number(process.env.GOOGLE_PLACES_MAX_REQUESTS_PER_SYNC || 10000);
+const MAX_COST_PER_SYNC = Number(process.env.GOOGLE_PLACES_MAX_COST_PER_SYNC || 80);
+const ALERT_COST = Number(process.env.GOOGLE_PLACES_ALERT_COST || 50);
 
 // API pricing (per request)
 const PRICING = {
@@ -49,7 +50,7 @@ class GooglePlacesSyncService {
   private static instance: GooglePlacesSyncService;
   private currentSyncId: string | null = null;
   private isSyncRunning = false;
-  private scheduledJob: cron.ScheduledTask | null = null;
+  private scheduledJob: ScheduledTask | null = null;
 
   private constructor() {
     this.initializeScheduledSync();
@@ -607,7 +608,7 @@ class GooglePlacesSyncService {
   /**
    * Get current sync status
    */
-  getSyncStatus(): SyncStatus | null {
+  getSyncStatus(): SyncStatusDetails | null {
     if (!this.isSyncRunning || !this.currentSyncId) {
       return null;
     }

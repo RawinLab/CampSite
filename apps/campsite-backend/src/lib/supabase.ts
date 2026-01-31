@@ -46,6 +46,9 @@ export const supabaseAdmin: any = new Proxy({}, {
   },
 });
 
+// Default export for backward compatibility - alias to supabaseAdmin
+export const supabase = supabaseAdmin;
+
 // Create client with user's JWT token for RLS-enabled queries
 export function createSupabaseClient(accessToken?: string): SupabaseClient {
   if (!accessToken) {
